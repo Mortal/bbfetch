@@ -83,13 +83,10 @@ def print_handin_info(i, group, data):
 def previous_handin(group, data):
     handin = os.path.dirname(data['file'])
     o = re.match(r'(.*_)(\d+)', handin)
-    print(o)
     if o:
         directory = o.group(1) + str(int(o.group(2)) - 1)
-        print(directory)
         base = os.path.join(directory, group)
         annotated = base + '_handin_ann.pdf'
-        print(annotated)
         if os.path.exists(annotated):
             return annotated
 
