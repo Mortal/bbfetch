@@ -122,7 +122,8 @@ def grade_loop(handins):
             i = int(input()) - 1
             if 0 <= i < len(handins):
                 handin_loop(i, handins[i])
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
+            print('')
             break
 
 
@@ -139,7 +140,11 @@ def print_comments(handins):
 def main():
     args = sys.argv[1:]
     if len(args) == 0:
-        zipname, attempt = guess_params()
+        try:
+            zipname, attempt = guess_params()
+        except (KeyboardInterrupt, EOFError):
+            print('')
+            return
     elif len(args) == 1:
         zipname = args[0]
         attempt = 1
