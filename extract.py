@@ -33,8 +33,23 @@ FILES_FIELD = re.compile(
 EXTENSIONS = ['.pdf']
 
 
+def downloads_dir():
+    d = None
+    try:
+        d = subprocess.check_output(
+            ('xdg-user-dir', 'DOWNLOAD'),
+            stdin=subprocess.DEVNULL,
+            universal_newlines=True,
+        ).strip()
+    except:
+        pass
+    if d is None or not os.path.exists(d):
+        d = os.path.expanduser('~/Downloads')
+    return d
+
+
 def guess_params():
-    directory = os.path.expanduser('~/Downloads')
+    directory = downloads_dir()
     filenames = os.listdir(directory)
     filenames = [
         os.path.join(directory, f)
