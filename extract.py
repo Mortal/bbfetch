@@ -215,6 +215,7 @@ def main():
                         print("skipping %r" % handin['file'])
 
     handins = sorted(handins.items(), key=lambda x: x[0])
+    handins = [(group, data) for group, data in handins if 'file' in data]
     grade_loop(handins)
     print_comments(handins)
 
