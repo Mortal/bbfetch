@@ -1,0 +1,165 @@
+import os
+import re
+import json
+import getpass
+import keyring
+import logging
+import argparse
+import html5lib
+import requests
+import requests.cookies
+# import xml.etree.ElementTree
+from six.moves.urllib.parse import urlparse, parse_qs, urlencode
+from six.moves.http_cookiejar import LWPCookieJar
+
+
+logger = logging.getLogger('bblinks')
+
+NS = {'h': 'http://www.w3.org/1999/xhtml'}
+
+
+def configure_logging(quiet):
+    handlers = []
+    handlers.append(logging.FileHandler('fetch.log', 'a'))
+    if not quiet:
+        handlers.append(logging.StreamHandler(None))
+    fmt = '[%(asctime)s %(levelname)s] %(message)s'
+    datefmt = None
+    formatter = logging.Formatter(fmt, datefmt, '%')
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
+
+def wayf_login(session, response, auth_data):
+    logger.info("Sending login details to WAYF")
+    response = session.post(response.url, auth_data)
+    logger.debug("WAYF login -> %s", response.url)
+    logger.debug("WAYF response %s", response.status_code)
+    with open('wayftmp.html', 'wb') as fp:
+        fp.write(response.content)
+
+    response = post_hidden_form(session, response)
+    logger.debug("Hidden form 1 -> %s %s", response.status_code, response.url)
+    response = post_hidden_form(session, response)
+    logger.debug("Hidden form 2 -> %s %s", response.status_code, response.url)
+    return response
+
+
+def post_hidden_form(session, response):
+    document = html5lib.parse(response.content, encoding=response.encoding)
+    form = document.find('.//h:form', NS)
+    url = form.get('action')
+    inputs = form.findall('.//h:input[@name]', NS)
+    logger.debug("Response page form has %d inputs", len(inputs))
+    assert len(inputs) > 0
+    post_data = {
+        i.get('name'): i.get('value')
+        for i in inputs
+    }
+    response = session.post(url, post_data)
+
+    return response
+
+
+def make_authenticator(username):
+    data = dict(username=username, password=None)
+
+    def get_auth():
+        if data['password'] is None:
+            if data['username'] is None:
+                data['username'] = input("WAYF username: ")
+            data['password'] = keyring.get_password(
+                "fetch.py WAYF", data['username'])
+            if data['password'] is None:
+                print("Please enter password for %s to store in keyring." %
+                      data['username'])
+                data['password'] = getpass.getpass()
+                keyring.set_password(
+                    "fetch.py WAYF", data['username'], data['password'])
+
+        return data
+
+    return get_auth
+
+
+def follow_html_redirect(session, response):
+    js_redirect_pattern = (
+        r'(?:<!--)?\s*' +
+        r'document\.location\.replace\(\'' +
+        r'(?P<url>(?:\\.|[^\'])+)' +
+        r'\'\);\s*' +
+        r'(?:(?://)?-->)?\s*$')
+    real_login_url = (
+        'https://bb.au.dk/webapps/' +
+        'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
+
+    while True:
+        document = html5lib.parse(response.content, encoding=response.encoding)
+        scripts = document.findall('.//h:script', NS)
+
+        next_url = None
+        for s in scripts:
+            t = ''.join(s.itertext())
+            mo = re.match(js_redirect_pattern, t)
+            if mo:
+                logger.debug("Detected JavaScript redirect")
+                next_url = mo.group('url')
+                break
+        if next_url is not None:
+            o = urlparse(next_url)
+            p = o.netloc + o.path
+            if p == 'bb.au.dk/webapps/login/':
+                qs = parse_qs(o.query)
+                new_qs = urlencode(
+                    dict(returnUrl=qs['new_loc'][0],
+                         authProviderId='_102_1'))
+                next_url = '%s?%s' % (real_login_url, new_qs)
+                logger.debug("Changing redirect to %r", next_url)
+            response = session.get(next_url)
+            continue
+        break
+    return response
+
+
+def autologin(session, response, get_auth):
+    response = follow_html_redirect(session, response)
+    o = urlparse(response.url)
+    if o.netloc == 'wayf.au.dk':
+        response = wayf_login(session, response, get_auth())
+    return response
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('--username', '-u')
+    parser.add_argument('--cookiejar', default='cookies.txt')
+    args = parser.parse_args()
+    configure_logging(quiet=args.quiet)
+
+    get_auth = make_authenticator(args.username)
+
+    cookies = LWPCookieJar(args.cookiejar)
+    try:
+        cookies.load()
+    except FileNotFoundError:
+        pass
+
+    session = requests.Session()
+    requests.cookies.merge_cookies(session.cookies, cookies)
+    course_id = '_43290_1'
+    url = (
+        'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp?' +
+        'course_id=%s&showAll=true&sortCol=LastLoginCol&sortDir=D' % course_id)
+    r = autologin(session, session.get(url), get_auth)
+    with open('tmp.html', 'wb') as fp:
+        fp.write(r.content)
+    document = html5lib.parse(r.content, encoding=r.encoding)
+    requests.cookies.merge_cookies(cookies, session.cookies)
+    cookies.save()
+
+
+if __name__ == "__main__":
+    main()
