@@ -1,13 +1,11 @@
-import logging
 import sys
-import suds
 import random
-
-from suds.client import Client
-from suds.xsd.doctor import ImportDoctor, Import
-from suds.wsse import *
-from uuid import uuid1
+import logging
 from datetime import datetime
+
+from uuid import uuid1
+from suds.client import Client
+from suds.wsse import Element
 
 
 def generate_nonce(length=8):
@@ -260,7 +258,7 @@ if __name__ == '__main__':
             print(annFilter)
 
         # Call getCourseAnnouncements with the string representation of the external Id and the filter we created.
-        announcements = announcementWS.service.getCourseAnnouncements(str(externalId),annFilter)
+        announcements = announcementWS.service.getCourseAnnouncements(str(externalId), annFilter)
         if DEBUG == True:
             print(announcements)
 
