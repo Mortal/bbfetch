@@ -1,6 +1,4 @@
-import os
 import re
-import json
 import getpass
 import keyring
 import logging
@@ -90,9 +88,11 @@ class BlackBoardSession:
             fp.write(response.content)
 
         response = self.post_hidden_form(response)
-        logger.debug("Hidden form 1 -> %s %s", response.status_code, response.url)
+        logger.debug("Hidden form 1 -> %s %s",
+                     response.status_code, response.url)
         response = self.post_hidden_form(response)
-        logger.debug("Hidden form 2 -> %s %s", response.status_code, response.url)
+        logger.debug("Hidden form 2 -> %s %s",
+                     response.status_code, response.url)
         return response
 
     def post_hidden_form(self, response):
@@ -122,7 +122,7 @@ class BlackBoardSession:
         """Repeatedly follow HTML redirects in the page.
 
         If the given response has no HTML redirect, return it unaltered.
-        Otherwise, return a new response by following the redirects in the page.
+        Otherwise, return a new response by following the redirects.
         """
 
         js_redirect_pattern = (
@@ -136,7 +136,8 @@ class BlackBoardSession:
             'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
 
         while True:
-            document = html5lib.parse(response.content, encoding=response.encoding)
+            document = html5lib.parse(
+                response.content, encoding=response.encoding)
             scripts = document.findall('.//h:script', NS)
 
             next_url = None
@@ -165,8 +166,8 @@ class BlackBoardSession:
     def autologin(self, response):
         """Automatically log in if necessary.
 
-        If the given response is not for a login form, just follow HTML redirects
-        and return the response.
+        If the given response is not for a login form,
+        just follow HTML redirects and return the response.
         Otherwise, log in using wayf_login and get_auth.
         """
 
