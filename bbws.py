@@ -55,7 +55,7 @@ def createHeaders(action, username, password, endpoint):
     return([wsa_action, wsa_uuid, wsa_replyTo, wsa_to, security])
 
 
-def createWSSecurityHeader(username,password):
+def createWSSecurityHeader(username, password):
     """
     Generate the WS-Security headers for making Blackboard Web Service calls.
 
@@ -70,7 +70,6 @@ def createWSSecurityHeader(username,password):
                     'oasis-200401-wss-wssecurity-secext-1.0.xsd')
     wsu = ('wsu', 'http://docs.oasis-open.org/wss/2004/01/' +
                   'oasis-200401-wss-wssecurity-utility-1.0.xsd')
-
 
     # Create Security Element
     security = Element('Security', ns=wsse)
@@ -223,7 +222,8 @@ if __name__ == '__main__':
 
     # Add Headers and WS-Security to client. Set port to default value,
     # otherwise, you must add to service call
-    contextWS.set_options(soapheaders=headers, port='Context.WSSOAP12port_https')
+    contextWS.set_options(
+        soapheaders=headers, port='Context.WSSOAP12port_https')
 
     # Initialize Context
     sessionId = contextWS.service.initialize()
