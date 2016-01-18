@@ -168,32 +168,32 @@ if __name__ == '__main__':
     # endpoint, although only the ones I need are uncommented.
     url = url_header + 'Context.WS?wsdl'
     contextWS = Client(url, autoblend=True)
-    if DEBUG == True:
+    if DEBUG:
         print(contextWS)
 
     url = url_header + 'Announcement.WS?wsdl'
     announcementWS = Client(url, autoblend=True)
-    if DEBUG == True:
+    if DEBUG:
         print(announcementWS)
 
 #     url = url_header + 'Calendar.WS?wsdl'
 #     calendarWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(calendarWS)
 #
 #     url = url_header + 'Content.WS?wsdl'
 #     contentWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(contextWS)
 #
 #     url = url_header + 'Course.WS?wsdl'
 #     courseWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(courseWS)
 #
 #     url = url_header + 'CourseMembership.WS?wsdl'
 #     courseMembershipWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(courseMembershipWS)
 #
 #     # If on Blackboard Learn 9.1 April 2014 or earlier, or October 2014 with
@@ -203,17 +203,17 @@ if __name__ == '__main__':
 #     # your absolute path on your filesystem.
 #     # url = 'file:///Users/shurrey/wsdl/Gradebook.xml'
 #     gradebookWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(gradebookWS)
 #
 #     url = url_header + 'User.WS?wsdl'
 #     userWS = Client(url, autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(userWS)
 #
 #     url = url_header + 'Util.WS?wsdl'
 #     utilWS = Client(url,autoblend=True)
-#     if DEBUG == True:
+#     if DEBUG:
 #        print(utilWS)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
     # Initialize Context
     sessionId = contextWS.service.initialize()
-    if DEBUG == True:
+    if DEBUG:
         print(sessionId)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     # Login as User.
     loggedIn = contextWS.service.login(
         "administrator", "password", "bb", "blackboard", "", 3600)
-    if DEBUG == True:
+    if DEBUG:
         print(loggedIn)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -260,7 +260,7 @@ if __name__ == '__main__':
     # Get all memberships for current logged in user. This will return both
     # Courses and Organizations.
     myMemberships = contextWS.service.getMyMemberships()
-    if DEBUG == True:
+    if DEBUG:
         print(myMemberships)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     # Initialize the announcements Web Service
     annInit = announcementWS.service.initializeAnnouncementWS(False)
-    if DEBUG == True:
+    if DEBUG:
         print(annInit)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -292,13 +292,13 @@ if __name__ == '__main__':
 
     # Loop through memberships returned from ContextWS.getMyMemberships()...
     for membership in myMemberships:
-        if DEBUG == True:
+        if DEBUG:
             print(membership)
 
         # Grab the external id from the membership, in form (_XX_X)
         # This could be a course pk1 or an organization pk1
         externalId = membership.externalId
-        if DEBUG == True:
+        if DEBUG:
             print(externalId)
 
         # Complex types (not int or char or string) must be generated using the
@@ -311,14 +311,14 @@ if __name__ == '__main__':
         annFilter.startDate = '0'
         annFilter.userId = ""
 
-        if DEBUG == True:
+        if DEBUG:
             print(annFilter)
 
         # Call getCourseAnnouncements with the string representation of the
         # external Id and the filter we created.
         announcements = announcementWS.service.getCourseAnnouncements(
             str(externalId), annFilter)
-        if DEBUG == True:
+        if DEBUG:
             print(announcements)
 
     # Initialize headers and then call createHeaders to generate the soap
@@ -333,5 +333,5 @@ if __name__ == '__main__':
 
     # Log the user out to invalidate the session id. This prevents XSS
     loggedOut = contextWS.service.logout()
-    if DEBUG == True:
+    if DEBUG:
         print(loggedOut)
