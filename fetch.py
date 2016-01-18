@@ -5,6 +5,7 @@ import blackboard
 from blackboard import BlackBoardSession
 from visit_stats import get_visit_stats
 from forum import get_forum_posts
+from grades import get_grade_information
 
 
 def configure_logging(quiet):
@@ -33,17 +34,19 @@ def main():
 
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
 
-    with open('visit_stats.txt', 'a') as fp:
-        for name, time in get_visit_stats(session):
-            fp.write('%s %s\n' % (time, name))
+    get_grade_information(session)
 
-    with open('forum_posts.txt', 'a') as fp:
-        for post in get_forum_posts(session):
-            for k, v in post['metadata']:
-                fp.write("%s %s\n" % (k, v))
-            fp.write('\n')
-            fp.write(post['body'] + '\n')
-            fp.write('='*79 + '\n')
+    # with open('visit_stats.txt', 'a') as fp:
+    #     for name, time in get_visit_stats(session):
+    #         fp.write('%s %s\n' % (time, name))
+
+    # with open('forum_posts.txt', 'a') as fp:
+    #     for post in get_forum_posts(session):
+    #         for k, v in post['metadata']:
+    #             fp.write("%s %s\n" % (k, v))
+    #         fp.write('\n')
+    #         fp.write(post['body'] + '\n')
+    #         fp.write('='*79 + '\n')
 
     session.save_cookies()
 
