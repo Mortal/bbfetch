@@ -181,6 +181,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--quiet', action='store_true')
     parser.add_argument('--username', '-u')
+    parser.add_argument('--course', default='_43290_1')
     parser.add_argument('--cookiejar', default='cookies.txt')
     args = parser.parse_args()
     configure_logging(quiet=args.quiet)
@@ -195,7 +196,7 @@ def main():
 
     session = requests.Session()
     requests.cookies.merge_cookies(session.cookies, cookies)
-    course_id = '_43290_1'
+    course_id = args.course
     url = (
         'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp?' +
         'course_id=%s&showAll=true&sortCol=LastLoginCol&sortDir=D' % course_id)
