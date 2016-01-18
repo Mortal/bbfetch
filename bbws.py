@@ -130,36 +130,17 @@ def createWSSecurityHeader(username, password):
 
 
 if __name__ == '__main__':
-    """
-    This is the main class for the Blackboard Soap Web Services Python sample
-    code.
-
-    If I were to turn this into a production-level tool, much of this would be
-    abstracted into more manageable chunks.
-    """
-
-    # If True, extra information will be printed to the console
-    DEBUG = True
-
-    # Set up logging. logging level is set to DEBUG on the suds tools in order
-    # to show you what's happening along the way.
-    # It will give you SOAP messages and responses, which will help you develop
-    # your own tool.
     logging.basicConfig(level=logging.INFO)
-
     logging.getLogger('suds.client').setLevel(logging.DEBUG)
     logging.getLogger('suds.transport').setLevel(logging.DEBUG)
     logging.getLogger('suds.xsd.schema').setLevel(logging.DEBUG)
     logging.getLogger('suds.wsdl').setLevel(logging.DEBUG)
 
     # Necessary system-setting for handling large complex WSDLs
-    sys.setrecursionlimit(10000)
+    # sys.setrecursionlimit(10000)
 
     # Set up the base URL for Web Service endpoints
-    protocol = 'https'
-    server = 'localhost:9877'
-    service_path = 'webapps/ws/services'
-    url_header = protocol + "://" + server + "/" + service_path + "/"
+    url_header = "https://bb.au.dk/webapps/ws/services/"
 
     # This is the pattern for the SUDS library to dynamically create your Web
     # Service code.  There are caching capabilities so that you can avoid this
@@ -167,13 +148,11 @@ if __name__ == '__main__':
     # endpoint, although only the ones I need are uncommented.
     url = url_header + 'Context.WS?wsdl'
     contextWS = Client(url, autoblend=True)
-    if DEBUG:
-        print(contextWS)
+    print(contextWS)
 
     url = url_header + 'Announcement.WS?wsdl'
     announcementWS = Client(url, autoblend=True)
-    if DEBUG:
-        print(announcementWS)
+    print(announcementWS)
 
 #     url = url_header + 'Calendar.WS?wsdl'
 #     calendarWS = Client(url, autoblend=True)
@@ -195,15 +174,14 @@ if __name__ == '__main__':
 #     if DEBUG:
 #        print(courseMembershipWS)
 #
-#     # If on Blackboard Learn 9.1 April 2014 or earlier, or October 2014 with
-#     # bug workaround #2 (see README.txt for details)
-#     url = url_header + 'Gradebook.WS?wsdl'
-#     # Else if on October 2014 with bug workaround #1, replace my path with
-#     # your absolute path on your filesystem.
-#     # url = 'file:///Users/shurrey/wsdl/Gradebook.xml'
-#     gradebookWS = Client(url, autoblend=True)
-#     if DEBUG:
-#        print(gradebookWS)
+    # If on Blackboard Learn 9.1 April 2014 or earlier, or October 2014 with
+    # bug workaround #2 (see README.txt for details)
+    url = url_header + 'Gradebook.WS?wsdl'
+    # Else if on October 2014 with bug workaround #1, replace my path with
+    # your absolute path on your filesystem.
+    # url = 'file:///Users/shurrey/wsdl/Gradebook.xml'
+    gradebookWS = Client(url, autoblend=True)
+    print(gradebookWS)
 #
 #     url = url_header + 'User.WS?wsdl'
 #     userWS = Client(url, autoblend=True)
@@ -227,8 +205,7 @@ if __name__ == '__main__':
 
     # Initialize Context
     sessionId = contextWS.service.initialize()
-    if DEBUG:
-        print(sessionId)
+    print(sessionId)
 
     # Initialize headers and then call createHeaders to generate the soap
     # headers with WSSE bits.
@@ -243,8 +220,7 @@ if __name__ == '__main__':
     # Login as User.
     loggedIn = contextWS.service.login(
         "administrator", "password", "bb", "blackboard", "", 3600)
-    if DEBUG:
-        print(loggedIn)
+    print(loggedIn)
 
     # Initialize headers and then call createHeaders to generate the soap
     # headers with WSSE bits.
