@@ -33,9 +33,8 @@ def main():
 
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
 
-    table = get_visit_stats(session)
     with open('visit_stats.txt', 'a') as fp:
-        for name, time in table:
+        for name, time in get_visit_stats(session):
             fp.write('%s %s\n' % (time, name))
 
     with open('forum_posts.txt', 'a') as fp:
