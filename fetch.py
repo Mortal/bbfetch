@@ -36,148 +36,148 @@ def configure_logging(quiet):
     logger.setLevel(logging.DEBUG)
 
 
-def wayf_login(session, response, auth_data):
-    """Login to WAYF.
+class BlackBoardSession:
+    def __init__(self, cookiejar, username, course_id):
+        self.cookiejar_filename = cookiejar
+        self.username = username
+        self.course_id = course_id
 
-    Parameters
-    ----------
-    session : requests.Session
-        The session where we want to log in
-    response : requests.Response
-        Login page (with username/password form)
-    auth_data : callable () -> dict(username=..., password=...)
-        Callable returning a dict with the authentication data
-    """
+        self.password = None
+        self.cookies = LWPCookieJar(cookiejar)
+        self.session = requests.Session()
+        self.load_cookies()
 
-    logger.info("Sending login details to WAYF")
-    response = session.post(response.url, auth_data)
-    logger.debug("WAYF login -> %s", response.url)
-    logger.debug("WAYF response %s", response.status_code)
-    with open('wayftmp.html', 'wb') as fp:
-        fp.write(response.content)
+    def load_cookies(self):
+        try:
+            self.cookies.load(ignore_discard=True)
+        except FileNotFoundError:
+            pass
+        requests.cookies.merge_cookies(self.session.cookies, self.cookies)
 
-    response = post_hidden_form(session, response)
-    logger.debug("Hidden form 1 -> %s %s", response.status_code, response.url)
-    response = post_hidden_form(session, response)
-    logger.debug("Hidden form 2 -> %s %s", response.status_code, response.url)
-    return response
+    def save_cookies(self):
+        requests.cookies.merge_cookies(self.cookies, self.session.cookies)
+        self.cookies.save(ignore_discard=True)
 
-
-def post_hidden_form(session, response):
-    """Send POST request to form with only hidden fields.
-
-    Parameters
-    ----------
-    session : requests.Session
-        The session where we want to submit the form
-    response : requests.Response
-        Page containing form with only hidden fields
-    """
-
-    document = html5lib.parse(response.content, encoding=response.encoding)
-    form = document.find('.//h:form', NS)
-    url = form.get('action')
-    inputs = form.findall('.//h:input[@name]', NS)
-    logger.debug("Response page form has %d inputs", len(inputs))
-    assert len(inputs) > 0
-    post_data = {
-        i.get('name'): i.get('value')
-        for i in inputs
-    }
-    response = session.post(url, post_data)
-
-    return response
-
-
-def make_authenticator(username):
-    """Make a get_auth callable.
-
-    The callable returns the given username and a password read with the
-    keyring module. If no password is stored, it is prompted at the command
-    line using the getpass module, and stored with keyring.
-
-    If username is None, prompts the user for a username before getting the
-    password.
-    """
-
-    data = dict(username=username, password=None)
-
-    def get_auth():
-        if data['password'] is None:
-            if data['username'] is None:
-                data['username'] = input("WAYF username: ")
-            data['password'] = keyring.get_password(
-                "fetch.py WAYF", data['username'])
-            if data['password'] is None:
+    def get_auth(self):
+        if self.password is None:
+            if self.username is None:
+                self.username = input("WAYF username: ")
+            self.password = keyring.get_password(
+                "fetch.py WAYF", self.username)
+            if self.password is None:
                 print("Please enter password for %s to store in keyring." %
-                      data['username'])
-                data['password'] = getpass.getpass()
+                      self.username)
+                self.password = getpass.getpass()
                 keyring.set_password(
-                    "fetch.py WAYF", data['username'], data['password'])
+                    "fetch.py WAYF", self.username, self.password)
 
-        return data
+        return dict(username=self.username, password=self.password)
 
-    return get_auth
+    def wayf_login(self, response):
+        """Login to WAYF.
 
+        Parameters
+        ----------
+        response : requests.Response
+            Login page (with username/password form)
+        """
 
-def follow_html_redirect(session, response):
-    """Repeatedly follow HTML redirects in the page.
+        logger.info("Sending login details to WAYF")
+        response = self.session.post(response.url, self.get_auth())
+        logger.debug("WAYF login -> %s", response.url)
+        logger.debug("WAYF response %s", response.status_code)
+        with open('wayftmp.html', 'wb') as fp:
+            fp.write(response.content)
 
-    If the given response has no HTML redirect, return it unaltered.
-    Otherwise, return a new response by following the redirects in the page.
-    """
+        response = self.post_hidden_form(response)
+        logger.debug("Hidden form 1 -> %s %s", response.status_code, response.url)
+        response = self.post_hidden_form(response)
+        logger.debug("Hidden form 2 -> %s %s", response.status_code, response.url)
+        return response
 
-    js_redirect_pattern = (
-        r'(?:<!--)?\s*' +
-        r'document\.location\.replace\(\'' +
-        r'(?P<url>(?:\\.|[^\'])+)' +
-        r'\'\);\s*' +
-        r'(?:(?://)?-->)?\s*$')
-    real_login_url = (
-        'https://bb.au.dk/webapps/' +
-        'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
+    def post_hidden_form(self, response):
+        """Send POST request to form with only hidden fields.
 
-    while True:
+        Parameters
+        ----------
+        response : requests.Response
+            Page containing form with only hidden fields
+        """
+
         document = html5lib.parse(response.content, encoding=response.encoding)
-        scripts = document.findall('.//h:script', NS)
+        form = document.find('.//h:form', NS)
+        url = form.get('action')
+        inputs = form.findall('.//h:input[@name]', NS)
+        logger.debug("Response page form has %d inputs", len(inputs))
+        assert len(inputs) > 0
+        post_data = {
+            i.get('name'): i.get('value')
+            for i in inputs
+        }
+        response = self.session.post(url, post_data)
 
-        next_url = None
-        for s in scripts:
-            t = ''.join(s.itertext())
-            mo = re.match(js_redirect_pattern, t)
-            if mo:
-                logger.debug("Detected JavaScript redirect")
-                next_url = mo.group('url')
-                break
-        if next_url is not None:
-            o = urlparse(next_url)
-            p = o.netloc + o.path
-            if p == 'bb.au.dk/webapps/login/':
-                qs = parse_qs(o.query)
-                new_qs = urlencode(
-                    dict(returnUrl=qs['new_loc'][0],
-                         authProviderId='_102_1'))
-                next_url = '%s?%s' % (real_login_url, new_qs)
-                logger.debug("Changing redirect to %r", next_url)
-            response = session.get(next_url)
-            continue
-        break
-    return response
+        return response
 
+    def follow_html_redirect(self, response):
+        """Repeatedly follow HTML redirects in the page.
 
-def autologin(session, response, get_auth):
-    """Automatically log in if necessary.
+        If the given response has no HTML redirect, return it unaltered.
+        Otherwise, return a new response by following the redirects in the page.
+        """
 
-    If the given response is not for a login form, just follow HTML redirects
-    and return the response.
-    Otherwise, log in using wayf_login and get_auth.
-    """
+        js_redirect_pattern = (
+            r'(?:<!--)?\s*' +
+            r'document\.location\.replace\(\'' +
+            r'(?P<url>(?:\\.|[^\'])+)' +
+            r'\'\);\s*' +
+            r'(?:(?://)?-->)?\s*$')
+        real_login_url = (
+            'https://bb.au.dk/webapps/' +
+            'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
 
-    response = follow_html_redirect(session, response)
-    o = urlparse(response.url)
-    if o.netloc == 'wayf.au.dk':
-        response = wayf_login(session, response, get_auth())
-    return response
+        while True:
+            document = html5lib.parse(response.content, encoding=response.encoding)
+            scripts = document.findall('.//h:script', NS)
+
+            next_url = None
+            for s in scripts:
+                t = ''.join(s.itertext())
+                mo = re.match(js_redirect_pattern, t)
+                if mo:
+                    logger.debug("Detected JavaScript redirect")
+                    next_url = mo.group('url')
+                    break
+            if next_url is not None:
+                o = urlparse(next_url)
+                p = o.netloc + o.path
+                if p == 'bb.au.dk/webapps/login/':
+                    qs = parse_qs(o.query)
+                    new_qs = urlencode(
+                        dict(returnUrl=qs['new_loc'][0],
+                             authProviderId='_102_1'))
+                    next_url = '%s?%s' % (real_login_url, new_qs)
+                    logger.debug("Changing redirect to %r", next_url)
+                response = self.session.get(next_url)
+                continue
+            break
+        return response
+
+    def autologin(self, response):
+        """Automatically log in if necessary.
+
+        If the given response is not for a login form, just follow HTML redirects
+        and return the response.
+        Otherwise, log in using wayf_login and get_auth.
+        """
+
+        response = self.follow_html_redirect(response)
+        o = urlparse(response.url)
+        if o.netloc == 'wayf.au.dk':
+            response = self.wayf_login(response)
+        return response
+
+    def get(self, url):
+        return self.autologin(self.session.get(url))
 
 
 def main():
@@ -189,40 +189,30 @@ def main():
     args = parser.parse_args()
     configure_logging(quiet=args.quiet)
 
-    get_auth = make_authenticator(args.username)
+    session = BlackBoardSession(args.cookiejar, args.username, args.course)
 
-    cookies = LWPCookieJar(args.cookiejar)
-    try:
-        cookies.load(ignore_discard=True)
-    except FileNotFoundError:
-        pass
-
-    session = requests.Session()
-    requests.cookies.merge_cookies(session.cookies, cookies)
-    course_id = args.course
-
-    table = get_visit_stats(session, course_id, get_auth)
+    table = get_visit_stats(session)
     with open('visit_stats.txt', 'a') as fp:
         for name, time in table:
             fp.write('%s %s\n' % (time, name))
 
     with open('forum_posts.txt', 'a') as fp:
-        for post in get_forum_posts(session, course_id, get_auth):
+        for post in get_forum_posts(session):
             for k, v in post['metadata']:
                 fp.write("%s %s\n" % (k, v))
             fp.write('\n')
             fp.write(post['body'] + '\n')
             fp.write('='*79 + '\n')
 
-    requests.cookies.merge_cookies(cookies, session.cookies)
-    cookies.save(ignore_discard=True)
+    session.save_cookies()
 
 
-def get_visit_stats(session, course_id, get_auth):
+def get_visit_stats(session):
     url = (
-        'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp?' +
-        'course_id=%s&showAll=true&sortCol=LastLoginCol&sortDir=D' % course_id)
-    r = autologin(session, session.get(url), get_auth)
+        'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
+        '?course_id=%s' % session.course_id +
+        '&showAll=true&sortCol=LastLoginCol&sortDir=D')
+    r = session.get(url)
     document = html5lib.parse(r.content, encoding=r.encoding)
     keys, rows = parse_visit_stats(document)
     first = keys.index('FirstNameCol')
@@ -254,17 +244,17 @@ def parse_visit_stats(document):
     return keys, res
 
 
-def get_forum_posts(session, course_id, get_auth):
-    for forum_id, name in get_forum_ids(session, course_id, get_auth):
+def get_forum_posts(session):
+    for forum_id, name in get_forum_ids(session):
         print(name)
-        nonce, tids = get_thread_ids(session, course_id, forum_id, get_auth)
+        nonce, tids = get_thread_ids(session, forum_id)
         threads = get_thread_posts(
-            session, course_id, forum_id, nonce, tids, get_auth)
+            session, forum_id, nonce, tids)
         for post in threads:
             yield post
 
 
-def get_thread_posts(session, course_id, forum_id, nonce, threads, get_auth):
+def get_thread_posts(session, forum_id, nonce, threads):
     ids = [i for i, name in threads]
 
     url = (
@@ -272,8 +262,8 @@ def get_thread_posts(session, course_id, forum_id, nonce, threads, get_auth):
         '?conf_id=%s&forum_id=%s&action=collect' % forum_id +
         '&blackboard.platform.security.NonceUtil.nonce=%s' % nonce +
         ''.join('&formCBs=%s' % t for t in ids) +
-        '&requestType=thread&course_id=%s&' % course_id)
-    r = autologin(session, session.get(url), get_auth)
+        '&requestType=thread&course_id=%s&' % session.course_id)
+    r = session.get(url)
     document = html5lib.parse(r.content, encoding=r.encoding)
     return parse_thread_posts(document)
 
@@ -338,12 +328,12 @@ def parse_thread_posts(document):
             body=body)
 
 
-def get_forum_ids(session, course_id, get_auth):
+def get_forum_ids(session):
     url = (
         'https://bb.au.dk/webapps/discussionboard/do/conference' +
-        '?action=list_forums&course_id=%s&nav=discussion_board' % course_id +
-        '&showAll=true')
-    r = autologin(session, session.get(url), get_auth)
+        '?action=list_forums&course_id=%s' % session.course_id +
+        '&nav=discussion_board&showAll=true')
+    r = session.get(url)
     # with open('tmp.html', 'wb') as fp:
     #     fp.write(r.content)
     document = html5lib.parse(r.content, encoding=r.encoding)
@@ -364,15 +354,15 @@ def parse_forum_ids(document):
     return forums
 
 
-def get_thread_ids(session, course_id, forum_id, get_auth):
+def get_thread_ids(session, forum_id):
     url = (
         'https://bb.au.dk/webapps/discussionboard/do/forum' +
         '?action=list_threads&nav=discussion_board' +
-        '&course_id=%s' % course_id +
+        '&course_id=%s' % session.course_id +
         '&conf_id=%s&forum_id=%s' % forum_id +
         '&showAll=true'
     )
-    r = autologin(session, session.get(url), get_auth)
+    r = session.get(url)
     document = html5lib.parse(r.content, encoding=r.encoding)
     return parse_thread_ids(document)
 
