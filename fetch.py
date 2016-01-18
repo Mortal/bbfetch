@@ -19,6 +19,7 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
 def configure_logging(quiet):
+    """Configure the Python logging module."""
     handlers = []
     handlers.append(logging.FileHandler('fetch.log', 'a'))
     if not quiet:
@@ -33,6 +34,18 @@ def configure_logging(quiet):
 
 
 def wayf_login(session, response, auth_data):
+    """Login to WAYF.
+
+    Parameters
+    ----------
+    session : requests.Session
+        The session where we want to log in
+    response : requests.Response
+        Login page (with username/password form)
+    auth_data : callable () -> dict(username=..., password=...)
+        Callable returning a dict with the authentication data
+    """
+
     logger.info("Sending login details to WAYF")
     response = session.post(response.url, auth_data)
     logger.debug("WAYF login -> %s", response.url)
@@ -48,6 +61,16 @@ def wayf_login(session, response, auth_data):
 
 
 def post_hidden_form(session, response):
+    """Send POST request to form with only hidden fields.
+
+    Parameters
+    ----------
+    session : requests.Session
+        The session where we want to submit the form
+    response : requests.Response
+        Page containing form with only hidden fields
+    """
+
     document = html5lib.parse(response.content, encoding=response.encoding)
     form = document.find('.//h:form', NS)
     url = form.get('action')
@@ -64,6 +87,16 @@ def post_hidden_form(session, response):
 
 
 def make_authenticator(username):
+    """Make a get_auth callable.
+
+    The callable returns the given username and a password read with the
+    keyring module. If no password is stored, it is prompted at the command
+    line using the getpass module, and stored with keyring.
+
+    If username is None, prompts the user for a username before getting the
+    password.
+    """
+
     data = dict(username=username, password=None)
 
     def get_auth():
@@ -85,6 +118,12 @@ def make_authenticator(username):
 
 
 def follow_html_redirect(session, response):
+    """Repeatedly follow HTML redirects in the page.
+
+    If the given response has no HTML redirect, return it unaltered.
+    Otherwise, return a new response by following the redirects in the page.
+    """
+
     js_redirect_pattern = (
         r'(?:<!--)?\s*' +
         r'document\.location\.replace\(\'' +
@@ -124,6 +163,13 @@ def follow_html_redirect(session, response):
 
 
 def autologin(session, response, get_auth):
+    """Automatically log in if necessary.
+
+    If the given response is not for a login form, just follow HTML redirects
+    and return the response.
+    Otherwise, log in using wayf_login and get_auth.
+    """
+
     response = follow_html_redirect(session, response)
     o = urlparse(response.url)
     if o.netloc == 'wayf.au.dk':
