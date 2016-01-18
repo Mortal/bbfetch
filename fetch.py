@@ -190,7 +190,7 @@ def main():
 
     cookies = LWPCookieJar(args.cookiejar)
     try:
-        cookies.load()
+        cookies.load(ignore_discard=True)
     except FileNotFoundError:
         pass
 
@@ -205,7 +205,7 @@ def main():
         fp.write(r.content)
     document = html5lib.parse(r.content, encoding=r.encoding)
     requests.cookies.merge_cookies(cookies, session.cookies)
-    cookies.save()
+    cookies.save(ignore_discard=True)
 
 
 if __name__ == "__main__":
