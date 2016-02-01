@@ -1,23 +1,18 @@
-import html5lib
-
-from datatable import parse_datatable
-
-
-NS = {'h': 'http://www.w3.org/1999/xhtml'}
+from datatable import fetch_datatable
 
 
 def get_visit_stats(session):
     url = (
         'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
         '?course_id=%s' % session.course_id +
-        '&showAll=true&sortCol=LastLoginCol&sortDir=D')
-    r = session.get(url)
-    document = html5lib.parse(r.content, encoding=r.encoding)
-    return parse_visit_stats(document)
+        '&sortCol=LastLoginCol&sortDir=D')
+    response, keys, rows = fetch_datatable(session, url)
+    for r in list(response.history) + [response]:
+        print("%s %s" % (r.status_code, r.url))
+    return parse_visit_stats(keys, rows)
 
 
-def parse_visit_stats(document):
-    keys, rows = parse_datatable(document)
+def parse_visit_stats(keys, rows):
     first = keys.index('FirstNameCol')
     last = keys.index('LastNameCol')
     time = keys.index('LastLoginCol')
