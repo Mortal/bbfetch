@@ -13,6 +13,10 @@ def get_visit_stats(session):
         '&showAll=true&sortCol=LastLoginCol&sortDir=D')
     r = session.get(url)
     document = html5lib.parse(r.content, encoding=r.encoding)
+    return parse_visit_stats(document)
+
+
+def parse_visit_stats(document):
     keys, rows = parse_datatable(document)
     first = keys.index('FirstNameCol')
     last = keys.index('LastNameCol')
