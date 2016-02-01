@@ -1,4 +1,5 @@
 import re
+import time
 import getpass
 import keyring
 import logging
@@ -172,3 +173,20 @@ class BlackBoardSession:
             response = self.session.get(url)
             response.history = history + list(response.history)
         return response
+
+
+def slowlog(threshold=2):
+    t1 = time.time()
+
+    def report(msg, *args, **kwargs):
+        t2 = time.time()
+        t = t2 - t1
+        if t > threshold:
+            if kwargs:
+                kwargs['t'] = t
+                logger.debug(msg, kwargs)
+            else:
+                args += (t,)
+                logger.debug(msg, *args)
+
+    return report
