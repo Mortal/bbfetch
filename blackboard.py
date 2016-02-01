@@ -60,19 +60,24 @@ class BlackBoardSession:
             Login page (with username/password form)
         """
 
+        history = list(response.history) + [response]
         logger.info("Sending login details to WAYF")
         response = self.session.post(response.url, self.get_auth())
+        history += list(response.history) + [response]
         logger.debug("WAYF login -> %s", response.url)
         logger.debug("WAYF response %s", response.status_code)
         with open('wayftmp.html', 'wb') as fp:
             fp.write(response.content)
 
         response = self.post_hidden_form(response)
+        history += list(response.history) + [response]
         logger.debug("Hidden form 1 -> %s %s",
                      response.status_code, response.url)
         response = self.post_hidden_form(response)
+        history += list(response.history) + [response]
         logger.debug("Hidden form 2 -> %s %s",
                      response.status_code, response.url)
+        response.history = history[:-1]
         return response
 
     def post_hidden_form(self, response):
@@ -114,6 +119,7 @@ class BlackBoardSession:
         real_login_url = (
             'https://bb.au.dk/webapps/' +
             'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
+        history = list(response.history) + [response]
 
         while True:
             document = html5lib.parse(
@@ -139,8 +145,10 @@ class BlackBoardSession:
                     next_url = '%s?%s' % (real_login_url, new_qs)
                     logger.debug("Changing redirect to %r", next_url)
                 response = self.session.get(next_url)
+                history += list(response.history) + [response]
                 continue
             break
+        response.history = history[:-1]
         return response
 
     def autologin(self, response):
@@ -158,4 +166,9 @@ class BlackBoardSession:
         return response
 
     def get(self, url):
-        return self.autologin(self.session.get(url))
+        response = self.autologin(self.session.get(url))
+        if response.url != url:
+            history = list(response.history) + [response]
+            response = self.session.get(url)
+            response.history = history + list(response.history)
+        return response
