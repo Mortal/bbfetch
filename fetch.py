@@ -1,3 +1,4 @@
+import json
 import logging
 import argparse
 
@@ -6,6 +7,7 @@ from blackboard import BlackBoardSession
 from visit_stats import get_visit_stats
 from forum import get_forum_posts
 from grades import get_grade_information
+from all_users import get_all_users
 
 
 def configure_logging(quiet):
@@ -34,7 +36,11 @@ def main():
 
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
 
-    get_grade_information(session)
+    all_users = get_all_users(session)
+    with open('all_users.json', 'w') as fp:
+        json.dump(all_users, fp, indent=2)
+
+    # get_grade_information(session)
 
     # with open('visit_stats.txt', 'a') as fp:
     #     for name, time in get_visit_stats(session):
