@@ -53,8 +53,7 @@ def iter_datatable(session, url):
         l("Fetching datatable page %d took %.4f s", page_number)
         history += list(response.history) + [response]
         document = html5lib.parse(response.content, encoding=response.encoding)
-        keys_, rows_ = parse_datatable(document)
-        rows += rows_
+        keys_, rows = parse_datatable(document)
         if keys != keys_:
             raise ValueError(
                 "Page %d keys (%r) do not match page 1 keys (%r)" %
