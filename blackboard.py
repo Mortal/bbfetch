@@ -44,6 +44,22 @@ class BlackBoardSession:
             print(self.session.cookies._cookies)
             raise
 
+    def get_script_session_id(self):
+        try:
+            return self._script_session_id
+        except AttributeError:
+            pass
+        url = 'https://bb.au.dk/javascript/dwr/engine.js'
+        dwr_engine = self.session.get(url).text
+        mo = re.search('dwr.engine._origScriptSessionId = "(.*)";', dwr_engine)
+        if mo:
+            orig_id = mo.group(1)
+        else:
+            logger.warning("Could not find _origScriptSessionId")
+            orig_id = '8A22AEE4C7B3F9CA3A094735175A6B14'
+        self._script_session_id = '%s42' % orig_id
+        return self._script_session_id
+
     def get_auth(self):
         if self.password is None:
             if self.username is None:
