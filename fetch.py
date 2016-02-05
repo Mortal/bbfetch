@@ -36,11 +36,11 @@ def main():
 
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
 
-    all_users = get_all_users(session)
-    with open('all_users.json', 'w') as fp:
-        json.dump(all_users, fp, indent=2)
+    # all_users = get_all_users(session)
+    # with open('all_users.json', 'w') as fp:
+    #     json.dump(all_users, fp, indent=2)
 
-    # get_grade_information(session)
+    get_grade_information(session)
 
     # with open('visit_stats.txt', 'a') as fp:
     #     for name, time in get_visit_stats(session):
