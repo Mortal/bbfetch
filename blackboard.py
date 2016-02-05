@@ -37,6 +37,13 @@ class BlackBoardSession:
         requests.cookies.merge_cookies(self.cookies, self.session.cookies)
         self.cookies.save(ignore_discard=True)
 
+    def get_cookie(self, key, path):
+        try:
+            return self.session.cookies._cookies['bb.au.dk'][path][key].value
+        except KeyError:
+            print(self.session.cookies._cookies)
+            raise
+
     def get_auth(self):
         if self.password is None:
             if self.username is None:
