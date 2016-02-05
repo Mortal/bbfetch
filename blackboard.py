@@ -197,6 +197,15 @@ class BlackBoardSession:
             response.history = history + list(response.history)
         return response
 
+    def post(self, url, data):
+        response = self.session.post(url, data)
+        if response.history:
+            logger.warning('POST %r redirected', url)
+            for r in response.history:
+                logger.warning("... from %r", r.url)
+            logger.warning("... to %r", response.url)
+        return response
+
 
 def slowlog(threshold=2):
     t1 = time.time()
