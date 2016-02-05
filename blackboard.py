@@ -206,6 +206,13 @@ class BlackBoardSession:
             logger.warning("... to %r", response.url)
         return response
 
+    def ensure_logged_in(self):
+        url = (
+            'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
+            '?course_id=%s' % self.course_id +
+            '&sortCol=LastLoginCol&sortDir=D')
+        self.get(url)
+
 
 def slowlog(threshold=2):
     t1 = time.time()
