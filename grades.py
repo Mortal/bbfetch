@@ -145,93 +145,131 @@ def dwr_get_attempts_info(session, attempts, batch_size=20):
     return results
 
 
-def get_grade_information(session):
-    # https://bb.au.dk/webapps/gradebook/do/instructor/viewSpreadsheet2?course_id=_43290_1
-    session.ensure_logged_in()
+class Gradebook:
+    def __init__(self, session, filename):
+        self.session = session
+        self.filename = filename
+        try:
+            self.load_file()
+        except FileNotFoundError:
+            self.students = self.fetch_time = None
+            self.refresh()
+            self.save_file()
 
-    # Ensure we have a session cookie for gradebook
-    url = (
-        'https://bb.au.dk/webapps/gradebook/do/instructor/enterGradeCenter' +
-        '?course_id=%s&cvid=fullGC' % session.course_id)
-    session.get(url)
+    def load_file(self):
+        with open(self.filename) as fp:
+            o = json.load(fp)
+        self.students = o['students']
+        self.fetch_time = o['fetch_time']
 
-    url = (
-        'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
-        '?course_id=%s' % session.course_id)
-    response = session.get(url)
-    try:
-        o = response.json()
-    except json.decoder.JSONDecodeError:
-        print(url)
-        print(response.text)
-        raise
+    def refresh(self):
+        self.fetch_time = time.time()
+        prev, self.students = self.students, self.fetch_overview()
+        if prev is not None:
+            self.copy_attempts(prev)
+        self.refresh_attempts()
 
-    columns = o['colDefs']
-    column_dict = {c['id']: c for c in columns}
-    # column_ids = [c['id'] for c in columns]
-    # is_assignment = [c['src'] == 'resource/x-bb-assignment' for c in columns]
-    # column_names = [c['name'] for c in columns]
-    # assignment_ids = ['_%s_1' % c['id'] for c in columns
-    #                   if c['src'] == 'resource/x-bb-assignment']
+    def save_file(self):
+        with open(self.filename, 'w') as fp:
+            json.dump({'students': self.students,
+                       'fetch_time': self.fetch_time})
 
-    # for i in assignment_ids:
-    #     o = session.get(
-    #         'https://bb.au.dk/webapps/gradebook/do/instructor/' +
-    #         'getAttemptNavData?course_id=%s' % session.course_id +
-    #         '&itemId=%s' % i).json()
-    #     groups = []
-    #     for group in o['options']:
-    #         groups.append((group['value'], group['label']))
+    def fetch_overview(self):
+        url = (
+            'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
+            '?course_id=%s' % self.session.course_id)
+        response = self.session.get(url)
+        try:
+            o = response.json()
+        except json.decoder.JSONDecodeError:
+            print(url)
+            print(response.text)
+            raise
 
-    #     group_attempts = []
-    #     for group_id, name in groups:
-    #         o = session.get(
-    #             'https://bb.au.dk/webapps/gradebook/do/instructor/' +
-    #             'getAttemptNavData?course_id=%s' % session.course_id +
-    #             '&itemId=%s' % i +
-    #             '&userId=%s' % group_id).json()
-    #         for a in o['options']:
-    #             group_attempts.append((group_id, a['value'], name, o['label']))
+        columns = o['colDefs']
+        column_dict = {c['id']: c for c in columns}
+        # column_ids = [c['id'] for c in columns]
+        # is_assignment = [c['src'] == 'resource/x-bb-assignment' for c in columns]
+        # column_names = [c['name'] for c in columns]
+        # assignment_ids = ['_%s_1' % c['id'] for c in columns
+        #                   if c['src'] == 'resource/x-bb-assignment']
 
-    users = {}
-    attempt_keys = []
-    for row in o['rows']:
-        user_id = row[0]['uid']
-        user_available = row[0]['avail']
+        # for i in assignment_ids:
+        #     o = self.session.get(
+        #         'https://bb.au.dk/webapps/gradebook/do/instructor/' +
+        #         'getAttemptNavData?course_id=%s' % self.session.course_id +
+        #         '&itemId=%s' % i).json()
+        #     groups = []
+        #     for group in o['options']:
+        #         groups.append((group['value'], group['label']))
 
-        user_data = {cell['c']: cell['v'] for cell in row if 'v' in cell}
+        #     group_attempts = []
+        #     for group_id, name in groups:
+        #         o = self.session.get(
+        #             'https://bb.au.dk/webapps/gradebook/do/instructor/' +
+        #             'getAttemptNavData?course_id=%s' % self.session.course_id +
+        #             '&itemId=%s' % i +
+        #             '&userId=%s' % group_id).json()
+        #         for a in o['options']:
+        #             group_attempts.append((group_id, a['value'], name, o['label']))
 
-        user_assignments = {}
+        users = {}
+        for row in o['rows']:
+            user_id = row[0]['uid']
+            user_available = row[0]['avail']
 
-        for cell in row:
-            if not cell:
+            user_data = {cell['c']: cell['v'] for cell in row if 'v' in cell}
+
+            user_assignments = {}
+
+            for cell in row:
+                if not cell:
+                    continue
+                column = column_dict[cell['c']]
+                if column.get('src') == 'resource/x-bb-assignment':
+                    needs_grading = bool(cell.get('ng'))
+                    user_assignments[cell['c']] = {
+                        'score': cell['v'],
+                        'needs_grading': needs_grading,
+                        'attempts': None,
+                    }
+
+            users[user_id] = dict(
+                first_name=user_data['FN'],
+                last_name=user_data['LN'],
+                username=user_data['UN'],
+                student_number=user_data['SI'],
+                last_access=user_data['LA'],
+                id=user_id,
+                available=user_available,
+                assignments=user_assignments,
+            )
+
+        return users
+
+    def copy_attempts(self, prev):
+        for user_id, user in self.students.items():
+            try:
+                prev_user = prev[user_id]
+            except KeyError:
                 continue
-            column = column_dict[cell['c']]
-            if column.get('src') == 'resource/x-bb-assignment':
-                needs_grading = bool(cell.get('ng'))
-                attempt_keys.append((user_id, cell['c']))
-                user_assignments[cell['c']] = {
-                    'score': cell['v'],
-                    'needs_grading': needs_grading,
-                }
+            for assignment_id, assignment in user['assignments'].items():
+                try:
+                    prev_assignment = prev_user['assignments'][assignment_id]
+                except KeyError:
+                    continue
+                if assignment['attempts'] is None:
+                    assignment['attempts'] = prev_assignment['attempts']
 
-        users[user_id] = dict(
-            first_name=user_data['FN'],
-            last_name=user_data['LN'],
-            username=user_data['UN'],
-            student_number=user_data['SI'],
-            last_access=user_data['LA'],
-            id=user_id,
-            available=user_available,
-            assignments=user_assignments,
-        )
-
-    attempt_data = dwr_get_attempts_info(session, attempt_keys)
-    for (user_id, handin_id), attempts in zip(attempt_keys, attempt_data):
-        users[user_id]['assignments'][handin_id]['attempts'] = attempts
-
-    with open('gradebook.json', 'w') as fp:
-        json.dump(users, fp, indent=2)
+    def refresh_attempts(self):
+        attempt_keys = []
+        for user_id, user in self.students.items():
+            for assignment_id, assignment in user['assignments'].items():
+                if assignment['attempts'] is None:
+                    attempt_keys.append((user_id, assignment_id))
+        attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
+        for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
+            self.students[user_id]['assignments'][aid]['attempts'] = attempts
 
 
 if __name__ == "__main__":
