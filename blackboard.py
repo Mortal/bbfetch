@@ -164,8 +164,13 @@ class BlackBoardSession:
                 p = o.netloc + o.path
                 if p == 'bb.au.dk/webapps/login/':
                     qs = parse_qs(o.query)
+                    try:
+                        return_url = qs['new_loc'][0]
+                    except KeyError:
+                        print("We are being redirected to %r" % (next_url,))
+                        return_url = ''
                     new_qs = urlencode(
-                        dict(returnUrl=qs['new_loc'][0],
+                        dict(returnUrl=return_url,
                              authProviderId='_102_1'))
                     next_url = '%s?%s' % (real_login_url, new_qs)
                     logger.debug("Changing redirect to %r", next_url)
