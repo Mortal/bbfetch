@@ -180,7 +180,7 @@ class Gradebook:
         with open(self.filename, 'w') as fp:
             json.dump({'students': self.students,
                        'assignment_ids': self.assignment_ids,
-                       'fetch_time': self.fetch_time}, fp)
+                       'fetch_time': self.fetch_time}, fp, indent=2)
 
     def print_gradebook(self):
         def get_name(student):
@@ -341,6 +341,7 @@ class Gradebook:
 def print_gradebook(session):
     g = Gradebook(session, 'gradebook.json')
     g.print_gradebook()
+    # g.save_file()
 
 
 if __name__ == "__main__":
