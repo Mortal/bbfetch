@@ -3,7 +3,9 @@ import json
 import time
 import numbers
 
+import groups
 import blackboard
+from blackboard import logger
 
 
 def get_handin_attempt_counts(session, handin_id):
@@ -169,7 +171,9 @@ class Gradebook:
         prev = self.students
         self.assignment_ids, self.students = self.fetch_overview()
         if prev is not None:
-            self.copy_attempts(prev)
+            self.copy_student_data(prev)
+        else:
+            self.fetch_groups()
         self.refresh_attempts()
 
     def save_file(self):
@@ -190,6 +194,11 @@ class Gradebook:
             if not u['available']:
                 name = '(%s)' % name
             cells = []
+            group = ''
+            for group_name, group_id in (u['groups'] or []):
+                prefix = 'Hand In Group '
+                if group_name.startswith(prefix):
+                    group = group_name[len(prefix):]
             for aid in self.assignment_ids:
                 try:
                     a = u['assignments'][aid]
@@ -204,7 +213,23 @@ class Gradebook:
                 if isinstance(score, numbers.Real):
                     score = '%g' % score
                 cells.append('%s%-4s' % (ng, score))
-            print('%-30s | %s' % (name, ' | '.join(cells)))
+            print('%-14s %-30s | %-5s | %s' %
+                  (u['username'], name, group, ' | '.join(cells)))
+
+    def fetch_groups(self):
+        user_groups = groups.get_groups(self.session)
+        usernames = {
+            u['username']: user_id for user_id, u in self.students.items()}
+        for u in user_groups:
+            try:
+                user_id = usernames[u['username']]
+            except KeyError:
+                logger.warn(
+                    "Username %s in group list does not exist in gradebook",
+                    u['username'])
+                continue
+            s = self.students[user_id]
+            s['groups'] = u['groups']
 
     def fetch_overview(self):
         url = (
@@ -219,7 +244,7 @@ class Gradebook:
             raise
 
         columns = o['colDefs']
-        column_dict = {c['id']: c for c in columns}
+        # column_dict = {c['id']: c for c in columns}
         assignment_ids = [c['id'] for c in columns
                           if c.get('src') == 'resource/x-bb-assignment']
 
@@ -277,16 +302,19 @@ class Gradebook:
                 id=user_id,
                 available=user_available,
                 assignments=user_assignments,
+                groups=None,
             )
 
         return assignment_ids, users
 
-    def copy_attempts(self, prev):
+    def copy_student_data(self, prev):
         for user_id, user in self.students.items():
             try:
                 prev_user = prev[user_id]
             except KeyError:
                 continue
+            if user['groups'] is None:
+                user['groups'] = prev_user['groups']
             for assignment_id, a1 in user['assignments'].items():
                 try:
                     a2 = prev_user['assignments'][assignment_id]
