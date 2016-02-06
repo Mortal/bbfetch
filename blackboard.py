@@ -3,6 +3,7 @@ import time
 import getpass
 import keyring
 import logging
+import argparse
 import html5lib
 import requests
 import requests.cookies
@@ -229,3 +230,32 @@ def slowlog(threshold=2):
                 logger.debug(msg, *args)
 
     return report
+
+
+def configure_logging(quiet):
+    """Configure the Python logging module."""
+    handlers = []
+    handlers.append(logging.FileHandler('fetch.log', 'a'))
+    if not quiet:
+        handlers.append(logging.StreamHandler(None))
+    fmt = '[%(asctime)s %(levelname)s] %(message)s'
+    datefmt = None
+    formatter = logging.Formatter(fmt, datefmt, '%')
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
+
+def wrapper(fun):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('--username', '-u')
+    parser.add_argument('--course', default='_43290_1')
+    parser.add_argument('--cookiejar', default='cookies.txt')
+    args = parser.parse_args()
+    configure_logging(quiet=args.quiet)
+
+    session = BlackBoardSession(args.cookiejar, args.username, args.course)
+    fun(session)
+    session.save_cookies()
