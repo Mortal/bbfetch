@@ -39,6 +39,7 @@ def get_groups(session):
     users = []
     for row in rows:
         users.append(dict(
+            username=row[username],
             first_name=row[first_name],
             last_name=row[last_name],
             role=row[role],
@@ -50,9 +51,9 @@ def get_groups(session):
 def print_groups(session):
     users = get_groups(session)
     for user in users:
-        print("%s %s (%s) is in %s" %
+        print("%s %s (%s, %s) is in %s" %
               (user['first_name'], user['last_name'],
-               user['role'], user['groups']))
+               user['username'], user['role'], user['groups']))
 
 
 if __name__ == "__main__":
