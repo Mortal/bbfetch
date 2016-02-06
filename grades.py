@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import numbers
 
 import blackboard
 
@@ -152,7 +153,7 @@ class Gradebook:
         try:
             self.load_file()
         except FileNotFoundError:
-            self.students = self.fetch_time = None
+            self.assignment_ids = self.students = self.fetch_time = None
             self.refresh()
             self.save_file()
 
@@ -161,10 +162,12 @@ class Gradebook:
             o = json.load(fp)
         self.students = o['students']
         self.fetch_time = o['fetch_time']
+        self.assignment_ids = o['assignment_ids']
 
     def refresh(self):
         self.fetch_time = time.time()
-        prev, self.students = self.students, self.fetch_overview()
+        prev = self.students
+        self.assignment_ids, self.students = self.fetch_overview()
         if prev is not None:
             self.copy_attempts(prev)
         self.refresh_attempts()
@@ -172,7 +175,36 @@ class Gradebook:
     def save_file(self):
         with open(self.filename, 'w') as fp:
             json.dump({'students': self.students,
-                       'fetch_time': self.fetch_time})
+                       'assignment_ids': self.assignment_ids,
+                       'fetch_time': self.fetch_time}, fp)
+
+    def print_gradebook(self):
+        def get_name(student):
+            return '%s %s' % (student['first_name'], student['last_name'])
+
+        user_ids = sorted(self.students.keys(),
+                          key=lambda u: get_name(self.students[u]))
+        for user_id in user_ids:
+            u = self.students[user_id]
+            name = get_name(u)
+            if not u['available']:
+                name = '(%s)' % name
+            cells = []
+            for aid in self.assignment_ids:
+                try:
+                    a = u['assignments'][aid]
+                except KeyError:
+                    cells.append(' --  ')
+                    continue
+                if a['needs_grading']:
+                    ng = '!'
+                else:
+                    ng = ' '
+                score = a['score']
+                if isinstance(score, numbers.Real):
+                    score = '%g' % score
+                cells.append('%s%-4s' % (ng, score))
+            print('%-30s | %s' % (name, ' | '.join(cells)))
 
     def fetch_overview(self):
         url = (
@@ -188,11 +220,12 @@ class Gradebook:
 
         columns = o['colDefs']
         column_dict = {c['id']: c for c in columns}
+        assignment_ids = [c['id'] for c in columns
+                          if c.get('src') == 'resource/x-bb-assignment']
+
         # column_ids = [c['id'] for c in columns]
         # is_assignment = [c['src'] == 'resource/x-bb-assignment' for c in columns]
         # column_names = [c['name'] for c in columns]
-        # assignment_ids = ['_%s_1' % c['id'] for c in columns
-        #                   if c['src'] == 'resource/x-bb-assignment']
 
         # for i in assignment_ids:
         #     o = self.session.get(
@@ -218,21 +251,22 @@ class Gradebook:
             user_id = row[0]['uid']
             user_available = row[0]['avail']
 
+            user_cells = {cell['c']: cell for cell in row if 'c' in cell}
             user_data = {cell['c']: cell['v'] for cell in row if 'v' in cell}
 
             user_assignments = {}
 
-            for cell in row:
-                if not cell:
+            for a in assignment_ids:
+                try:
+                    cell = user_cells[a]
+                except KeyError:
                     continue
-                column = column_dict[cell['c']]
-                if column.get('src') == 'resource/x-bb-assignment':
-                    needs_grading = bool(cell.get('ng'))
-                    user_assignments[cell['c']] = {
-                        'score': cell['v'],
-                        'needs_grading': needs_grading,
-                        'attempts': None,
-                    }
+                needs_grading = bool(cell.get('ng'))
+                user_assignments[a] = {
+                    'score': cell['v'],
+                    'needs_grading': needs_grading,
+                    'attempts': None,
+                }
 
             users[user_id] = dict(
                 first_name=user_data['FN'],
@@ -245,7 +279,7 @@ class Gradebook:
                 assignments=user_assignments,
             )
 
-        return users
+        return assignment_ids, users
 
     def copy_attempts(self, prev):
         for user_id, user in self.students.items():
@@ -253,13 +287,17 @@ class Gradebook:
                 prev_user = prev[user_id]
             except KeyError:
                 continue
-            for assignment_id, assignment in user['assignments'].items():
+            for assignment_id, a1 in user['assignments'].items():
                 try:
-                    prev_assignment = prev_user['assignments'][assignment_id]
+                    a2 = prev_user['assignments'][assignment_id]
                 except KeyError:
                     continue
-                if assignment['attempts'] is None:
-                    assignment['attempts'] = prev_assignment['attempts']
+                if a1['needs_grading'] and not a2['needs_grading']:
+                    continue
+                if a1['score'] != a2['score']:
+                    continue
+                if a1['attempts'] is None:
+                    a1['attempts'] = a2['attempts']
 
     def refresh_attempts(self):
         attempt_keys = []
@@ -272,5 +310,10 @@ class Gradebook:
             self.students[user_id]['assignments'][aid]['attempts'] = attempts
 
 
+def print_gradebook(session):
+    g = Gradebook(session, 'gradebook.json')
+    g.print_gradebook()
+
+
 if __name__ == "__main__":
-    blackboard.wrapper(get_grade_information)
+    blackboard.wrapper(print_gradebook)
