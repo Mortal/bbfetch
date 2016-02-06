@@ -1,3 +1,4 @@
+import blackboard
 from datatable import fetch_datatable
 
 
@@ -18,3 +19,7 @@ def parse_visit_stats(keys, rows):
     time = keys.index('LastLoginCol')
     data = [('%s %s' % (r[first], r[last]), r[time]) for r in rows]
     return data
+
+
+if __name__ == "__main__":
+    blackboard.wrapper(get_visit_stats)

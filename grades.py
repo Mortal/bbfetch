@@ -1,8 +1,8 @@
 import re
 import json
-import textwrap
+import time
 
-from blackboard import logger
+import blackboard
 
 
 def get_handin_attempt_counts(session, handin_id):
@@ -232,3 +232,7 @@ def get_grade_information(session):
 
     with open('gradebook.json', 'w') as fp:
         json.dump(users, fp, indent=2)
+
+
+if __name__ == "__main__":
+    blackboard.wrapper(get_grade_information)

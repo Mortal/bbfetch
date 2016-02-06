@@ -1,4 +1,3 @@
-import html5lib
 import blackboard
 
 from datatable import fetch_datatable
@@ -35,3 +34,7 @@ def parse_all_users(keys, rows):
          'email': row[email_address]}
         for row in rows
     ]
+
+
+if __name__ == "__main__":
+    blackboard.wrapper(get_all_users)

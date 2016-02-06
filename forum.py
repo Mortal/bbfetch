@@ -3,6 +3,7 @@ import html5lib
 import html2text
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
+import blackboard
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -144,3 +145,7 @@ def parse_thread_ids(document):
     for f in thread_fields:
         threads.append((f.get('value'), f.get('title')))
     return nonce, threads
+
+
+if __name__ == "__main__":
+    blackboard.wrapper(get_forum_posts)
