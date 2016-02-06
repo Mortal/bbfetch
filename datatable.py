@@ -9,28 +9,28 @@ import blackboard
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
-def fetch_datatable(session, url, filename=None):
+def fetch_datatable(session, url, filename=None, **kwargs):
     if filename is not None:
         with open(filename, 'w') as fp:
-            data = list(dump_iter_datatable(session, url, fp))
+            data = list(dump_iter_datatable(session, url, fp, **kwargs))
     else:
-        data = list(iter_datatable(session, url))
+        data = list(iter_datatable(session, url, **kwargs))
     keys = data[0]
     rows = data[1:-1]
     response = data[-1]
     return response, keys, rows
 
 
-def dump_iter_datatable(session, url, fp):
+def dump_iter_datatable(session, url, fp, **kwargs):
     c = csv.writer(fp, dialect='excel-tab')
-    for r in iter_datatable(session, url):
+    for r in iter_datatable(session, url, **kwargs):
         if isinstance(r, list):
             c.writerow(r)
             fp.flush()
         yield r
 
 
-def iter_datatable(session, url):
+def iter_datatable(session, url, **kwargs):
     url += '&numResults=1000&startIndex=0'
     l = blackboard.slowlog()
     response = session.get(url)
@@ -39,7 +39,7 @@ def iter_datatable(session, url):
         print("%s %s" % (r.status_code, r.url))
     history = list(response.history) + [response]
     document = html5lib.parse(response.content, encoding=response.encoding)
-    keys, rows = parse_datatable(document)
+    keys, rows = parse_datatable(document, **kwargs)
     yield keys
     yield from rows
     next_id = 'listContainer_nextpage_top'
@@ -53,7 +53,7 @@ def iter_datatable(session, url):
         l("Fetching datatable page %d took %.4f s", page_number)
         history += list(response.history) + [response]
         document = html5lib.parse(response.content, encoding=response.encoding)
-        keys_, rows = parse_datatable(document)
+        keys_, rows = parse_datatable(document, **kwargs)
         if keys != keys_:
             raise ValueError(
                 "Page %d keys (%r) do not match page 1 keys (%r)" %
@@ -64,8 +64,10 @@ def iter_datatable(session, url):
     yield response
 
 
-def parse_datatable(document):
-    table = document.find('.//h:table[@id="listContainer_datatable"]', NS)
+def parse_datatable(document, extract=None, table_id=None):
+    if table_id is None:
+        table_id = 'listContainer_datatable'
+    table = document.find('.//h:table[@id="%s"]' % table_id, NS)
     header = table.find('./h:thead', NS)
     keys = []
     for h in header[0]:
@@ -81,6 +83,9 @@ def parse_datatable(document):
     for row in rows:
         r = []
         res.append(r)
-        for cell in row:
-            r.append(' '.join(''.join(cell.itertext()).split()))
+        for key, cell in zip(keys, row):
+            v = ' '.join(''.join(cell.itertext()).split())
+            if extract is not None:
+                v = extract(key, cell, v)
+            r.append(v)
     return keys, res
