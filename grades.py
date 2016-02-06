@@ -55,7 +55,7 @@ def parse_js(code):
     id = r'[a-zA-Z_][a-zA-Z0-9_]*'
     obj = r'(?:[^;\'"]|\'(?:[^\\\']|\\.)*\'|"(?:[^\\"]|\\.)*")*'
     patterns = [
-        ('throw', r"throw '((?:[^\\']|\\.)*)';"),
+        ('throw', "throw "+obj+";"),
         ('comment', '//(.*)'),
         ('var', 'var ('+id+')=('+obj+');'),
         ('setattr', '('+id+')\\.('+id+')=('+obj+');'),
