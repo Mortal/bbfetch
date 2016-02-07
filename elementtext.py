@@ -1,3 +1,4 @@
+from xml.etree.ElementTree import ElementTree
 from six import BytesIO
 import html2text
 
