@@ -2,6 +2,10 @@ from six import BytesIO
 import html2text
 
 
+def element_text_content(element):
+    return ' '.join(''.join(element.itertext()).split())
+
+
 def element_to_markdown(element):
     with BytesIO() as buf:
         # We cannot use default_namespace,

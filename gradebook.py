@@ -2,7 +2,6 @@ import json
 import time
 import numbers
 
-import groups
 import blackboard
 from blackboard import logger
 from dwr import dwr_get_attempts_info
@@ -19,13 +18,15 @@ def get_handin_attempt_counts(session, handin_id):
 
 
 class Gradebook:
+    """Provides a view of what is accessible in the BlackBoard gradebook."""
+
     def __init__(self, session, filename):
         self.session = session
         self.filename = filename
         try:
             self.load_file()
         except FileNotFoundError:
-            self.assignment_ids = self.students = self.fetch_time = None
+            self.assignments = self.students = self.fetch_time = None
             self.refresh()
             self.save_file()
 
@@ -34,22 +35,20 @@ class Gradebook:
             o = json.load(fp)
         self.students = o['students']
         self.fetch_time = o['fetch_time']
-        self.assignment_ids = o['assignment_ids']
+        self.assignments = o['assignments']
 
     def refresh(self):
         self.fetch_time = time.time()
         prev = self.students
-        self.assignment_ids, self.students = self.fetch_overview()
+        self.assignments, self.students = self.fetch_overview()
         if prev is not None:
             self.copy_student_data(prev)
-        else:
-            self.fetch_groups()
         self.refresh_attempts()
 
     def save_file(self):
         with open(self.filename, 'w') as fp:
             json.dump({'students': self.students,
-                       'assignment_ids': self.assignment_ids,
+                       'assignments': self.assignments,
                        'fetch_time': self.fetch_time}, fp, indent=2)
 
     def print_gradebook(self):
@@ -64,12 +63,7 @@ class Gradebook:
             if not u['available']:
                 name = '(%s)' % name
             cells = []
-            group = ''
-            for group_name, group_id in (u['groups'] or []):
-                prefix = 'Hand In Group '
-                if group_name.startswith(prefix):
-                    group = group_name[len(prefix):]
-            for aid in self.assignment_ids:
+            for aid in self.assignments.keys():
                 try:
                     a = u['assignments'][aid]
                 except KeyError:
@@ -83,23 +77,8 @@ class Gradebook:
                 if isinstance(score, numbers.Real):
                     score = '%g' % score
                 cells.append('%s%-4s' % (ng, score))
-            print('%-14s %-30s | %-5s | %s' %
-                  (u['username'], name, group, ' | '.join(cells)))
-
-    def fetch_groups(self):
-        user_groups = groups.get_groups(self.session)
-        usernames = {
-            u['username']: user_id for user_id, u in self.students.items()}
-        for u in user_groups:
-            try:
-                user_id = usernames[u['username']]
-            except KeyError:
-                logger.warn(
-                    "Username %s in group list does not exist in gradebook",
-                    u['username'])
-                continue
-            s = self.students[user_id]
-            s['groups'] = u['groups']
+            print('%-14s %-30s | %s' %
+                  (u['username'], name, ' | '.join(cells)))
 
     def fetch_overview(self):
         url = (
@@ -115,8 +94,17 @@ class Gradebook:
 
         columns = o['colDefs']
         # column_dict = {c['id']: c for c in columns}
-        assignment_ids = [c['id'] for c in columns
-                          if c.get('src') == 'resource/x-bb-assignment']
+        assignments = {}
+        for c in columns:
+            if c.get('src') != 'resource/x-bb-assignment':
+                continue
+            elif not c['groupActivity']:
+                logger.warn(
+                    "Assignment %s is not a group activity -- skipping",
+                    c['name'])
+            else:
+                assignments[c['id']] = c
+
 
         # column_ids = [c['id'] for c in columns]
         # is_assignment = [c['src'] == 'resource/x-bb-assignment' for c in columns]
@@ -151,7 +139,7 @@ class Gradebook:
 
             user_assignments = {}
 
-            for a in assignment_ids:
+            for a in assignments.keys():
                 try:
                     cell = user_cells[a]
                 except KeyError:
@@ -172,10 +160,9 @@ class Gradebook:
                 id=user_id,
                 available=user_available,
                 assignments=user_assignments,
-                groups=None,
             )
 
-        return assignment_ids, users
+        return assignments, users
 
     def copy_student_data(self, prev):
         for user_id, user in self.students.items():
@@ -183,8 +170,6 @@ class Gradebook:
                 prev_user = prev[user_id]
             except KeyError:
                 continue
-            if user['groups'] is None:
-                user['groups'] = prev_user['groups']
             for assignment_id, a1 in user['assignments'].items():
                 try:
                     a2 = prev_user['assignments'][assignment_id]
