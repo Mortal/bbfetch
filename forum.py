@@ -4,6 +4,7 @@ import html2text
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
 import blackboard
+from datatable import fetch_datatable
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -17,6 +18,15 @@ def get_forum_posts(session):
             session, forum_id, nonce, tids)
         for post in threads:
             yield post
+
+
+def print_forum_posts(session):
+    for post in get_forum_posts(session):
+        print("Title: %s" % post['message_title'])
+        for k, v in post['metadata']:
+            print("* %s: %s" % (k, v))
+        print(post['body'])
+        print(79*'=')
 
 
 def get_thread_posts(session, forum_id, nonce, threads):
@@ -94,29 +104,24 @@ def parse_thread_posts(document):
 
 
 def get_forum_ids(session):
+    def extract(key, cell, d):
+        if key != 'title':
+            return d
+        link = cell.find('./h:span/h:a', NS)
+        v = ' '.join(''.join(link.itertext()).split())
+        mo = re.search(
+            r'conf_id=([^&]+)&forum_id=([^&]+)', link.get('href'))
+        if not mo:
+            raise ValueError("Could not match %s" % link.get('href'))
+        return (mo.group(1), mo.group(2)), v
+
     url = (
         'https://bb.au.dk/webapps/discussionboard/do/conference' +
         '?action=list_forums&course_id=%s' % session.course_id +
-        '&nav=discussion_board&showAll=true')
-    r = session.get(url)
-    # with open('tmp.html', 'wb') as fp:
-    #     fp.write(r.content)
-    document = html5lib.parse(r.content, encoding=r.encoding)
-    return parse_forum_ids(document)
-
-
-def parse_forum_ids(document):
-    table = document.find('.//h:table[@id="listContainer_datatable"]', NS)
-    links = table.findall(
-        './h:tbody/h:tr/h:th/h:span[@class="dbheading"]/h:a', NS)
-    forums = []
-    for l in links:
-        mo = re.search(
-            r'conf_id=([^&]+)&forum_id=([^&]+)', l.get('href'))
-        text = ' '.join(''.join(l.itertext()).split())
-        if mo:
-            forums.append(((mo.group(1), mo.group(2)), text))
-    return forums
+        '&nav=discussion_board')
+    response, keys, rows = fetch_datatable(session, url, extract=extract)
+    title_col = keys.index('title')
+    return [row[title_col] for row in rows]
 
 
 def get_thread_ids(session, forum_id):
@@ -148,4 +153,4 @@ def parse_thread_ids(document):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(get_forum_posts)
+    blackboard.wrapper(print_forum_posts)
