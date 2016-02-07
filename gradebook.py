@@ -17,39 +17,24 @@ def get_handin_attempt_counts(session, handin_id):
     return o
 
 
-class Gradebook:
+class Gradebook(blackboard.Serializable):
     """Provides a view of what is accessible in the BlackBoard gradebook."""
 
-    def __init__(self, session, filename):
-        self.session = session
-        self.filename = filename
-        try:
-            self.load_file()
-        except FileNotFoundError:
-            self.assignments = self.students = self.fetch_time = None
-            self.refresh()
-            self.save_file()
+    FIELDS = 'students fetch_time assignments'.split()
 
-    def load_file(self):
-        with open(self.filename) as fp:
-            o = json.load(fp)
-        self.students = o['students']
-        self.fetch_time = o['fetch_time']
-        self.assignments = o['assignments']
+    def __init__(self, session):
+        self.session = session
 
     def refresh(self):
         self.fetch_time = time.time()
-        prev = self.students
+        try:
+            prev = self.students
+        except AttributeError:
+            prev = None
         self.assignments, self.students = self.fetch_overview()
         if prev is not None:
             self.copy_student_data(prev)
         self.refresh_attempts()
-
-    def save_file(self):
-        with open(self.filename, 'w') as fp:
-            json.dump({'students': self.students,
-                       'assignments': self.assignments,
-                       'fetch_time': self.fetch_time}, fp, indent=2)
 
     def print_gradebook(self):
         def get_name(student):
@@ -194,9 +179,10 @@ class Gradebook:
 
 
 def print_gradebook(session):
-    g = Gradebook(session, 'gradebook.json')
+    g = Gradebook(session)
+    g.load('gradebook.json')
     g.print_gradebook()
-    # g.save_file()
+    # g.save()
 
 
 if __name__ == "__main__":

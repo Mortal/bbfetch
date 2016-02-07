@@ -1,4 +1,5 @@
 import re
+import json
 import time
 import getpass
 import keyring
@@ -7,6 +8,7 @@ import argparse
 import html5lib
 import requests
 import requests.cookies
+import collections
 from six.moves.http_cookiejar import LWPCookieJar
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
@@ -264,3 +266,76 @@ def wrapper(fun):
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
     fun(session)
     session.save_cookies()
+
+
+class Serializable:
+    def refresh(self):
+        raise NotImplementedError()
+
+    def serialize(self):
+        o = []
+        for f in self.FIELDS:
+            v = getattr(self, f)
+            try:
+                v = v.serialize()
+            except AttributeError:
+                # v does not have a serialize method
+                pass
+            o.append((f, v))
+        return collections.OrderedDict(o)
+
+    def deserialize(self, o):
+        if frozenset(o.keys()) != frozenset(self.FIELDS):
+            raise Exception(
+                "%s.deserialize got incorrect fields: " % type(self).__name__ +
+                "%s" % ', '.join(o.keys()))
+        for k, v in o.items():
+            try:
+                getattr(self, k).deserialize(v)
+            except AttributeError:
+                # Either we don't have attribute k, or it doesn't have
+                # a deserialize method
+                setattr(self, k, v)
+
+    def save(self, filename=None):
+        if filename is None:
+            filename = self.filename
+        if filename is None:
+            raise ValueError("%s.save: You must specify filename" %
+                             type(self).__name__)
+        o = [('time', time.time())]
+        try:
+            course_id = self.session.course_id
+        except AttributeError:
+            pass
+        else:
+            o.append(('course', course_id))
+        o.append(('payload', self.serialize()))
+        with open(filename, 'w') as fp:
+            json.dump(collections.OrderedDict(o), fp, indent=2)
+
+    def load(self, filename=None, refresh=True):
+        if filename is None:
+            filename = self.filename
+        if filename is None:
+            raise ValueError("%s.load: You must specify filename" %
+                             type(self).__name__)
+        if refresh:
+            try:
+                with open(filename) as fp:
+                    o = json.load(fp)
+            except FileNotFoundError:
+                for k in self.FIELDS:
+                    setattr(self, k, getattr(self, k, None))
+                self.refresh()
+                self.save(filename=filename)
+                return
+        else:
+            with open(filename) as fp:
+                o = json.load(fp)
+        if 'course' in o:
+            course_id = self.session.course_id
+            if course_id != o['course']:
+                raise ValueError("%r is about the wrong course" %
+                                 filename)
+        self.deserialize(o['payload'])
