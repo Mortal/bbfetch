@@ -23,6 +23,10 @@ class Grading(blackboard.Serializable):
         if not self.attempt_state:
             self.attempt_state = {}
 
+    def load(self, *args, **kwargs):
+        super(Grading, self).load(*args, **kwargs)
+        self.assignments = self.get_assignments()
+
     def get_assignments(self):
         assignments = {}
         for assignment in self.gradebook.assignments.keys():
@@ -102,7 +106,7 @@ class Grading(blackboard.Serializable):
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % self.session.course_id +
-               '&groupAttemptId=_%s_1' % attempt)
+               '&groupAttemptId=%s' % attempt)
         response = self.session.get(url)
         document = html5lib.parse(response.content, encoding=response.encoding)
         submission_text = document.find(
@@ -111,6 +115,11 @@ class Grading(blackboard.Serializable):
             submission_text = element_to_markdown(submission_text)
         submission_list = document.find(
             './/h:ul[@id="currentAttempt_submissionList"]', NS)
+        if not submission_list:
+            with open('get_attempt_files.html', 'wb') as fp:
+                fp.write(response.content)
+            print(url)
+            raise Exception("No currentAttempt_submissionList")
         comments = document.find(
             './/h:div[@id="currentAttempt_comments"]', NS)
         if comments:
