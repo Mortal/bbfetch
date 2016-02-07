@@ -1,10 +1,10 @@
 import re
 import html5lib
-import html2text
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
 import blackboard
 from datatable import fetch_datatable
+from elementtext import element_to_markdown
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -80,20 +80,7 @@ def parse_thread_posts(document):
                     data.append((key, text))
         body = post.find('.//h:div[@class="vtbegenerated"]', NS)
         if body:
-            with BytesIO() as buf:
-                # We cannot use default_namespace,
-                # since it incorrectly errors on unnamespaced attributes
-                # See: https://bugs.python.org/issue17088
-                ElementTree(body).write(
-                    buf, encoding='utf8', xml_declaration=False,
-                    method='xml')
-                body = buf.getvalue().decode('utf8')
-                # Workaround to make it prettier
-                body = body.replace(
-                    ' xmlns:html="http://www.w3.org/1999/xhtml"', '')
-                body = body.replace('<html:', '<')
-                body = body.replace('</html:', '</')
-                body = html2text.html2text(body)
+            body = element_to_markdown(body)
         else:
             body = ''
         yield dict(
