@@ -5,6 +5,7 @@ import getpass
 import keyring
 import logging
 import argparse
+import datetime
 import html5lib
 import requests
 import requests.cookies
@@ -16,6 +17,34 @@ from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 logger = logging.getLogger('blackboard')
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
+
+
+class ParserError(Exception):
+    def __init__(self, msg, response, *extra):
+        self.msg = msg
+        self.response = response
+        self.extra = extra
+
+    def __str__(self):
+        return self.msg
+
+    def save(self):
+        n = datetime.datetime.now()
+        filename = n.strftime('%Y-%m-%d_%H%M_parseerror.txt')
+        with open(filename, 'w') as fp:
+            for r in self.response.history + [self.response]:
+                fp.write('%s %s\n' % (r.status_code, r.url))
+            fp.write("ParserError: %s\n\n" % self.msg)
+            fp.write("Reported encoding: %s\n" % self.response.encoding)
+            for s in self.extra:
+                fp.write(s + '\n')
+        with open(filename, 'ab') as fp:
+            fp.write(self.response.content)
+        print("ParserError logged to %s" % filename)
+
+
+class BadAuth(Exception):
+    pass
 
 
 class BlackBoardSession:
@@ -78,6 +107,11 @@ class BlackBoardSession:
 
         return dict(username=self.username, password=self.password)
 
+    def forget_password(self):
+        if self.username is None:
+            raise ValueError("forget_password: username is None")
+        keyring.delete_password("fetch.py WAYF", self.username)
+
     def wayf_login(self, response):
         """Login to WAYF.
 
@@ -93,8 +127,10 @@ class BlackBoardSession:
         history += list(response.history) + [response]
         logger.debug("WAYF login -> %s", response.url)
         logger.debug("WAYF response %s", response.status_code)
-        with open('wayftmp.html', 'wb') as fp:
-            fp.write(response.content)
+        # with open('wayftmp.html', 'wb') as fp:
+        #     fp.write(response.content)
+        if 'Forkert brugernavn eller kodeord' in response.text:
+            raise BadAuth()
 
         response = self.post_hidden_form(response)
         history += list(response.history) + [response]
@@ -121,7 +157,8 @@ class BlackBoardSession:
         url = form.get('action')
         inputs = form.findall('.//h:input[@name]', NS)
         logger.debug("Response page form has %d inputs", len(inputs))
-        assert len(inputs) > 0
+        if not inputs:
+            raise ParserError("No <input> with name", response)
         post_data = {
             i.get('name'): i.get('value')
             for i in inputs
@@ -264,7 +301,14 @@ def wrapper(fun):
     configure_logging(quiet=args.quiet)
 
     session = BlackBoardSession(args.cookiejar, args.username, args.course)
-    fun(session)
+    try:
+        fun(session)
+    except ParserError as exn:
+        print(exn)
+        exn.save()
+    except BadAuth:
+        print("Bad username or password. Forgetting password.")
+        session.forget_password()
     session.save_cookies()
 
 

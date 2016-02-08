@@ -7,7 +7,7 @@ def element_text_content(element):
     return ' '.join(''.join(element.itertext()).split())
 
 
-def element_to_markdown(element):
+def element_to_html(element):
     with BytesIO() as buf:
         # We cannot use default_namespace,
         # since it incorrectly errors on unnamespaced attributes
@@ -22,4 +22,8 @@ def element_to_markdown(element):
         ' xmlns:html="http://www.w3.org/1999/xhtml"', '')
     body = body.replace('<html:', '<')
     body = body.replace('</html:', '</')
-    return html2text.html2text(body)
+    return body
+
+
+def element_to_markdown(element):
+    return html2text.html2text(element_to_html(element))
