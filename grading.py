@@ -2,12 +2,11 @@ import os
 import html5lib
 from requests.compat import urljoin
 import blackboard
-from blackboard import logger
+from blackboard import logger, ParserError
 # from groups import get_groups
 from gradebook import Gradebook
 from elementtext import (
-    element_to_markdown, element_text_content, element_to_html)
-from xml.etree import ElementTree as ET
+    element_to_markdown, element_text_content)
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -21,10 +20,12 @@ class Grading(blackboard.Serializable):
         self.gradebook = Gradebook(self.session)
 
     def refresh(self):
+        logger.info("Refresh gradebook")
         self.gradebook.refresh()
         self.assignments = self.get_assignments()
         if not self.attempt_state:
             self.attempt_state = {}
+        self.autosave()
 
     def load(self, *args, **kwargs):
         super(Grading, self).load(*args, **kwargs)
@@ -81,7 +82,6 @@ class Grading(blackboard.Serializable):
         assignment = self.gradebook.assignments[assignment_id]
         assignment_name = assignment['name']
         group_name = attempt['groupName']
-        r = 1
         d = os.path.join(cwd, assignment_name, group_name)
         if os.path.exists(d):
             d = os.path.join(cwd, assignment_name,
@@ -92,6 +92,7 @@ class Grading(blackboard.Serializable):
         for dd in reversed(dirs[:-1]):
             os.mkdir(dd)
         o['directory'] = d
+        self.autosave()
         return d
 
     def download_attempt_files(self, attempt):
@@ -108,7 +109,11 @@ class Grading(blackboard.Serializable):
                 fp.write(data['submission'])
             logger.info("Saving submission.txt")
             local_files.append('submission.txt')
-        for filename, download_link in data['files']:
+        for o in data['files']:
+            filename = o['filename']
+            download_link = o['download_link']
+            if 'local_path' in o:
+                continue
             outfile = os.path.join(d, filename)
             if os.path.exists(outfile):
                 logger.info("%s already exists; skipping", outfile)
@@ -120,10 +125,18 @@ class Grading(blackboard.Serializable):
                 for chunk in response.iter_content(chunk_size=64*1024):
                     if chunk:
                         fp.write(chunk)
-            local_files.append(filename)
-        self.attempt_state[attempt]['local_files'] = local_files
+            o['local_path'] = outfile
+            self.autosave()
 
     def get_attempt_files(self, attempt):
+        keys = 'submission comments files'.split()
+        try:
+            return {k: self.attempt_state[attempt][k] for k in keys}
+        except KeyError:
+            self.refresh_attempt_files(attempt)
+            return {k: self.attempt_state[attempt][k] for k in keys}
+
+    def refresh_attempt_files(self, attempt):
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % self.session.course_id +
@@ -161,7 +174,8 @@ class Grading(blackboard.Serializable):
             if download_button is not None:
                 download_link = urljoin(
                     response.url, download_button.get('href'))
-                files.append((filename, download_link))
+                files.append(
+                    dict(filename=filename, download_link=download_link))
             else:
                 s = 'currentAttempt_attemptFilesubmissionText'
                 a = submission.find(
@@ -177,11 +191,11 @@ class Grading(blackboard.Serializable):
                     raise blackboard.ParserError(
                         "No download link for file %r" % (filename,),
                         response)
-        return {
-            'submission': submission_text,
-            'comments': comments,
-            'files': files,
-        }
+        self.attempt_state.setdefault(attempt, {}).update(
+            submission=submission_text,
+            comments=comments,
+            files=files)
+        self.autosave()
 
     def print_assignments(self):
         def group_key(group):

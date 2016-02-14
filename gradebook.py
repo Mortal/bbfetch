@@ -3,7 +3,7 @@ import time
 import numbers
 
 import blackboard
-from blackboard import logger
+from blackboard import logger, ParserError
 from dwr import dwr_get_attempts_info
 
 
@@ -73,9 +73,7 @@ class Gradebook(blackboard.Serializable):
         try:
             o = response.json()
         except json.decoder.JSONDecodeError:
-            print(url)
-            print(response.text)
-            raise
+            raise ParserError("Couldn't decode JSON", response)
 
         columns = o['colDefs']
         # column_dict = {c['id']: c for c in columns}

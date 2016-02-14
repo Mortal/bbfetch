@@ -143,6 +143,29 @@ class BlackBoardSession:
         response.history = history[:-1]
         return response
 
+    def relogin(self):
+        url = (
+            'https://bb.au.dk/webapps/bb-auth-provider-shibboleth-BBLEARN' +
+            '/execute/shibbolethLogin?authProviderId=_102_1')
+        response = self.get(url)
+        if self.detect_login(response) is False:
+            logger.error("Seems logged out after re-login. " +
+                         "Try deleting your cookiejar.")
+            raise ParserError("Not logged in", response)
+        return response
+
+    def detect_login(self, response):
+        document = html5lib.parse(response.content, encoding=response.encoding)
+        logged_out_url = (
+            '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_21_1')
+        o = document.find('.//h:a[@href="%s"]' % logged_out_url, NS)
+        if o is not None:
+            return False
+        log_out_id = 'topframe.logout.label'
+        o = document.find('.//h:a[@id="%s"]' % log_out_id, NS)
+        if o is not None:
+            return True
+
     def post_hidden_form(self, response):
         """Send POST request to form with only hidden fields.
 
@@ -236,6 +259,12 @@ class BlackBoardSession:
 
     def get(self, url):
         response = self.autologin(self.session.get(url))
+        if self.detect_login(response) is False:
+            history = response.history + [response]
+            relogin_response = self.relogin()
+            history += relogin_response.history + [relogin_response]
+            response = self.autologin(self.session.get(url))
+            response.history = history + list(response.history)
         if response.url != url:
             history = list(response.history) + [response]
             response = self.session.get(url)
@@ -344,6 +373,7 @@ class Serializable:
     def save(self, filename=None):
         if filename is None:
             filename = self.filename
+        self.last_filename = filename
         if filename is None:
             raise ValueError("%s.save: You must specify filename" %
                              type(self).__name__)
@@ -357,6 +387,11 @@ class Serializable:
         o.append(('payload', self.serialize()))
         with open(filename, 'w') as fp:
             json.dump(collections.OrderedDict(o), fp, indent=2)
+
+    def autosave(self):
+        filename = getattr(self, 'last_filename', None)
+        if filename is not None:
+            self.save(filename)
 
     def load(self, filename=None, refresh=True):
         if filename is None:
