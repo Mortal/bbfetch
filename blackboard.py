@@ -271,13 +271,13 @@ class BlackBoardSession:
             response.history = history + list(response.history)
         return response
 
-    def post(self, url, data):
-        response = self.session.post(url, data)
-        if response.history:
-            logger.warning('POST %r redirected', url)
-            for r in response.history:
-                logger.warning("... from %r", r.url)
-            logger.warning("... to %r", response.url)
+    def post(self, url, data, files=None):
+        response = self.session.post(url, data=data, files=files)
+        # if response.history:
+        #     logger.warning('POST %r redirected', url)
+        #     for r in response.history:
+        #         logger.warning("... from %r", r.url)
+        #     logger.warning("... to %r", response.url)
         return response
 
     def ensure_logged_in(self):
