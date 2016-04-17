@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import html5lib
 from requests.compat import urljoin
 import blackboard
@@ -351,5 +352,50 @@ def submit_feedback(session):
     g.submit_grade('_22022_1', 0.8, 'Test feedback', ['test.txt'])
 
 
+def submit_feedback_20160417(session):
+    g = Grading(session)
+    g.load('grading.json')
+    g.refresh()
+    assignment_id = '219345'
+    groups = g.assignments[assignment_id]
+    attempt_ids = sorted(groups.keys(), key=lambda x: groups[x]['groupName'])
+    for attempt_id in attempt_ids:
+        attempt = groups[attempt_id]
+        d = g.get_attempt_directory(attempt_id)
+        data = g.get_attempt_files(attempt_id)
+        uploads = []
+        comments = ''
+        score = None
+        comments_file = os.path.join(d, 'comments.txt')
+        if not os.path.exists(comments_file):
+            continue
+
+        with open(comments_file) as fp:
+            comments = fp.read()
+        rehandin = re.search(r'genaflevering|re-?handin', comments, re.I)
+        accept = re.search(r'accepted|godkendt', comments, re.I)
+        if rehandin and accept:
+            score = 0.5
+        elif rehandin:
+            score = 0
+        elif accept:
+            score = 1
+
+        for o in data['files']:
+            filename = o['filename']
+            base, ext = os.path.splitext(filename)
+            if ext != '.pdf':
+                continue
+            # outfile = os.path.join(d, filename)
+            annfile = os.path.join(d, '%s_ann%s' % (base, ext))
+            if os.path.exists(annfile):
+                uploads.append(annfile)
+        print(attempt['groupName'], attempt['groupStatus'],
+              attempt_id, score, len(comments), uploads)
+        if attempt['groupStatus'] == 'ng' and (score == 0 or score == 1):
+            g.submit_grade(attempt_id, score, comments, uploads)
+    # for a in g.needs_grading():
+
+
 if __name__ == "__main__":
-    blackboard.wrapper(submit_feedback)
+    blackboard.wrapper(submit_feedback_20160417)
