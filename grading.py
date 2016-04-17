@@ -85,15 +85,9 @@ class Grading(blackboard.Serializable):
         assignment = self.gradebook.assignments[assignment_id]
         assignment_name = assignment['name']
         group_name = attempt['groupName']
-        d = os.path.join(cwd, assignment_name, group_name)
-        if os.path.exists(d):
-            d = os.path.join(cwd, assignment_name,
-                             '%s (%s)' % (group_name, attempt_id))
-        dirs = [d]
-        while not os.path.exists(dirs[-1]):
-            dirs.append(os.path.split(dirs[-1])[0])
-        for dd in reversed(dirs[:-1]):
-            os.mkdir(dd)
+        d = os.path.join(cwd, assignment_name,
+                         '%s (%s)' % (group_name, attempt_id))
+        os.makedirs(d)
         o['directory'] = d
         self.autosave()
         return d
