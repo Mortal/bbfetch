@@ -272,7 +272,8 @@ class BlackBoardSession:
         return response
 
     def post(self, url, data, files=None):
-        response = self.session.post(url, data=data, files=files)
+        response = self.session.post(
+            url, data=data, files=files)
         # if response.history:
         #     logger.warning('POST %r redirected', url)
         #     for r in response.history:
