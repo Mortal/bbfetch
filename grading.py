@@ -189,6 +189,8 @@ class Grading(blackboard.Serializable):
                     raise blackboard.ParserError(
                         "No download link for file %r" % (filename,),
                         response)
+        logger.debug("refresh_attempt_files updating attempt_state[%r]",
+                     attempt)
         self.attempt_state.setdefault(attempt, {}).update(
             submission=submission_text,
             comments=comments,
