@@ -1,3 +1,4 @@
+import io
 import os
 import html5lib
 from requests.compat import urljoin
@@ -316,6 +317,12 @@ class Grading(blackboard.Serializable):
             files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
         post_url = (
             'https://bb.au.dk/webapps/assignment//gradeGroupAssignment/submit')
+        if not files:
+            # BlackBoard requires the POST to be
+            # Content-Type: multipart/form-data.
+            # Unfortunately, requests can only make a form-data POST
+            # if it has file-like input in the files list.
+            files = [('dummy', io.StringIO(''))]
         try:
             response = self.session.post(post_url, data=data, files=files)
         except:
