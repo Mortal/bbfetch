@@ -373,7 +373,7 @@ class Serializable:
     def save(self, filename=None):
         if filename is None:
             filename = self.filename
-        self.last_filename = filename
+        self.filename = filename
         if filename is None:
             raise ValueError("%s.save: You must specify filename" %
                              type(self).__name__)
@@ -389,7 +389,7 @@ class Serializable:
             json.dump(collections.OrderedDict(o), fp, indent=2)
 
     def autosave(self):
-        filename = getattr(self, 'last_filename', None)
+        filename = getattr(self, 'filename', None)
         if filename is not None:
             self.save(filename)
 
@@ -418,3 +418,4 @@ class Serializable:
                 raise ValueError("%r is about the wrong course" %
                                  filename)
         self.deserialize(o['payload'])
+        self.filename = filename
