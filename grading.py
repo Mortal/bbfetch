@@ -127,8 +127,9 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_files(self, attempt):
         keys = 'submission comments files'.split()
+        st = self.attempt_state[attempt]
         try:
-            return {k: self.attempt_state[attempt][k] for k in keys}
+            return {k: st[k] for k in keys}
         except KeyError:
             self.refresh_attempt_files(attempt)
             return {k: self.attempt_state[attempt][k] for k in keys}
