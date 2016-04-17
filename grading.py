@@ -71,9 +71,12 @@ class Grading(blackboard.Serializable):
     def get_attempt_directory(self, attempt_id):
         o = self.attempt_state.setdefault(attempt_id, {})
         try:
-            return o['directory']
+            d = o['directory']
         except KeyError:
             pass
+        else:
+            if os.path.exists(d):
+                return d
         cwd = os.getcwd()
         assignment_id, = [
             a for a in self.assignments
