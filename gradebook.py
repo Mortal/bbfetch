@@ -25,7 +25,7 @@ class DictWrapper:
     are passed along to item_class.
 
     >>> from collections import namedtuple
-    >>> Foo = namedtuple('Foo', 'inner meta')
+    >>> Foo = namedtuple('Foo', 'inner meta data_key')
     >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
     >>> foos = DictWrapper(Foo, foo_data, meta=42)
 
@@ -34,14 +34,14 @@ class DictWrapper:
 
     >>> for foo in foos:
     ...     print(foo)
-    Foo(inner=('bar', 2), meta=42)
-    Foo(inner=('baz', 3), meta=42)
+    Foo(inner=('bar', 2), meta=42, data_key='bar')
+    Foo(inner=('baz', 3), meta=42, data_key='baz')
 
     The index operator looks up the key in the underlying dictionary
     and wraps the result in item_class.
 
     >>> print(foos['bar'])
-    Foo(inner=('bar', 2), meta=42)
+    Foo(inner=('bar', 2), meta=42, data_key='bar')
     """
 
     def __init__(self, item_class, data, order_by=str, **kwargs):
@@ -54,13 +54,13 @@ class DictWrapper:
         try:
             return iter(self._items)
         except AttributeError:
-            self._items = [self._item_class(v, **self._kwargs)
-                           for v in self._data.values()]
+            self._items = [self._item_class(v, data_key=k, **self._kwargs)
+                           for k, v in self._data.items()]
             self._items.sort(key=self._order_by)
             return iter(self._items)
 
     def __getitem__(self, key):
-        return self._item_class(self._data[key], **self._kwargs)
+        return self._item_class(self._data[key], data_key=key, **self._kwargs)
 
 
 class ItemWrapper:
