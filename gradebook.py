@@ -52,6 +52,12 @@ class DictWrapper:
         self._order_by = order_by
         self._kwargs = kwargs
 
+    def __len__(self):
+        try:
+            return len(self._items)
+        except AttributeError:
+            return len(self._data)
+
     def __iter__(self):
         try:
             return iter(self._items)
