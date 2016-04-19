@@ -405,6 +405,7 @@ def submit_feedback_20160417(session):
 
 def main(args, session, grading):
     grading.refresh()
+    grading.gradebook.print_gradebook()
     for a in grading.needs_grading():
         print(a)
 
