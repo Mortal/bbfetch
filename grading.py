@@ -111,17 +111,14 @@ class Grading(blackboard.Serializable):
         assert isinstance(attempt, Attempt)
         data = self.get_attempt_files(attempt)
         d = self.get_attempt_directory(attempt)
-        local_files = []
         if data['comments']:
             with open(os.path.join(d, 'comments.txt'), 'w') as fp:
                 fp.write(data['comments'])
             logger.info("Saving comments.txt for attempt %s", attempt)
-            local_files.append('comments.txt')
         if data['submission']:
             with open(os.path.join(d, 'submission.txt'), 'w') as fp:
                 fp.write(data['submission'])
             logger.info("Saving submission.txt for attempt %s", attempt)
-            local_files.append('submission.txt')
         for o in data['files']:
             filename = o['filename']
             download_link = o['download_link']
