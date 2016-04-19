@@ -9,7 +9,7 @@ from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
-from gradebook import Gradebook, Attempt, truncate_name
+from gradebook import Gradebook, Attempt, truncate_name, StudentAssignment
 from elementtext import (
     element_to_markdown, element_text_content)
 
@@ -55,11 +55,12 @@ class Grading(blackboard.Serializable):
                 except KeyError:
                     cells.append('     ')
                     continue
-                if a['needs_grading']:
+                assert isinstance(a, StudentAssignment)
+                if a.needs_grading:
                     ng = '!'
                 else:
                     ng = ' '
-                score = a['score']
+                score = a.score
                 if isinstance(score, numbers.Real):
                     score = '%g' % score
                 cells.append('%s%-4s' % (ng, score))
