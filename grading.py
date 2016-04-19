@@ -19,9 +19,11 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 class Grading(blackboard.Serializable):
     FIELDS = ('attempt_state', 'gradebook', 'username')
 
+    gradebook_class = Gradebook
+
     def __init__(self, session):
         self.session = session
-        self.gradebook = Gradebook(self.session)
+        self.gradebook = type(self).gradebook_class(self.session)
         self.username = session.username
 
     def refresh(self):
