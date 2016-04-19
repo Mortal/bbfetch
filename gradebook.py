@@ -100,7 +100,7 @@ class Student(ItemWrapper):
     @property
     def assignments(self):
         return DictWrapper(StudentAssignment, self['assignments'],
-                           assignments=self.kwargs['assignments'])
+                           assignments=self._kwargs['assignments'])
 
     @property
     def name(self):
@@ -130,8 +130,8 @@ class Assignment(ItemWrapper):
 
 
 class StudentAssignment(ItemWrapper):
-    id = property(lambda self: self.kwargs['data_key'])
-    assignment = property(lambda self: self.kwargs['assignments'][self.id])
+    id = property(lambda self: self._kwargs['data_key'])
+    assignment = property(lambda self: self._kwargs['assignments'][self.id])
     name = property(lambda self: self.assignment.name)
 
     def __str__(self):
