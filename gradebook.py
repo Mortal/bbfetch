@@ -207,16 +207,20 @@ class Gradebook(blackboard.Serializable):
                 if a1['attempts'] is None:
                     a1['attempts'] = a2['attempts']
 
-    def refresh_attempts(self):
+    def refresh_attempts(self, students=None):
         """Bulk-refresh all missing assignment data."""
         attempt_keys = []
-        for user_id, user in self._students.items():
+        if students is None:
+            students = self.students
+        elif isinstance(students, Student):
+            students = [students]
+        for user in students:
             for assignment_id, assignment in user['assignments'].items():
                 if assignment['attempts'] is None:
-                    attempt_keys.append((user_id, assignment_id))
+                    attempt_keys.append((user.id, assignment_id))
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
-            self._students[user_id]['assignments'][aid]['attempts'] = attempts
+            self.students[user_id]['assignments'][aid]['attempts'] = attempts
 
 
 def print_gradebook(session):
