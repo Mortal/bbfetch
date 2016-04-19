@@ -268,6 +268,24 @@ class Grading(blackboard.Serializable):
                 attempts.append(r)
         return attempts
 
+    def has_downloaded(self, assignment):
+        """
+        has_downloaded(attempt) -> True if the attempt's files have been
+        downloaded.
+
+        has_downloaded(student_assignment) -> True if the student's latest
+        attempt's files have been downloaded; None if no attempts exist.
+        """
+
+        if isinstance(assignment, Attempt):
+            attempts = [assignment]
+        else:
+            assert isinstance(assignment, StudentAssignment)
+            attempts = list(assignment.attempts)
+        if attempts:
+            st = self.attempt_state.get(attempts[-1].id, {})
+            return 'local_files' in st
+
     def submit_grade(self, attempt_id, grade, text, filenames):
         url = (
             'https://bb.au.dk/webapps/assignment/gradeAssignmentRedirector' +
