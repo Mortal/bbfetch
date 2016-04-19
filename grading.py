@@ -2,13 +2,14 @@ import io
 import os
 import re
 import json
+import numbers
 import argparse
 import html5lib
 from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
-from gradebook import Gradebook, Assignment, Student
+from gradebook import Gradebook, Attempt, truncate_name
 from elementtext import (
     element_to_markdown, element_text_content)
 
@@ -29,80 +30,76 @@ class Grading(blackboard.Serializable):
     def refresh(self):
         logger.info("Refresh gradebook")
         self.gradebook.refresh()
-        self.assignments = self.get_assignments()
         if not self.attempt_state:
             self.attempt_state = {}
         self.autosave()
 
-    def load(self, *args, **kwargs):
-        super(Grading, self).load(*args, **kwargs)
-        self.assignments = self.get_assignments()
-
-    def get_assignments(self):
-        students = self.gradebook.students
-        assignments = {}
-        for assignment in self.gradebook._assignments.keys():
-            by_attempt_id = {}
-            user_groups = {}
-            for s in students:
+    def print_gradebook(self):
+        """Print a representation of the gradebook state."""
+        assignments = self.gradebook.assignments
+        cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
+        for assignment in assignments:
+            name = self.get_assignment_name_display(assignment)
+            cells.append(' %-4s' % name)
+        print(' | '.join(cells))
+        students = filter(self.get_student_visible, self.gradebook.students)
+        students = sorted(students, key=self.get_student_ordering)
+        for u in students:
+            name = str(u)
+            if not u['available']:
+                name = '(%s)' % name
+            cells = []
+            for assignment in assignments:
                 try:
-                    assignment_data = s['assignments'][assignment]
+                    a = u.assignments[assignment.id]
                 except KeyError:
+                    cells.append('     ')
                     continue
-                for i, a in enumerate(assignment_data['attempts']):
-                    first = i == 0
-                    last = i == (len(assignment_data['attempts']) - 1)
-                    data = by_attempt_id.setdefault(
-                        a['groupAttemptId'],
-                        dict(users=set(), first=first, last=last, **a))
-                    data['users'].add(s)
-                    user_groups.setdefault(s, []).append(
-                        data['users'])
+                if a['needs_grading']:
+                    ng = '!'
+                else:
+                    ng = ' '
+                score = a['score']
+                if isinstance(score, numbers.Real):
+                    score = '%g' % score
+                cells.append('%s%-4s' % (ng, score))
+            username = u['username'][:8]
+            name = truncate_name(name, 30)
+            group_name = self.get_group_name_display(u.group)[:6]
+            print('%-8s %-30s %-6s | %s' %
+                  (username, name, group_name or '', ' | '.join(cells)))
 
-            for s, groups in user_groups.items():
-                groups = frozenset(map(frozenset, groups))
-                if len(groups) > 1:
-                    groups = ', '.join(
-                        '{%s}' % ', '.join(map(str, g)) for g in groups)
-                    print("%s has handed in assignment " % s +
-                          "%s in multiple different groups: " % assignment +
-                          "%s" % (groups,))
+    def get_attempts(self):
+        return sorted(set(
+            attempt
+            for student in self.gradebook.students
+            for assignment in student.assignments
+            for attempt in assignment.attempts
+        ))
 
-            assignments[assignment] = by_attempt_id
-        return assignments
-
-    def get_attempt(self, attempt_id):
-        for assignment_id, by_attempt_id in self.assignments.items():
-            try:
-                return by_attempt_id[attempt_id]
-            except KeyError:
-                pass
-
-    def get_attempt_directory(self, attempt_id):
-        o = self.attempt_state.setdefault(attempt_id, {})
+    def get_attempt_directory(self, attempt):
+        assert isinstance(attempt, Attempt)
+        st = self.attempt_state.setdefault(attempt.id, {})
         try:
-            d = o['directory']
+            d = st['directory']
         except KeyError:
             pass
         else:
             if os.path.exists(d):
                 return d
         cwd = os.getcwd()
-        assignment_id, = [
-            a for a in self.assignments
-            if attempt_id in self.assignments[a]]
-        attempt = self.assignments[assignment_id][attempt_id]
-        assignment = self.gradebook._assignments[assignment_id]
-        assignment_name = assignment['name']
-        group_name = attempt['groupName']
+        assignment = attempt.assignment
+        assignment_name = assignment.name
+        group_name = attempt.student.group_name
         d = os.path.join(cwd, assignment_name,
-                         '%s (%s)' % (group_name, attempt_id))
+                         '%s (%s)' % (group_name, attempt.id))
         os.makedirs(d)
-        o['directory'] = d
+        st['directory'] = d
         self.autosave()
         return d
 
     def download_attempt_files(self, attempt):
+        assert isinstance(attempt, Attempt)
         data = self.get_attempt_files(attempt)
         d = self.get_attempt_directory(attempt)
         local_files = []
@@ -136,19 +133,20 @@ class Grading(blackboard.Serializable):
             self.autosave()
 
     def get_attempt_files(self, attempt):
+        assert isinstance(attempt, Attempt)
         keys = 'submission comments files'.split()
-        st = self.attempt_state[attempt]
-        try:
-            return {k: st[k] for k in keys}
-        except KeyError:
+        st = self.attempt_state[attempt.id]
+        if not all(k in st for k in keys):
             self.refresh_attempt_files(attempt)
-            return {k: self.attempt_state[attempt][k] for k in keys}
+            st = self.attempt_state[attempt.id]
+        return {k: st[k] for k in keys}
 
     def refresh_attempt_files(self, attempt):
+        assert isinstance(attempt, Attempt)
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % self.session.course_id +
-               '&groupAttemptId=%s' % attempt)
+               '&groupAttemptId=%s' % attempt.id)
         response = self.session.get(url)
         document = html5lib.parse(response.content, encoding=response.encoding)
         submission_text = document.find(
@@ -200,8 +198,8 @@ class Grading(blackboard.Serializable):
                         "No download link for file %r" % (filename,),
                         response)
         logger.debug("refresh_attempt_files updating attempt_state[%r]",
-                     attempt)
-        self.attempt_state.setdefault(attempt, {}).update(
+                     attempt.id)
+        self.attempt_state.setdefault(attempt.id, {}).update(
             submission=submission_text,
             comments=comments,
             files=files)
@@ -217,13 +215,13 @@ class Grading(blackboard.Serializable):
                     k += (1, v)
             return k + (group['last'],)
 
-        assignments_sorted = sorted(
-            self.assignments.items(), key=lambda x: x[0])
-        for assignment, groups in assignments_sorted:
+        all_attempts = self.get_attempts()
+        for assignment in self.gradebook.assignments:
+            attempts = [a for a in all_attempts
+                        if a.assignment == assignment]
             print('='*79)
-            print(self.gradebook._assignments[assignment]['name'])
-            groups = sorted(groups.values(), key=group_key)
-            for attempt in groups:
+            print(assignment)
+            for attempt in attempts:
                 if not attempt['last']:
                     continue
                 members = sorted(
@@ -344,14 +342,15 @@ class Grading(blackboard.Serializable):
         logger.debug("goodMsg1: %s", element_text_content(msg))
 
 
-class StudentDads(Student):
-    @staticmethod
-    def ordering(student):
+class GradingDads(Grading):
+    def get_student_ordering(self, student):
         return (student.group or '\xff', student.name)
 
-    @property
-    def group(self):
-        group_name = super().group
+    def get_student_visible(self, student):
+        group_name = self.get_group_name_display(student.group) or ''
+        return group_name.startswith('2-')
+
+    def get_group_name_display(self, group_name):
         if group_name is None:
             return group_name
         elif group_name.startswith('Gruppe'):
@@ -363,20 +362,8 @@ class StudentDads(Student):
         else:
             return group_name
 
-
-class AssignmentDads(Assignment):
-    @property
-    def name(self):
-        return super().name.split()[-1]
-
-
-class GradebookDads(Gradebook):
-    student_class = StudentDads
-    assignment_class = AssignmentDads
-
-
-class GradingDads(Grading):
-    gradebook_class = GradebookDads
+    def get_assignment_name_display(self, assignment):
+        return assignment.name.split()[-1]
 
 
 def download_attempts(session):
@@ -442,9 +429,7 @@ def submit_feedback_20160417(session):
 
 def main(args, session, grading):
     grading.refresh()
-    grading.gradebook.print_gradebook()
-    for a in grading.needs_grading():
-        print(a)
+    grading.print_gradebook()
 
 
 def get_setting(filename, key):
