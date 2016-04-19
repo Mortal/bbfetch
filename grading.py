@@ -37,11 +37,12 @@ class Grading(blackboard.Serializable):
         self.assignments = self.get_assignments()
 
     def get_assignments(self):
+        students = self.gradebook.students
         assignments = {}
         for assignment in self.gradebook.assignments.keys():
             by_attempt_id = {}
             user_groups = {}
-            for user_id, s in self.gradebook.students.items():
+            for s in students:
                 try:
                     assignment_data = s['assignments'][assignment]
                 except KeyError:
@@ -52,14 +53,16 @@ class Grading(blackboard.Serializable):
                     data = by_attempt_id.setdefault(
                         a['groupAttemptId'],
                         dict(users=set(), first=first, last=last, **a))
-                    data['users'].add(user_id)
-                    user_groups.setdefault(user_id, []).append(
+                    data['users'].add(s)
+                    user_groups.setdefault(s, []).append(
                         data['users'])
 
-            for user_id, groups in user_groups.items():
+            for s, groups in user_groups.items():
                 groups = frozenset(map(frozenset, groups))
                 if len(groups) > 1:
-                    print("%s has handed in assignment " % user_id +
+                    groups = ', '.join(
+                        '{%s}' % ', '.join(map(str, g)) for g in groups)
+                    print("%s has handed in assignment " % s +
                           "%s in multiple different groups: " % assignment +
                           "%s" % (groups,))
 
