@@ -224,63 +224,6 @@ class Grading(blackboard.Serializable):
             files=files)
         self.autosave()
 
-    def print_assignments(self):
-        def group_key(group):
-            k = ()
-            for v in group['groupName'].split():
-                try:
-                    k += (0, int(v))
-                except ValueError:
-                    k += (1, v)
-            return k + (group['last'],)
-
-        all_attempts = self.get_attempts()
-        for assignment in self.gradebook.assignments:
-            attempts = [a for a in all_attempts
-                        if a.assignment == assignment]
-            print('='*79)
-            print(assignment)
-            for attempt in attempts:
-                if not attempt['last']:
-                    continue
-                members = sorted(
-                    '%s %s' % (s['first_name'], s['last_name'])
-                    for s in (self.gradebook.students[i]
-                              for i in attempt['users'])
-                )
-                if attempt['groupStatus'] != 'ng':
-                    score = attempt['groupScore']
-                    if score == 1:
-                        tag = '✔'
-                    elif score == 0:
-                        tag = '✘'
-                    else:
-                        tag = '%g' % score
-                elif attempt['first']:
-                    tag = ' '
-                else:
-                    tag = '.'
-                tail = ''
-                if not attempt['last']:
-                    tail = ' Superseded by later attempt'
-                print("[%s] %s (%s)%s" %
-                      (tag, attempt['groupName'], ', '.join(members), tail))
-
-    def needs_grading(self):
-        attempts = []
-        for assignment, groups in self.assignments.items():
-            for attempt_id, attempt in groups.items():
-                if attempt['groupStatus'] != 'ng':
-                    continue
-                r = dict(attempt_id=attempt_id)
-                s = self.attempt_state.get(attempt_id, {})
-                if 'local_files' in s:
-                    r['downloaded'] = True
-                else:
-                    r['downloaded'] = False
-                attempts.append(r)
-        return attempts
-
     def has_downloaded(self, assignment):
         """
         has_downloaded(attempt) -> True if the attempt's files have been
