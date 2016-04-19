@@ -170,6 +170,10 @@ class StudentAssignment(ItemWrapper):
     score = property(lambda self: self['score'])
     needs_grading = property(lambda self: self['needs_grading'])
 
+    @staticmethod
+    def ordering(item):
+        return 0  # Don't sort StudentAssignments
+
     def __getattr__(self, key):
         return getattr(self._kwargs['assignments'][self.id], key)
 
