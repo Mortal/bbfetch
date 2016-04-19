@@ -55,9 +55,9 @@ class Student:
         return hash(self.id)
 
 
-class Students:
-    order_by = str
-    item_class = Student
+class DictWrapper:
+    order_by = ...
+    item_class = ...
 
     def __init__(self, data):
         self._data = data
@@ -68,6 +68,11 @@ class Students:
 
     def __getitem__(self, key):
         return type(self).item_class(self._data[key])
+
+
+class Students(DictWrapper):
+    order_by = str
+    item_class = Student
 
 
 def truncate_name(name, n):
