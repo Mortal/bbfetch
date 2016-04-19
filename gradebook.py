@@ -209,9 +209,9 @@ class Gradebook(blackboard.Serializable):
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
         assignments = self.assignments
-        cells = [' ' * 45]
+        cells = [' ' * (14+30+15+2)]
         for assignment in assignments:
-            cells.append(' %-4s' % assignment.name.split()[-1])
+            cells.append(' %-4s' % assignment.name)
         print(' | '.join(cells))
         for u in self.students:
             name = str(u)
@@ -234,8 +234,8 @@ class Gradebook(blackboard.Serializable):
                 cells.append('%s%-4s' % (ng, score))
             username = u['username'][:14]
             name = truncate_name(name, 30)
-            print('%-14s %-30s | %s' %
-                  (username, name, ' | '.join(cells)))
+            print('%-14s %-30s %-15s | %s' %
+                  (username, name, u.group or '', ' | '.join(cells)))
 
     def fetch_overview(self):
         """Fetch gradebook information. Returns (assignments, students)."""
