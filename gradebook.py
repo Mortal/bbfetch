@@ -203,9 +203,10 @@ class Gradebook(blackboard.Serializable):
                 if isinstance(score, numbers.Real):
                     score = '%g' % score
                 cells.append('%s%-4s' % (ng, score))
+            username = u['username'][:14]
             name = truncate_name(name, 30)
             print('%-14s %-30s | %s' %
-                  (u['username'], name, ' | '.join(cells)))
+                  (username, name, ' | '.join(cells)))
 
     def fetch_overview(self):
         """Fetch gradebook information. Returns (assignments, students)."""
