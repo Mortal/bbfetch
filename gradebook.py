@@ -56,14 +56,17 @@ class Student:
 
 
 class Students:
-    def __init__(self, gradebook):
-        self._gradebook = gradebook
+    sort_key = str
+
+    def __init__(self, data):
+        self._data = data
 
     def __iter__(self):
-        return map(Student, self._gradebook._students.values())
+        students = map(Student, self._data.values())
+        return iter(sorted(students, key=type(self).sort_key))
 
     def __getitem__(self, key):
-        return Student(self._gradebook._students[key])
+        return Student(self._data[key])
 
 
 def truncate_name(name, n):
@@ -84,7 +87,7 @@ class Gradebook(blackboard.Serializable):
         assert isinstance(session, BlackBoardSession)
         self.session = session
 
-    students = property(lambda self: Students(self))
+    students = property(lambda self: Students(self._students))
 
     def refresh(self):
         self.fetch_time = time.time()
@@ -98,8 +101,7 @@ class Gradebook(blackboard.Serializable):
         self.refresh_attempts()
 
     def print_gradebook(self):
-        students = sorted(self.students, key=str)
-        for u in students:
+        for u in self.students:
             name = str(u)
             if not u['available']:
                 name = '(%s)' % name
