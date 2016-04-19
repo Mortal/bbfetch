@@ -181,18 +181,21 @@ class Gradebook(blackboard.Serializable):
 
     FIELDS = '_students fetch_time _assignments'.split()
 
+    student_class = Student
+    assignment_class = Assignment
+
     def __init__(self, session):
         assert isinstance(session, BlackBoardSession)
         self.session = session
 
     @property
     def students(self):
-        return DictWrapper(Student, self._students,
+        return DictWrapper(type(self).student_class, self._students,
                            assignments=self.assignments)
 
     @property
     def assignments(self):
-        return DictWrapper(Assignment, self._assignments)
+        return DictWrapper(type(self).assignment_class, self._assignments)
 
     def refresh(self):
         """Fetch gradebook information from BlackBoard website."""
@@ -323,7 +326,7 @@ class Gradebook(blackboard.Serializable):
         attempt_keys = []
         if students is None:
             students = self.students
-        elif isinstance(students, Student):
+        elif isinstance(students, type(self).student_class):
             students = [students]
         for user in students:
             for assignment_id, assignment in user['assignments'].items():
