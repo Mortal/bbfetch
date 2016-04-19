@@ -59,7 +59,7 @@ class Student(ItemWrapper):
 
 
 class DictWrapper:
-    order_by = ...
+    order_by = str
     item_class = ...
 
     def __init__(self, data):
@@ -74,7 +74,6 @@ class DictWrapper:
 
 
 class Students(DictWrapper):
-    order_by = str
     item_class = Student
 
 
