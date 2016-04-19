@@ -109,7 +109,7 @@ def truncate_name(name, n):
 class Gradebook(blackboard.Serializable):
     """Provides a view of what is accessible in the BlackBoard gradebook."""
 
-    FIELDS = '_students fetch_time assignments'.split()
+    FIELDS = '_students fetch_time _assignments'.split()
 
     def __init__(self, session):
         assert isinstance(session, BlackBoardSession)
@@ -124,7 +124,7 @@ class Gradebook(blackboard.Serializable):
             prev = self._students
         except AttributeError:
             prev = None
-        self.assignments, self._students = self.fetch_overview()
+        self._assignments, self._students = self.fetch_overview()
         if prev is not None:
             self.copy_student_data(prev)
         self.refresh_attempts()
@@ -136,7 +136,7 @@ class Gradebook(blackboard.Serializable):
             if not u['available']:
                 name = '(%s)' % name
             cells = []
-            for aid in self.assignments.keys():
+            for aid in self._assignments.keys():
                 try:
                     a = u['assignments'][aid]
                 except KeyError:

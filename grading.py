@@ -39,7 +39,7 @@ class Grading(blackboard.Serializable):
     def get_assignments(self):
         students = self.gradebook.students
         assignments = {}
-        for assignment in self.gradebook.assignments.keys():
+        for assignment in self.gradebook._assignments.keys():
             by_attempt_id = {}
             user_groups = {}
             for s in students:
@@ -90,7 +90,7 @@ class Grading(blackboard.Serializable):
             a for a in self.assignments
             if attempt_id in self.assignments[a]]
         attempt = self.assignments[assignment_id][attempt_id]
-        assignment = self.gradebook.assignments[assignment_id]
+        assignment = self.gradebook._assignments[assignment_id]
         assignment_name = assignment['name']
         group_name = attempt['groupName']
         d = os.path.join(cwd, assignment_name,
@@ -219,7 +219,7 @@ class Grading(blackboard.Serializable):
             self.assignments.items(), key=lambda x: x[0])
         for assignment, groups in assignments_sorted:
             print('='*79)
-            print(self.gradebook.assignments[assignment]['name'])
+            print(self.gradebook._assignments[assignment]['name'])
             groups = sorted(groups.values(), key=group_key)
             for attempt in groups:
                 if not attempt['last']:
