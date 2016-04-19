@@ -90,6 +90,7 @@ class Gradebook(blackboard.Serializable):
     students = property(lambda self: Students(self._students))
 
     def refresh(self):
+        """Fetch gradebook information from BlackBoard website."""
         self.fetch_time = time.time()
         try:
             prev = self._students
@@ -101,6 +102,7 @@ class Gradebook(blackboard.Serializable):
         self.refresh_attempts()
 
     def print_gradebook(self):
+        """Print a representation of the gradebook state."""
         for u in self.students:
             name = str(u)
             if not u['available']:
@@ -125,6 +127,7 @@ class Gradebook(blackboard.Serializable):
                   (u['username'], name, ' | '.join(cells)))
 
     def fetch_overview(self):
+        """Fetch gradebook information. Returns (assignments, students)."""
         url = (
             'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
             '?course_id=%s' % self.session.course_id)
@@ -182,24 +185,30 @@ class Gradebook(blackboard.Serializable):
         return assignments, users
 
     def copy_student_data(self, prev):
+        """After updating self._students, copy over old assignment data."""
         for user_id, user in self._students.items():
             try:
                 prev_user = prev[user_id]
             except KeyError:
+                # This user did not exist in the old gradebook.
                 continue
             for assignment_id, a1 in user['assignments'].items():
                 try:
                     a2 = prev_user['assignments'][assignment_id]
                 except KeyError:
+                    # This user did not have this assignment previously.
                     continue
                 if a1['needs_grading'] and not a2['needs_grading']:
+                    # A new handin needs grading -- don't copy this assignment.
                     continue
                 if a1['score'] != a2['score']:
+                    # Score information changed -- don't copy this assignment.
                     continue
                 if a1['attempts'] is None:
                     a1['attempts'] = a2['attempts']
 
     def refresh_attempts(self):
+        """Bulk-refresh all missing assignment data."""
         attempt_keys = []
         for user_id, user in self._students.items():
             for assignment_id, assignment in user['assignments'].items():
