@@ -74,6 +74,9 @@ class Assignment(ItemWrapper):
 
     name = property(lambda self: self['name'])
 
+    def __str__(self):
+        return self.name
+
 
 class DictWrapper:
     order_by = str
