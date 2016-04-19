@@ -76,13 +76,20 @@ class Grading(blackboard.Serializable):
             print('%-8s %-30s %-6s | %s' %
                   (username, name, group_name or '', ' | '.join(cells)))
 
-    def get_attempts(self):
-        return sorted(set(
-            attempt
-            for student in self.gradebook.students
-            for assignment in student.assignments
-            for attempt in assignment.attempts
-        ))
+    def get_attempts(self, visible=True, needs_grading=None,
+                     needs_download=None):
+        students = self.gradebook.students
+        if visible is True:
+            students = filter(self.get_student_visible, students)
+        attempts = (attempt for student in students
+                    for assignment in student.assignments
+                    for attempt in assignment.attempts)
+        attempts = set(attempts)
+        if needs_grading is True:
+            attempts = filter(lambda a: a.needs_grading, attempts)
+        if needs_download is True:
+            attempts = filter(lambda a: not self.has_downloaded(a), attempts)
+        return sorted(attempts)
 
     def get_attempt_directory(self, attempt):
         assert isinstance(attempt, Attempt)
