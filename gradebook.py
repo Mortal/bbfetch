@@ -79,8 +79,35 @@ class Assignment(ItemWrapper):
 
 
 class DictWrapper:
+    """
+    Wrapper around a dictionary of objects.
+    Each object is wrapped in the class type(self).item_class,
+    and any keyword arguments passed to the constructor
+    are passed along to item_class.
+
+    >>> from collections import namedtuple
+    >>> class FooWrapper(DictWrapper):
+    ...     item_class = namedtuple('Foo', 'inner meta')
+    >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
+    >>> foos = FooWrapper(foo_data, meta=42)
+
+    Iterating over the DictWrapper will yield the values of foo_data,
+    wrapped in item_class.
+
+    >>> for foo in foos:
+    ...     print(foo)
+    Foo(inner=('bar', 2), meta=42)
+    Foo(inner=('baz', 3), meta=42)
+
+    The index operator looks up the key in the underlying dictionary
+    and wraps the result in item_class.
+
+    >>> print(foos['bar'])
+    Foo(inner=('bar', 2), meta=42)
+    """
+
     order_by = str
-    item_class = ...
+    item_class = NotImplementedError
 
     def __init__(self, data, **kwargs):
         self._data = data
