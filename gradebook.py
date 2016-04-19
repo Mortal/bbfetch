@@ -189,9 +189,9 @@ class Gradebook(blackboard.Serializable):
             if not u['available']:
                 name = '(%s)' % name
             cells = []
-            for aid in self._assignments.keys():
+            for assignment in assignments:
                 try:
-                    a = u['assignments'][aid]
+                    a = u.assignments[assignment.id]
                 except KeyError:
                     cells.append('     ')
                     continue
