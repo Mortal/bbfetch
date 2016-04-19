@@ -98,6 +98,11 @@ class Student(ItemWrapper):
     last_name = property(lambda self: self['last_name'])
 
     @property
+    def assignments(self):
+        return DictWrapper(StudentAssignment, self['assignments'],
+                           assignments=self.kwargs['assignments'])
+
+    @property
     def name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
@@ -119,6 +124,15 @@ class Assignment(ItemWrapper):
     """
 
     name = property(lambda self: self['name'])
+
+    def __str__(self):
+        return self.name
+
+
+class StudentAssignment(ItemWrapper):
+    id = property(lambda self: self.kwargs['data_key'])
+    assignment = property(lambda self: self.kwargs['assignments'][self.id])
+    name = property(lambda self: self.assignment.name)
 
     def __str__(self):
         return self.name
