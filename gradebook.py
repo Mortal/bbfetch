@@ -17,6 +17,55 @@ def get_handin_attempt_counts(session, handin_id):
     return o
 
 
+class Student:
+    """
+    >>> s = Student(dict(first_name="Foo", last_name="Bar", id="123"))
+    >>> s
+    <Student Foo Bar>
+    >>> print(s)
+    Foo Bar
+    >>> s.id
+    '123'
+    """
+
+    first_name = property(lambda self: self['first_name'])
+    last_name = property(lambda self: self['last_name'])
+    id = property(lambda self: self['id'])
+
+    @property
+    def name(self):
+        return '%s %s' % (self.first_name, self.last_name)
+
+    def __repr__(self):
+        return '<Student {}>'.format(self)
+
+    def __str__(self):
+        return self.name
+
+    def __init__(self, data):
+        """
+        data is a mutable mapping in which this student's data is stored.
+        """
+        self._data = data
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __hash__(self):
+        return hash(self.id)
+
+
+class Students:
+    def __init__(self, gradebook):
+        self._gradebook = gradebook
+
+    def __iter__(self):
+        return map(Student, self._gradebook._students.values())
+
+    def __getitem__(self, key):
+        return Student(self._gradebook._students[key])
+
+
 class Gradebook(blackboard.Serializable):
     """Provides a view of what is accessible in the BlackBoard gradebook."""
 
@@ -24,6 +73,8 @@ class Gradebook(blackboard.Serializable):
 
     def __init__(self, session):
         self.session = session
+
+    students = property(lambda self: Students(self))
 
     def refresh(self):
         self.fetch_time = time.time()
