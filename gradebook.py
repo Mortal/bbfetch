@@ -64,10 +64,10 @@ class Assignment(ItemWrapper):
     >>> a = Assignment(dict(
     ...     gpid="", due=0, src="resource/x-bb-assignment",
     ...     limitedAttendance=True, name="Aflevering 3", scrble=True,
-    ...     userCreated=False, gbvis=True, hideAtt=False, cdate=0, sid="449245",
-    ...     catid="813746", align="y", pos=5, an="n", am="y", points=1,
-    ...     groupActivity=True, ldue=0, ssid="", manual=False, visAll=False,
-    ...     vis=True, id="219347", isDeleg=False, type="N"))
+    ...     userCreated=False, gbvis=True, hideAtt=False, cdate=0,
+    ...     sid="449245", catid="813746", align="y", pos=5, an="n", am="y",
+    ...     points=1, groupActivity=True, ldue=0, ssid="", manual=False,
+    ...     visAll=False, vis=True, id="219347", isDeleg=False, type="N"))
     >>> print(a)
     Aflevering 3
     """
