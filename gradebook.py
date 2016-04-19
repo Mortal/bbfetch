@@ -158,6 +158,8 @@ class Attempt(ItemWrapper):
     score = property(lambda self: self['groupScore'])
     needs_grading = property(lambda self: self['groupStatus'] == 'ng')
 
+    assignment = property(lambda self: self._kwargs['assignment'])
+
     def __str__(self):
         return 'Group Attempt %s %s' % (self.group_name, self.date)
 
@@ -174,7 +176,7 @@ class StudentAssignment(ItemWrapper):
         if r is None:
             self._fetch_attempts()
             r = self['attempts']
-        return [Attempt(a) for a in r]
+        return [Attempt(a, assignment=self) for a in r]
 
     def _fetch_attempts(self):
         raise NotImplementedError(
