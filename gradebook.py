@@ -3,7 +3,7 @@ import time
 import numbers
 
 import blackboard
-from blackboard import logger, ParserError
+from blackboard import logger, ParserError, BlackBoardSession
 from dwr import dwr_get_attempts_info
 
 
@@ -72,6 +72,7 @@ class Gradebook(blackboard.Serializable):
     FIELDS = '_students fetch_time assignments'.split()
 
     def __init__(self, session):
+        assert isinstance(session, BlackBoardSession)
         self.session = session
 
     students = property(lambda self: Students(self))
