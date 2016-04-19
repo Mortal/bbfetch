@@ -106,6 +106,14 @@ class Student(ItemWrapper):
     def name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
+    @property
+    def group(self):
+        attempts = [attempt for assignment in self.assignments
+                    for attempt in assignment.attempts]
+        group_names = set(attempt.group_name for attempt in attempts)
+        if group_names:
+            return next(iter(group_names))
+
     def __str__(self):
         return self.name
 
