@@ -8,7 +8,7 @@ from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
-from gradebook import Gradebook
+from gradebook import Gradebook, Assignment, Student
 from elementtext import (
     element_to_markdown, element_text_content)
 
@@ -344,6 +344,37 @@ class Grading(blackboard.Serializable):
         logger.debug("goodMsg1: %s", element_text_content(msg))
 
 
+class StudentDads(Student):
+    @property
+    def group(self):
+        group_name = super().group
+        if group_name is None:
+            return group_name
+        elif group_name.startswith('Gruppe'):
+            x = group_name.split()
+            return '%s-%s' % (x[1], x[3])
+        elif group_name.startswith('Hold'):
+            x = group_name.split()
+            return x[1]
+        else:
+            return group_name
+
+
+class AssignmentDads(Assignment):
+    @property
+    def name(self):
+        return super().name.split()[-1]
+
+
+class GradebookDads(Gradebook):
+    student_class = StudentDads
+    assignment_class = AssignmentDads
+
+
+class GradingDads(Grading):
+    gradebook_class = GradebookDads
+
+
 def download_attempts(session):
     g = Grading(session)
     g.load('grading.json')
@@ -446,7 +477,7 @@ def wrapper():
         parser.error("--username is required")
 
     session = BlackBoardSession(args.cookiejar, username, course)
-    grading = Grading(session)
+    grading = GradingDads(session)
     grading.load(args.dbpath)
     try:
         main(args, session, grading)
