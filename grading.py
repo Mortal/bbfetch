@@ -51,19 +51,25 @@ class Grading(blackboard.Serializable):
             cells = []
             for assignment in assignments:
                 try:
-                    a = u.assignments[assignment.id]
+                    student_assignment = u.assignments[assignment.id]
                 except KeyError:
                     cells.append('     ')
                     continue
-                assert isinstance(a, StudentAssignment)
-                if a.needs_grading:
-                    ng = '!'
-                else:
-                    ng = ' '
-                score = a.score
-                if isinstance(score, numbers.Real):
-                    score = '%g' % score
-                cells.append('%s%-4s' % (ng, score))
+                assert isinstance(student_assignment, StudentAssignment)
+                cell = []
+                for attempt in student_assignment.attempts:
+                    if attempt.needs_grading:
+                        if self.has_downloaded(attempt):
+                            cell.append('!')
+                        else:
+                            cell.append('\u2913')  # DOWNWARDS ARROW TO BAR
+                    elif attempt.score == 0:
+                        cell.append('\u2718')  # HEAVY BALLOT X
+                    elif attempt.score == 1:
+                        cell.append('\u2714')  # HEAVY CHECK MARK
+                    elif isinstance(attempt.score, numbers.Real):
+                        cell.append('%g' % attempt.score)
+                cells.append('%-5s' % ''.join(cell))
             username = u['username'][:8]
             name = truncate_name(name, 30)
             group_name = self.get_group_name_display(u.group)[:6]
