@@ -66,6 +66,15 @@ class Students:
         return Student(self._gradebook._students[key])
 
 
+def truncate_name(name, n):
+    if len(name) <= n:
+        return name
+    parts = name.split()
+    while len(parts) >= 2 and len(' '.join(parts)) >= n:
+        parts = parts[:-2] + [parts[-2][0] + ' ' + parts[-1]]
+    return ' '.join(parts)[:n]
+
+
 class Gradebook(blackboard.Serializable):
     """Provides a view of what is accessible in the BlackBoard gradebook."""
 
@@ -109,6 +118,7 @@ class Gradebook(blackboard.Serializable):
                 if isinstance(score, numbers.Real):
                     score = '%g' % score
                 cells.append('%s%-4s' % (ng, score))
+            name = truncate_name(name, 30)
             print('%-14s %-30s | %s' %
                   (u['username'], name, ' | '.join(cells)))
 
