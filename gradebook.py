@@ -26,8 +26,9 @@ class ItemWrapper:
     def __str__(self):
         return self.id
 
-    def __init__(self, data):
+    def __init__(self, data, **kwargs):
         self._data = data
+        self._kwargs = kwargs
 
     def __getitem__(self, key):
         return self._data[key]
@@ -78,20 +79,21 @@ class DictWrapper:
     order_by = str
     item_class = ...
 
-    def __init__(self, data):
+    def __init__(self, data, **kwargs):
         self._data = data
+        self._kwargs = kwargs
 
     def __iter__(self):
         try:
             return iter(self._items)
         except AttributeError:
-            self._items = [type(self).item_class(v)
+            self._items = [type(self).item_class(v, **self._kwargs)
                            for v in self._data.values()]
             self._items.sort(key=type(self).order_by)
             return iter(self._items)
 
     def __getitem__(self, key):
-        return type(self).item_class(self._data[key])
+        return type(self).item_class(self._data[key], **self._kwargs)
 
 
 class Students(DictWrapper):
