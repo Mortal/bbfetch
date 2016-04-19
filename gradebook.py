@@ -179,6 +179,11 @@ class Gradebook(blackboard.Serializable):
 
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
+        assignments = self.assignments
+        cells = [' ' * 45]
+        for assignment in assignments:
+            cells.append(' %-4s' % assignment.name.split()[-1])
+        print(' | '.join(cells))
         for u in self.students:
             name = str(u)
             if not u['available']:
