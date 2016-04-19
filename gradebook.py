@@ -152,8 +152,11 @@ class Assignment(ItemWrapper):
 
 
 class Attempt(ItemWrapper):
+    id = property(lambda self: self['groupAttemptId'])
     group_name = property(lambda self: self['groupName'])
     date = property(lambda self: self['date'])
+    score = property(lambda self: self['groupScore'])
+    needs_grading = property(lambda self: self['groupStatus'] == 'ng')
 
     def __str__(self):
         return 'Group Attempt %s %s' % (self.group_name, self.date)
