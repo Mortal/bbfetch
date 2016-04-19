@@ -44,9 +44,11 @@ class DictWrapper:
     Foo(inner=('bar', 2), meta=42, data_key='bar')
     """
 
-    def __init__(self, item_class, data, order_by=str, **kwargs):
+    def __init__(self, item_class, data, order_by=None, **kwargs):
         self._item_class = item_class
         self._data = data
+        if order_by is None:
+            order_by = self._item_class.ordering
         self._order_by = order_by
         self._kwargs = kwargs
 
@@ -65,6 +67,11 @@ class DictWrapper:
 
 class ItemWrapper:
     id = property(lambda self: self['id'])
+
+    @staticmethod
+    def ordering(item):
+        """Items are naturally ordered according to this key."""
+        return str(item)
 
     def __repr__(self):
         return '<{} {}>'.format(type(self).__name__, self)
