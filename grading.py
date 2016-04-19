@@ -1,10 +1,12 @@
 import io
 import os
 import re
+import json
+import argparse
 import html5lib
 from requests.compat import urljoin
 import blackboard
-from blackboard import logger, ParserError
+from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
 from gradebook import Gradebook
 from elementtext import (
@@ -15,11 +17,12 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
 class Grading(blackboard.Serializable):
-    FIELDS = ('attempt_state', 'gradebook')
+    FIELDS = ('attempt_state', 'gradebook', 'username')
 
     def __init__(self, session):
         self.session = session
         self.gradebook = Gradebook(self.session)
+        self.username = session.username
 
     def refresh(self):
         logger.info("Refresh gradebook")
@@ -397,5 +400,61 @@ def submit_feedback_20160417(session):
     # for a in g.needs_grading():
 
 
+def main(args, session, grading):
+    grading.refresh()
+    for a in grading.needs_grading():
+        print(a)
+
+
+def get_setting(filename, key):
+    try:
+        with open(filename) as fp:
+            o = json.load(fp)
+        try:
+            return o[key]
+        except KeyError:
+            return o['payload'][key]
+    except Exception:
+        pass
+
+
+def wrapper():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('--username', '-u', default=None)
+    parser.add_argument('--course', default=None)
+    parser.add_argument('--cookiejar', default='cookies.txt')
+    parser.add_argument('--dbpath', default='grading.json')
+    args = parser.parse_args()
+    blackboard.configure_logging(quiet=args.quiet)
+
+    course = args.course
+    if course is None:
+        course = get_setting(args.dbpath, 'course')
+    if course is None:
+        parser.error("--course is required")
+    username = args.username
+    if username is None:
+        username = get_setting(args.dbpath, 'username')
+    if username is None:
+        parser.error("--username is required")
+
+    session = BlackBoardSession(args.cookiejar, username, course)
+    grading = Grading(session)
+    grading.load(args.dbpath)
+    try:
+        main(args, session, grading)
+    except ParserError as exn:
+        print(exn)
+        exn.save()
+    except BadAuth:
+        print("Bad username or password. Forgetting password.")
+        session.forget_password()
+    else:
+        grading.save(args.dbpath)
+    session.save_cookies()
+
+
 if __name__ == "__main__":
-    blackboard.wrapper(submit_feedback_20160417)
+    wrapper()
+    # blackboard.wrapper(submit_feedback_20160417)
