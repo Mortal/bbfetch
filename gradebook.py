@@ -122,7 +122,6 @@ class Gradebook(blackboard.Serializable):
             raise ParserError("Couldn't decode JSON", response)
 
         columns = o['colDefs']
-        # column_dict = {c['id']: c for c in columns}
         assignments = {}
         for c in columns:
             if c.get('src') != 'resource/x-bb-assignment':
@@ -133,30 +132,6 @@ class Gradebook(blackboard.Serializable):
                     c['name'])
             else:
                 assignments[c['id']] = c
-
-
-        # column_ids = [c['id'] for c in columns]
-        # is_assignment = [c['src'] == 'resource/x-bb-assignment' for c in columns]
-        # column_names = [c['name'] for c in columns]
-
-        # for i in assignment_ids:
-        #     o = self.session.get(
-        #         'https://bb.au.dk/webapps/gradebook/do/instructor/' +
-        #         'getAttemptNavData?course_id=%s' % self.session.course_id +
-        #         '&itemId=%s' % i).json()
-        #     groups = []
-        #     for group in o['options']:
-        #         groups.append((group['value'], group['label']))
-
-        #     group_attempts = []
-        #     for group_id, name in groups:
-        #         o = self.session.get(
-        #             'https://bb.au.dk/webapps/gradebook/do/instructor/' +
-        #             'getAttemptNavData?course_id=%s' % self.session.course_id +
-        #             '&itemId=%s' % i +
-        #             '&userId=%s' % group_id).json()
-        #         for a in o['options']:
-        #             group_attempts.append((group_id, a['value'], name, o['label']))
 
         users = {}
         for row in o['rows']:
