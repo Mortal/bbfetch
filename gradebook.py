@@ -86,10 +86,9 @@ class DictWrapper:
     are passed along to item_class.
 
     >>> from collections import namedtuple
-    >>> class FooWrapper(DictWrapper):
-    ...     item_class = namedtuple('Foo', 'inner meta')
+    >>> Foo = namedtuple('Foo', 'inner meta')
     >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
-    >>> foos = FooWrapper(foo_data, meta=42)
+    >>> foos = DictWrapper(Foo, foo_data, meta=42)
 
     Iterating over the DictWrapper will yield the values of foo_data,
     wrapped in item_class.
@@ -106,32 +105,23 @@ class DictWrapper:
     Foo(inner=('bar', 2), meta=42)
     """
 
-    order_by = str
-    item_class = NotImplementedError
-
-    def __init__(self, data, **kwargs):
+    def __init__(self, item_class, data, order_by=str, **kwargs):
+        self._item_class = item_class
         self._data = data
+        self._order_by = order_by
         self._kwargs = kwargs
 
     def __iter__(self):
         try:
             return iter(self._items)
         except AttributeError:
-            self._items = [type(self).item_class(v, **self._kwargs)
+            self._items = [self._item_class(v, **self._kwargs)
                            for v in self._data.values()]
-            self._items.sort(key=type(self).order_by)
+            self._items.sort(key=self._order_by)
             return iter(self._items)
 
     def __getitem__(self, key):
-        return type(self).item_class(self._data[key], **self._kwargs)
-
-
-class Students(DictWrapper):
-    item_class = Student
-
-
-class Assignments(DictWrapper):
-    item_class = Assignment
+        return self._item_class(self._data[key], **self._kwargs)
 
 
 def truncate_name(name, n):
@@ -152,7 +142,14 @@ class Gradebook(blackboard.Serializable):
         assert isinstance(session, BlackBoardSession)
         self.session = session
 
-    students = property(lambda self: Students(self._students))
+    @property
+    def students(self):
+        return DictWrapper(Student, self._students,
+                           assignments=self.assignments)
+
+    @property
+    def assignments(self):
+        return DictWrapper(Assignment, self._assignments)
 
     def refresh(self):
         """Fetch gradebook information from BlackBoard website."""
