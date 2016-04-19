@@ -17,6 +17,52 @@ def get_handin_attempt_counts(session, handin_id):
     return o
 
 
+class DictWrapper:
+    """
+    Wrapper around a dictionary of objects.
+    Each object is wrapped in the class type(self).item_class,
+    and any keyword arguments passed to the constructor
+    are passed along to item_class.
+
+    >>> from collections import namedtuple
+    >>> Foo = namedtuple('Foo', 'inner meta')
+    >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
+    >>> foos = DictWrapper(Foo, foo_data, meta=42)
+
+    Iterating over the DictWrapper will yield the values of foo_data,
+    wrapped in item_class.
+
+    >>> for foo in foos:
+    ...     print(foo)
+    Foo(inner=('bar', 2), meta=42)
+    Foo(inner=('baz', 3), meta=42)
+
+    The index operator looks up the key in the underlying dictionary
+    and wraps the result in item_class.
+
+    >>> print(foos['bar'])
+    Foo(inner=('bar', 2), meta=42)
+    """
+
+    def __init__(self, item_class, data, order_by=str, **kwargs):
+        self._item_class = item_class
+        self._data = data
+        self._order_by = order_by
+        self._kwargs = kwargs
+
+    def __iter__(self):
+        try:
+            return iter(self._items)
+        except AttributeError:
+            self._items = [self._item_class(v, **self._kwargs)
+                           for v in self._data.values()]
+            self._items.sort(key=self._order_by)
+            return iter(self._items)
+
+    def __getitem__(self, key):
+        return self._item_class(self._data[key], **self._kwargs)
+
+
 class ItemWrapper:
     id = property(lambda self: self['id'])
 
@@ -76,52 +122,6 @@ class Assignment(ItemWrapper):
 
     def __str__(self):
         return self.name
-
-
-class DictWrapper:
-    """
-    Wrapper around a dictionary of objects.
-    Each object is wrapped in the class type(self).item_class,
-    and any keyword arguments passed to the constructor
-    are passed along to item_class.
-
-    >>> from collections import namedtuple
-    >>> Foo = namedtuple('Foo', 'inner meta')
-    >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
-    >>> foos = DictWrapper(Foo, foo_data, meta=42)
-
-    Iterating over the DictWrapper will yield the values of foo_data,
-    wrapped in item_class.
-
-    >>> for foo in foos:
-    ...     print(foo)
-    Foo(inner=('bar', 2), meta=42)
-    Foo(inner=('baz', 3), meta=42)
-
-    The index operator looks up the key in the underlying dictionary
-    and wraps the result in item_class.
-
-    >>> print(foos['bar'])
-    Foo(inner=('bar', 2), meta=42)
-    """
-
-    def __init__(self, item_class, data, order_by=str, **kwargs):
-        self._item_class = item_class
-        self._data = data
-        self._order_by = order_by
-        self._kwargs = kwargs
-
-    def __iter__(self):
-        try:
-            return iter(self._items)
-        except AttributeError:
-            self._items = [self._item_class(v, **self._kwargs)
-                           for v in self._data.values()]
-            self._items.sort(key=self._order_by)
-            return iter(self._items)
-
-    def __getitem__(self, key):
-        return self._item_class(self._data[key], **self._kwargs)
 
 
 def truncate_name(name, n):
