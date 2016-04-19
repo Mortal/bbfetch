@@ -82,8 +82,13 @@ class DictWrapper:
         self._data = data
 
     def __iter__(self):
-        items = map(type(self).item_class, self._data.values())
-        return iter(sorted(items, key=type(self).order_by))
+        try:
+            return iter(self._items)
+        except AttributeError:
+            self._items = [type(self).item_class(v)
+                           for v in self._data.values()]
+            self._items.sort(key=type(self).order_by)
+            return iter(self._items)
 
     def __getitem__(self, key):
         return type(self).item_class(self._data[key])
