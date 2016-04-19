@@ -20,7 +20,7 @@ def get_handin_attempt_counts(session, handin_id):
 class Gradebook(blackboard.Serializable):
     """Provides a view of what is accessible in the BlackBoard gradebook."""
 
-    FIELDS = 'students fetch_time assignments'.split()
+    FIELDS = '_students fetch_time assignments'.split()
 
     def __init__(self, session):
         self.session = session
@@ -28,10 +28,10 @@ class Gradebook(blackboard.Serializable):
     def refresh(self):
         self.fetch_time = time.time()
         try:
-            prev = self.students
+            prev = self._students
         except AttributeError:
             prev = None
-        self.assignments, self.students = self.fetch_overview()
+        self.assignments, self._students = self.fetch_overview()
         if prev is not None:
             self.copy_student_data(prev)
         self.refresh_attempts()
@@ -40,10 +40,10 @@ class Gradebook(blackboard.Serializable):
         def get_name(student):
             return '%s %s' % (student['first_name'], student['last_name'])
 
-        user_ids = sorted(self.students.keys(),
-                          key=lambda u: get_name(self.students[u]))
+        user_ids = sorted(self._students.keys(),
+                          key=lambda u: get_name(self._students[u]))
         for user_id in user_ids:
-            u = self.students[user_id]
+            u = self._students[user_id]
             name = get_name(u)
             if not u['available']:
                 name = '(%s)' % name
@@ -148,7 +148,7 @@ class Gradebook(blackboard.Serializable):
         return assignments, users
 
     def copy_student_data(self, prev):
-        for user_id, user in self.students.items():
+        for user_id, user in self._students.items():
             try:
                 prev_user = prev[user_id]
             except KeyError:
@@ -167,13 +167,13 @@ class Gradebook(blackboard.Serializable):
 
     def refresh_attempts(self):
         attempt_keys = []
-        for user_id, user in self.students.items():
+        for user_id, user in self._students.items():
             for assignment_id, assignment in user['assignments'].items():
                 if assignment['attempts'] is None:
                     attempt_keys.append((user_id, assignment_id))
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
-            self.students[user_id]['assignments'][aid]['attempts'] = attempts
+            self._students[user_id]['assignments'][aid]['attempts'] = attempts
 
 
 def print_gradebook(session):
