@@ -166,9 +166,10 @@ class Attempt(ItemWrapper):
 
 class StudentAssignment(ItemWrapper):
     id = property(lambda self: self._kwargs['data_key'])
-    assignment = property(lambda self: self._kwargs['assignments'][self.id])
-    name = property(lambda self: self.assignment.name)
     student = property(lambda self: self._kwargs['student'])
+
+    def __getattr__(self, key):
+        return getattr(self._kwargs['assignments'][self.id], key)
 
     @property
     def attempts(self):
