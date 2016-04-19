@@ -87,16 +87,24 @@ class Grading(blackboard.Serializable):
         else:
             if os.path.exists(d):
                 return d
-        cwd = os.getcwd()
-        assignment = attempt.assignment
-        assignment_name = assignment.name
-        group_name = attempt.student.group_name
-        d = os.path.join(cwd, assignment_name,
-                         '%s (%s)' % (group_name, attempt.id))
+        d = self.get_attempt_directory_name(attempt)
         os.makedirs(d)
         st['directory'] = d
         self.autosave()
         return d
+
+    def get_attempt_directory_name(self, attempt):
+        """
+        To be overridden in subclass. Decide the name where the attempt's
+        files are to be stored.
+        """
+        assert isinstance(attempt, Attempt)
+        cwd = os.getcwd()
+        assignment = attempt.assignment
+        assignment_name = assignment.name
+        group_name = attempt.student.group_name
+        return os.path.join(cwd, assignment_name,
+                            '%s (%s)' % (group_name, attempt.id))
 
     def download_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
