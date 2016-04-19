@@ -17,7 +17,26 @@ def get_handin_attempt_counts(session, handin_id):
     return o
 
 
-class Student:
+class ItemWrapper:
+    id = property(lambda self: self['id'])
+
+    def __repr__(self):
+        return '<{} {}>'.format(type(self).__name__, self)
+
+    def __str__(self):
+        return self.id
+
+    def __init__(self, data):
+        self._data = data
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __hash__(self):
+        return hash(self.id)
+
+
+class Student(ItemWrapper):
     """
     >>> s = Student(dict(first_name="Foo", last_name="Bar", id="123"))
     >>> s
@@ -30,29 +49,13 @@ class Student:
 
     first_name = property(lambda self: self['first_name'])
     last_name = property(lambda self: self['last_name'])
-    id = property(lambda self: self['id'])
 
     @property
     def name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
-    def __repr__(self):
-        return '<Student {}>'.format(self)
-
     def __str__(self):
         return self.name
-
-    def __init__(self, data):
-        """
-        data is a mutable mapping in which this student's data is stored.
-        """
-        self._data = data
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __hash__(self):
-        return hash(self.id)
 
 
 class DictWrapper:
