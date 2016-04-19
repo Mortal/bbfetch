@@ -365,14 +365,38 @@ class GradingDads(Grading):
         elif group_name.startswith('Gruppe'):
             x = group_name.split()
             return '%s-%s' % (x[1], x[3])
-        elif group_name.startswith('Hold'):
-            x = group_name.split()
-            return x[1]
         else:
             return group_name
 
     def get_assignment_name_display(self, assignment):
-        return assignment.name.split()[-1]
+        if assignment.name.startswith('Aflevering'):
+            return assignment.name.split()[-1]
+        else:
+            return assignment.name
+
+    def get_class_name(self, group_name):
+        if group_name.startswith('Gruppe') or group_name.startswith('Hold'):
+            x = group_name.split()
+            return x[1]
+
+    def get_group_number(self, group_name):
+        if group_name.startswith('Gruppe'):
+            x = group_name.split()
+            return x[3]
+
+    def get_attempt_directory_name(self, attempt):
+        group_name = attempt.group_name
+        attempt_id = attempt.id
+        if attempt_id.startswith('_'):
+            attempt_id = attempt_id[1:]
+        if attempt_id.endswith('_1'):
+            attempt_id = attempt_id[:-2]
+        return '{base}/A{assignment}-{class_name}/{group}_{id}'.format(
+            base='/home/rav/TA/dADS2-2016',
+            assignment=self.get_assignment_name_display(attempt.assignment),
+            class_name=self.get_class_name(group_name),
+            group=self.get_group_number(group_name),
+            id=attempt_id)
 
 
 def download_attempts(session):
