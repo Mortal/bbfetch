@@ -112,7 +112,7 @@ class Gradebook(blackboard.Serializable):
                 try:
                     a = u['assignments'][aid]
                 except KeyError:
-                    cells.append(' --  ')
+                    cells.append('     ')
                     continue
                 if a['needs_grading']:
                     ng = '!'
