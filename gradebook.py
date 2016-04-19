@@ -129,10 +129,31 @@ class Assignment(ItemWrapper):
         return self.name
 
 
+class Attempt(ItemWrapper):
+    group_name = property(lambda self: self['groupName'])
+    date = property(lambda self: self['date'])
+
+    def __str__(self):
+        return 'Group Attempt %s %s' % (self.group_name, self.date)
+
+
 class StudentAssignment(ItemWrapper):
     id = property(lambda self: self._kwargs['data_key'])
     assignment = property(lambda self: self._kwargs['assignments'][self.id])
     name = property(lambda self: self.assignment.name)
+
+    @property
+    def attempts(self):
+        r = self['attempts']
+        if r is None:
+            self._fetch_attempts()
+            r = self['attempts']
+        return [Attempt(a) for a in r]
+
+    def _fetch_attempts(self):
+        raise NotImplementedError(
+            "StudentAssignment attempts was None, " +
+            "implement _fetch_attempts!")
 
     def __str__(self):
         return self.name
