@@ -243,6 +243,8 @@ class Grading(blackboard.Serializable):
             return 'local_files' in st
 
     def submit_grade(self, attempt_id, grade, text, filenames):
+        if isinstance(attempt_id, Attempt):
+            attempt_id = attempt_id.id
         url = (
             'https://bb.au.dk/webapps/assignment/gradeAssignmentRedirector' +
             '?course_id=%s' % self.session.course_id +
