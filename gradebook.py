@@ -88,14 +88,9 @@ class Gradebook(blackboard.Serializable):
         self.refresh_attempts()
 
     def print_gradebook(self):
-        def get_name(student):
-            return '%s %s' % (student['first_name'], student['last_name'])
-
-        user_ids = sorted(self._students.keys(),
-                          key=lambda u: get_name(self._students[u]))
-        for user_id in user_ids:
-            u = self._students[user_id]
-            name = get_name(u)
+        students = sorted(self.students, key=str)
+        for u in students:
+            name = str(u)
             if not u['available']:
                 name = '(%s)' % name
             cells = []
