@@ -345,6 +345,10 @@ class Grading(blackboard.Serializable):
 
 
 class StudentDads(Student):
+    @staticmethod
+    def ordering(student):
+        return (student.group or '\xff', student.name)
+
     @property
     def group(self):
         group_name = super().group
