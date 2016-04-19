@@ -56,17 +56,18 @@ class Student:
 
 
 class Students:
-    sort_key = str
+    order_by = str
+    item_class = Student
 
     def __init__(self, data):
         self._data = data
 
     def __iter__(self):
-        students = map(Student, self._data.values())
-        return iter(sorted(students, key=type(self).sort_key))
+        items = map(type(self).item_class, self._data.values())
+        return iter(sorted(items, key=type(self).order_by))
 
     def __getitem__(self, key):
-        return Student(self._data[key])
+        return type(self).item_class(self._data[key])
 
 
 def truncate_name(name, n):
