@@ -2,6 +2,14 @@ from blackboard.grading import Grading
 
 
 class GradingDads(Grading):
+    @classmethod
+    def get_username(cls, args):
+        return '20103940'
+
+    @classmethod
+    def get_course(cls, args):
+        return '_49446_1'
+
     def get_group_name_display(self, group_name):
         """Given a group name, compute an abbreviation of the name."""
         if group_name is None:
