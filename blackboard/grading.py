@@ -42,7 +42,7 @@ class Grading(blackboard.Serializable):
         for assignment in assignments:
             name = self.get_assignment_name_display(assignment)
             cells.append(' %-4s' % name)
-        print(' | '.join(cells))
+        rows = [cells]
         students = filter(self.get_student_visible, self.gradebook.students)
         students = sorted(students, key=self.get_student_ordering)
         for u in students:
@@ -76,8 +76,11 @@ class Grading(blackboard.Serializable):
             username = u['username'][:8]
             name = truncate_name(name, 30)
             group_name = self.get_group_name_display(u.group)[:6]
-            print('%-8s %-30s %-6s | %s' %
-                  (username, name, group_name or '', ' | '.join(cells)))
+            rows.append(
+                ['%-8s %-30s %-6s' % (username, name, group_name or '')] +
+                cells)
+        for row in rows:
+            print(' | '.join(row))
 
     def get_attempts(self, visible=True, needs_grading=None,
                      needs_download=None, needs_upload=None):
