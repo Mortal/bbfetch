@@ -95,6 +95,17 @@ class ItemWrapper:
     def __hash__(self):
         return hash(self.id)
 
+    def __lt__(self, other):
+        if type(self) != type(other):
+            raise TypeError("unorderable types: %s() < %s()" %
+                            (type(self).__name__, type(other).__name__))
+        return self.ordering(self) < self.ordering(other)
+
+    def __eq__(self, other):
+        if type(self) != type(other):
+            return False
+        return self.id == other.id
+
 
 class Student(ItemWrapper):
     """
