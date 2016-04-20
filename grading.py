@@ -417,12 +417,13 @@ class Grading(blackboard.Serializable):
                 self.submit_grade(attempt, score, feedback, attachments)
 
     def main(self, args, session, grading):
-        self.refresh()
-        self.print_gradebook()
+        if args.refresh:
+            self.refresh()
         if args.download:
             self.download_all_attempt_files()
         if args.upload:
             self.upload_all_feedback(dry_run=False)
+        self.print_gradebook()
 
     @staticmethod
     def get_setting(filename, key):
@@ -446,6 +447,8 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--download', '-d', action='store_true')
         parser.add_argument('--upload', '-u', action='store_true')
+        parser.add_argument('--no-refresh', '-n', action='store_false',
+                            dest='refresh')
         return parser
 
     @classmethod
