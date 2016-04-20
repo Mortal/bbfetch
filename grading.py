@@ -154,7 +154,7 @@ class Grading(blackboard.Serializable):
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
         keys = 'submission comments files'.split()
-        st = self.attempt_state[attempt.id]
+        st = self.attempt_state.get(attempt.id, {})
         if not all(k in st for k in keys):
             self.refresh_attempt_files(attempt)
             st = self.attempt_state[attempt.id]
