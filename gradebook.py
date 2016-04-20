@@ -135,9 +135,13 @@ class Student(ItemWrapper):
     def group(self):
         attempts = [attempt for assignment in self.assignments
                     for attempt in assignment.attempts]
-        group_names = set(attempt.group_name for attempt in attempts)
+        # Attempts are ordered first by assignment (latest last)
+        # and then by attempt within the assignment (most recent last).
+        # Thus, we take the last group_name.
+        group_names = [attempt.group_name for attempt in attempts
+                       if attempt.group_name]
         if group_names:
-            return next(iter(group_names))
+            return group_names[-1]
 
     def __str__(self):
         return self.name
