@@ -1,3 +1,4 @@
+import re
 from blackboard.grading import Grading
 
 
@@ -67,6 +68,19 @@ class GradingDads(Grading):
             base='/home/rav/TA/dADS2-2016',
             assignment=self.get_assignment_name_display(attempt.assignment),
             class_name=class_name, group=group_number, id=attempt_id)
+
+    def get_feedback_score(self, comments):
+        """
+        Decide from the contents of comments.txt what score to give a handin.
+        """
+        rehandin = re.search(r'genaflevering|re-?handin', comments, re.I)
+        accept = re.search(r'accepted|godkendt', comments, re.I)
+        if rehandin and accept:
+            raise ValueError("Both rehandin and accept")
+        elif rehandin:
+            return 0
+        elif accept:
+            return 1
 
 
 if __name__ == "__main__":
