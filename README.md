@@ -13,6 +13,45 @@ pip install -r requirements.txt
 Next, copy `dads-rav.py` to `YOURCOURSE.py`
 and edit it, filling out the details.
 
+### Usage
+
+Activate the virtual environment and run `YOURCOURSE.py`:
+
+```
+source venv/bin/activate
+python YOURCOURSE.py --help
+```
+
+The useful options are `-d` (download new handins),
+`-u` (upload feedback) and `-n` (do not refresh gradebook).
+
+When handins are downloaded, they are stored in the directories
+pointed to by `get_attempt_directory_name`.
+
+In order to upload feedback to the students, you must create a new file in this
+directory named `comments.txt` and include either the word "Accepted"
+or "re-handin" ("Godkendt"/"Genaflevering" in Danish).
+The `get_feedback_score` function may be modified to change this behavior.
+The `-u` (`--upload`) argument will look for handins that need grading
+and have a `comments.txt` file, and then upload the comments to the student.
+
+By default, if the student has handed in a file name `my-pretty-handin.pdf`
+and you create a file with the same name followed by `_ann` ("annotated"),
+e.g. `my-pretty-handin_ann.pdf`, it will be uploaded along with the feedback.
+This is the naming convention used by
+[PDFAnnotater](https://github.com/Mortal/pdfannotater).
+You can change this behavior by overriding `get_feedback_attachments`.
+
+
+### Password security
+
+This project uses the `keyring` 3rd party module from the Python package index (PyPI)
+to store your login password to BlackBoard so you don't have to enter it every time.
+
+Thus, your BlackBoard password will be accessible to all Python programs,
+making it possible for anyone with access to your computer to read your
+password. Keep your computer safe from malicious people!
+
 
 ## Implementation
 
