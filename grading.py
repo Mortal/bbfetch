@@ -91,6 +91,14 @@ class Grading(blackboard.Serializable):
             attempts = filter(lambda a: not self.has_downloaded(a), attempts)
         return sorted(attempts)
 
+    def download_all_attempt_files(self, **kwargs):
+        kwargs.setdefault('needs_grading', True)
+        kwargs.setdefault('needs_download', True)
+        for attempt in self.get_attempts(**kwargs):
+            self.download_attempt_files(attempt)
+            # print("Would download %s to %s" %
+            #       (attempt, self.get_attempt_directory_name(attempt)))
+
     def get_attempt_directory(self, attempt):
         assert isinstance(attempt, Attempt)
         st = self.attempt_state.setdefault(attempt.id, {})
@@ -426,6 +434,7 @@ def submit_feedback_20160417(session):
 def main(args, session, grading):
     grading.refresh()
     grading.print_gradebook()
+    grading.download_all_attempt_files()
 
 
 def get_setting(filename, key):
