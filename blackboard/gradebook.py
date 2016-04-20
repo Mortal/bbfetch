@@ -346,14 +346,3 @@ class Gradebook(blackboard.Serializable):
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
             self.students[user_id]['assignments'][aid]['attempts'] = attempts
-
-
-def print_gradebook(session):
-    g = Gradebook(session)
-    g.load('gradebook.json')
-    g.print_gradebook()
-    # g.save()
-
-
-if __name__ == "__main__":
-    blackboard.wrapper(print_gradebook)
