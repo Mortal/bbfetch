@@ -138,9 +138,9 @@ class Grading(blackboard.Serializable):
         data = self.get_attempt_files(attempt)
         d = self.get_attempt_directory(attempt)
         if data['comments']:
-            with open(os.path.join(d, 'comments.txt'), 'w') as fp:
+            with open(os.path.join(d, 'student_comments.txt'), 'w') as fp:
                 fp.write(data['comments'])
-            logger.info("Saving comments.txt for attempt %s", attempt)
+            logger.info("Saving student_comments.txt for attempt %s", attempt)
         if data['submission']:
             with open(os.path.join(d, 'submission.txt'), 'w') as fp:
                 fp.write(data['submission'])
