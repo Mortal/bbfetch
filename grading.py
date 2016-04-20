@@ -248,7 +248,20 @@ class Grading(blackboard.Serializable):
             attempts = list(assignment.attempts)
         if attempts:
             st = self.attempt_state.get(attempts[-1].id, {})
-            return all('local_path' in f for f in st.get('files', []))
+            files = st.get('files', [])
+            all_claimed = all('local_path' in f for f in files)
+            if not all_claimed:
+                return False
+            # Claims they all exist; do they really?
+            for f in files:
+                if not os.path.exists(f['local_path']):
+                    del f['local_path']
+            # Now, all files have only existing local_path
+            all_exist = all('local_path' in f for f in files)
+            if not all_exist:
+                # We deleted some local_paths
+                self.autosave()
+            return all_exist
 
     def submit_grade(self, attempt_id, grade, text, filenames):
         if isinstance(attempt_id, Attempt):
