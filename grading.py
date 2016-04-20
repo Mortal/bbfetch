@@ -437,7 +437,7 @@ class Grading(blackboard.Serializable):
             pass
 
     @classmethod
-    def execute_from_command_line(cls):
+    def get_argument_parser(cls):
         parser = argparse.ArgumentParser()
         parser.add_argument('--quiet', action='store_true')
         parser.add_argument('--username', default=None)
@@ -446,19 +446,40 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--download', '-d', action='store_true')
         parser.add_argument('--upload', '-u', action='store_true')
+
+    @classmethod
+    def parse_args(cls):
+        parser = cls.get_argument_parser()
         args = parser.parse_args()
         blackboard.configure_logging(quiet=args.quiet)
+        return parser, args
 
+    @classmethod
+    def get_course(cls, args):
         course = args.course
         if course is None:
             course = cls.get_setting(args.dbpath, 'course')
         if course is None:
-            parser.error("--course is required")
+            raise Exception("--course is required")
+        return course
+
+    @classmethod
+    def get_username(cls, args):
         username = args.username
         if username is None:
             username = cls.get_setting(args.dbpath, 'username')
         if username is None:
-            parser.error("--username is required")
+            raise Exception("--username is required")
+        return username
+
+    @classmethod
+    def execute_from_command_line(cls):
+        parser, args = cls.parse_args()
+        try:
+            course = cls.get_course(args)
+            username = cls.get_username(args)
+        except Exception as exn:
+            parser.error(str(exn))
 
         session = BlackBoardSession(args.cookiejar, username, course)
         grading = GradingDads(session)
