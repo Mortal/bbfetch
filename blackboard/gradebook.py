@@ -4,7 +4,7 @@ import numbers
 
 import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
-from dwr import dwr_get_attempts_info
+from blackboard.dwr import dwr_get_attempts_info
 
 
 def get_handin_attempt_counts(session, handin_id):
