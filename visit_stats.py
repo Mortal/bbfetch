@@ -1,5 +1,5 @@
 import blackboard
-from datatable import fetch_datatable
+from blackboard.datatable import fetch_datatable
 
 
 def get_visit_stats(session):

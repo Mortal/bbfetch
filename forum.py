@@ -3,7 +3,7 @@ import html5lib
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
 import blackboard
-from datatable import fetch_datatable
+from blackboard.datatable import fetch_datatable
 from elementtext import element_to_markdown
 
 

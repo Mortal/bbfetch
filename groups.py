@@ -1,5 +1,5 @@
 import blackboard
-from datatable import fetch_datatable
+from blackboard.datatable import fetch_datatable
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
