@@ -1,3 +1,21 @@
+## BlackBoard Grade Centre command line interface
+
+### Setup
+
+First, create a virtual environment and install the dependencies.
+
+```
+pyvenv-3.5 venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Next, copy `dads-rav.py` to `YOURCOURSE.py`
+and edit it, filling out the details.
+
+
+## Implementation
+
 Python module to access the BlackBoard installation at Aarhus University
 from the command line.
 
