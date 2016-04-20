@@ -247,8 +247,8 @@ class Grading(blackboard.Serializable):
         downloaded.
         """
 
-        st = self.attempt_state.get(attempt.id, {})
-        files = st.get('files', [])
+        st = self.get_attempt_files(attempt)
+        files = st['files']
         all_claimed = all('local_path' in f for f in files)
         if not all_claimed:
             return False
