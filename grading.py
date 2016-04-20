@@ -446,6 +446,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--download', '-d', action='store_true')
         parser.add_argument('--upload', '-u', action='store_true')
+        return parser
 
     @classmethod
     def parse_args(cls):
