@@ -240,7 +240,7 @@ class Grading(blackboard.Serializable):
             attempts = list(assignment.attempts)
         if attempts:
             st = self.attempt_state.get(attempts[-1].id, {})
-            return 'local_files' in st
+            return all('local_path' in f for f in st.get('files', []))
 
     def submit_grade(self, attempt_id, grade, text, filenames):
         if isinstance(attempt_id, Attempt):
