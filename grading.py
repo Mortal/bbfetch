@@ -59,7 +59,9 @@ class Grading(blackboard.Serializable):
                 cell = []
                 for attempt in student_assignment.attempts:
                     if attempt.needs_grading:
-                        if self.has_downloaded(attempt):
+                        if self.has_feedback(attempt):
+                            cell.append('\u21A5')  # UPWARDS ARROW FROM BAR
+                        elif self.has_downloaded(attempt):
                             cell.append('!')
                         else:
                             cell.append('\u2913')  # DOWNWARDS ARROW TO BAR
@@ -77,7 +79,7 @@ class Grading(blackboard.Serializable):
                   (username, name, group_name or '', ' | '.join(cells)))
 
     def get_attempts(self, visible=True, needs_grading=None,
-                     needs_download=None):
+                     needs_download=None, needs_upload=None):
         students = self.gradebook.students
         if visible is True:
             students = filter(self.get_student_visible, students)
@@ -89,6 +91,9 @@ class Grading(blackboard.Serializable):
             attempts = filter(lambda a: a.needs_grading, attempts)
         if needs_download is True:
             attempts = filter(lambda a: not self.has_downloaded(a), attempts)
+        if needs_upload is True:
+            attempts = filter(
+                lambda a: self.has_feedback(a) and a.needs_grading, attempts)
         return sorted(attempts)
 
     def download_all_attempt_files(self, **kwargs):
@@ -232,36 +237,74 @@ class Grading(blackboard.Serializable):
             files=files)
         self.autosave()
 
-    def has_downloaded(self, assignment):
+    def has_downloaded(self, attempt):
         """
         has_downloaded(attempt) -> True if the attempt's files have been
         downloaded.
-
-        has_downloaded(student_assignment) -> True if the student's latest
-        attempt's files have been downloaded; None if no attempts exist.
         """
 
-        if isinstance(assignment, Attempt):
-            attempts = [assignment]
-        else:
-            assert isinstance(assignment, StudentAssignment)
-            attempts = list(assignment.attempts)
-        if attempts:
-            st = self.attempt_state.get(attempts[-1].id, {})
-            files = st.get('files', [])
-            all_claimed = all('local_path' in f for f in files)
-            if not all_claimed:
-                return False
-            # Claims they all exist; do they really?
-            for f in files:
-                if not os.path.exists(f['local_path']):
-                    del f['local_path']
-            # Now, all files have only existing local_path
-            all_exist = all('local_path' in f for f in files)
-            if not all_exist:
-                # We deleted some local_paths
-                self.autosave()
-            return all_exist
+        st = self.attempt_state.get(attempt.id, {})
+        files = st.get('files', [])
+        all_claimed = all('local_path' in f for f in files)
+        if not all_claimed:
+            return False
+        # Claims they all exist; do they really?
+        for f in files:
+            if not os.path.exists(f['local_path']):
+                del f['local_path']
+        # Now, all files have only existing local_path
+        all_exist = all('local_path' in f for f in files)
+        if not all_exist:
+            # We deleted some local_paths
+            self.autosave()
+        return all_exist
+
+    def has_feedback(self, attempt):
+        st = self.attempt_state.get(attempt.id, {})
+        directory = st.get('directory')
+        if not directory:
+            return
+        feedback_file = os.path.join(directory, 'comments.txt')
+        return os.path.exists(feedback_file)
+
+    def get_feedback(self, attempt):
+        st = self.attempt_state.get(attempt.id, {})
+        directory = st.get('directory')
+        if not directory:
+            return
+        feedback_file = os.path.join(directory, 'comments.txt')
+        try:
+            with open(feedback_file) as fp:
+                return fp.read()
+        except FileNotFoundError:
+            return
+
+    def get_feedback_attachments(self, attempt):
+        st = self.attempt_state.get(attempt.id, {})
+        files = st.get('files', [])
+        try:
+            filenames = [f['local_path'] for f in files]
+        except KeyError:
+            raise ValueError("Not all files downloaded")
+        annotated_filenames = [
+            self.get_annotated_filename(filename)
+            for filename in filenames]
+        return [filename for filename in annotated_filenames
+                if os.path.exists(filename)]
+
+    def get_annotated_filename(self, filename):
+        base, ext = os.path.splitext(filename)
+        return base + '_ann' + ext
+
+    def get_feedback_score(self, comments):
+        rehandin = re.search(r'genaflevering|re-?handin', comments, re.I)
+        accept = re.search(r'accepted|godkendt', comments, re.I)
+        if rehandin and accept:
+            raise ValueError("Both rehandin and accept")
+        elif rehandin:
+            return 0
+        elif accept:
+            return 1
 
     def submit_grade(self, attempt_id, grade, text, filenames):
         if isinstance(attempt_id, Attempt):
@@ -343,6 +386,35 @@ class Grading(blackboard.Serializable):
         if msg is None:
             raise ParserError("No goodMsg1 in POST response", response)
         logger.debug("goodMsg1: %s", element_text_content(msg))
+
+    def upload_all_feedback(self, dry_run=False):
+        uploads = []
+        attempts = self.get_attempts(needs_upload=True)
+        for attempt in attempts:
+            feedback = self.get_feedback(attempt)
+            errors = []
+            try:
+                score = self.get_feedback_score(feedback)
+            except ValueError as exn:
+                errors.append(str(exn))
+            else:
+                if score is None:
+                    errors.append("Feedback does not indicate accept/rehandin")
+            try:
+                attachments = self.get_feedback_attachments(attempt)
+            except ValueError as exn:
+                errors.append(str(exn))
+            if errors:
+                print("Error for %s:" % (attempt,))
+                for e in errors:
+                    print("* %s" % (e,))
+            else:
+                uploads.append((attempt, score, feedback, attachments))
+        if dry_run:
+            print(uploads)
+        else:
+            for attempt, score, feedback, attachments in uploads:
+                self.submit_grade(attempt, score, feedback, attachments)
 
 
 class GradingDads(Grading):
@@ -447,7 +519,10 @@ def submit_feedback_20160417(session):
 def main(args, session, grading):
     grading.refresh()
     grading.print_gradebook()
-    grading.download_all_attempt_files()
+    if args.download:
+        grading.download_all_attempt_files()
+    if args.upload:
+        grading.upload_all_feedback(dry_run=False)
 
 
 def get_setting(filename, key):
@@ -465,10 +540,12 @@ def get_setting(filename, key):
 def wrapper():
     parser = argparse.ArgumentParser()
     parser.add_argument('--quiet', action='store_true')
-    parser.add_argument('--username', '-u', default=None)
+    parser.add_argument('--username', default=None)
     parser.add_argument('--course', default=None)
     parser.add_argument('--cookiejar', default='cookies.txt')
     parser.add_argument('--dbpath', default='grading.json')
+    parser.add_argument('--download', '-d', action='store_true')
+    parser.add_argument('--upload', '-u', action='store_true')
     args = parser.parse_args()
     blackboard.configure_logging(quiet=args.quiet)
 
