@@ -483,7 +483,7 @@ class Grading(blackboard.Serializable):
             parser.error(str(exn))
 
         session = BlackBoardSession(args.cookiejar, username, course)
-        grading = GradingDads(session)
+        grading = cls(session)
         grading.load(args.dbpath)
         try:
             grading.main(args, session, grading)
