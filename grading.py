@@ -372,16 +372,6 @@ class GradingDads(Grading):
             id=attempt_id)
 
 
-def download_attempts(session):
-    g = Grading(session)
-    g.load('grading.json')
-    g.print_assignments()
-    for a in g.needs_grading():
-        if not a['downloaded']:
-            g.download_attempt_files(a['attempt_id'])
-    g.save('grading.json')
-
-
 def submit_feedback(session):
     g = Grading(session)
     g.load('grading.json')
