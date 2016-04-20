@@ -11,7 +11,7 @@ from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
 from blackboard.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment)
-from elementtext import (
+from blackboard.elementtext import (
     element_to_markdown, element_text_content)
 
 
