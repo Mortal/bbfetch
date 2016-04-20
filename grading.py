@@ -416,6 +416,65 @@ class Grading(blackboard.Serializable):
             for attempt, score, feedback, attachments in uploads:
                 self.submit_grade(attempt, score, feedback, attachments)
 
+    def main(self, args, session, grading):
+        self.refresh()
+        self.print_gradebook()
+        if args.download:
+            self.download_all_attempt_files()
+        if args.upload:
+            self.upload_all_feedback(dry_run=False)
+
+    @staticmethod
+    def get_setting(filename, key):
+        try:
+            with open(filename) as fp:
+                o = json.load(fp)
+            try:
+                return o[key]
+            except KeyError:
+                return o['payload'][key]
+        except Exception:
+            pass
+
+    @classmethod
+    def execute_from_command_line(cls):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--quiet', action='store_true')
+        parser.add_argument('--username', default=None)
+        parser.add_argument('--course', default=None)
+        parser.add_argument('--cookiejar', default='cookies.txt')
+        parser.add_argument('--dbpath', default='grading.json')
+        parser.add_argument('--download', '-d', action='store_true')
+        parser.add_argument('--upload', '-u', action='store_true')
+        args = parser.parse_args()
+        blackboard.configure_logging(quiet=args.quiet)
+
+        course = args.course
+        if course is None:
+            course = cls.get_setting(args.dbpath, 'course')
+        if course is None:
+            parser.error("--course is required")
+        username = args.username
+        if username is None:
+            username = cls.get_setting(args.dbpath, 'username')
+        if username is None:
+            parser.error("--username is required")
+
+        session = BlackBoardSession(args.cookiejar, username, course)
+        grading = GradingDads(session)
+        grading.load(args.dbpath)
+        try:
+            grading.main(args, session, grading)
+        except ParserError as exn:
+            print(exn)
+            exn.save()
+        except BadAuth:
+            print("Bad username or password. Forgetting password.")
+            session.forget_password()
+        else:
+            grading.save(args.dbpath)
+        session.save_cookies()
+
 
 class GradingDads(Grading):
     def get_student_ordering(self, student):
@@ -465,117 +524,6 @@ class GradingDads(Grading):
             id=attempt_id)
 
 
-def submit_feedback(session):
-    g = Grading(session)
-    g.load('grading.json')
-    g.submit_grade('_22022_1', 0.8, 'Test feedback', ['test.txt'])
-
-
-def submit_feedback_20160417(session):
-    g = Grading(session)
-    g.load('grading.json')
-    g.refresh()
-    assignment_id = '219345'
-    groups = g.assignments[assignment_id]
-    attempt_ids = sorted(groups.keys(), key=lambda x: groups[x]['groupName'])
-    for attempt_id in attempt_ids:
-        attempt = groups[attempt_id]
-        d = g.get_attempt_directory(attempt_id)
-        data = g.get_attempt_files(attempt_id)
-        uploads = []
-        comments = ''
-        score = None
-        comments_file = os.path.join(d, 'comments.txt')
-        if not os.path.exists(comments_file):
-            continue
-
-        with open(comments_file) as fp:
-            comments = fp.read()
-        rehandin = re.search(r'genaflevering|re-?handin', comments, re.I)
-        accept = re.search(r'accepted|godkendt', comments, re.I)
-        if rehandin and accept:
-            score = 0.5
-        elif rehandin:
-            score = 0
-        elif accept:
-            score = 1
-
-        for o in data['files']:
-            filename = o['filename']
-            base, ext = os.path.splitext(filename)
-            if ext != '.pdf':
-                continue
-            # outfile = os.path.join(d, filename)
-            annfile = os.path.join(d, '%s_ann%s' % (base, ext))
-            if os.path.exists(annfile):
-                uploads.append(annfile)
-        print(attempt['groupName'], attempt['groupStatus'],
-              attempt_id, score, len(comments), uploads)
-        if attempt['groupStatus'] == 'ng' and (score == 0 or score == 1):
-            g.submit_grade(attempt_id, score, comments, uploads)
-    # for a in g.needs_grading():
-
-
-def main(args, session, grading):
-    grading.refresh()
-    grading.print_gradebook()
-    if args.download:
-        grading.download_all_attempt_files()
-    if args.upload:
-        grading.upload_all_feedback(dry_run=False)
-
-
-def get_setting(filename, key):
-    try:
-        with open(filename) as fp:
-            o = json.load(fp)
-        try:
-            return o[key]
-        except KeyError:
-            return o['payload'][key]
-    except Exception:
-        pass
-
-
-def wrapper():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--quiet', action='store_true')
-    parser.add_argument('--username', default=None)
-    parser.add_argument('--course', default=None)
-    parser.add_argument('--cookiejar', default='cookies.txt')
-    parser.add_argument('--dbpath', default='grading.json')
-    parser.add_argument('--download', '-d', action='store_true')
-    parser.add_argument('--upload', '-u', action='store_true')
-    args = parser.parse_args()
-    blackboard.configure_logging(quiet=args.quiet)
-
-    course = args.course
-    if course is None:
-        course = get_setting(args.dbpath, 'course')
-    if course is None:
-        parser.error("--course is required")
-    username = args.username
-    if username is None:
-        username = get_setting(args.dbpath, 'username')
-    if username is None:
-        parser.error("--username is required")
-
-    session = BlackBoardSession(args.cookiejar, username, course)
-    grading = GradingDads(session)
-    grading.load(args.dbpath)
-    try:
-        main(args, session, grading)
-    except ParserError as exn:
-        print(exn)
-        exn.save()
-    except BadAuth:
-        print("Bad username or password. Forgetting password.")
-        session.forget_password()
-    else:
-        grading.save(args.dbpath)
-    session.save_cookies()
-
-
 if __name__ == "__main__":
-    wrapper()
+    GradingDads.execute_from_command_line()
     # blackboard.wrapper(submit_feedback_20160417)
