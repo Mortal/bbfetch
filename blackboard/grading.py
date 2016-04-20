@@ -9,7 +9,8 @@ from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
-from gradebook import Gradebook, Attempt, truncate_name, StudentAssignment
+from blackboard.gradebook import (
+    Gradebook, Attempt, truncate_name, StudentAssignment)
 from elementtext import (
     element_to_markdown, element_text_content)
 

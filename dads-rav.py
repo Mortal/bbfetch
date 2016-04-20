@@ -1,4 +1,4 @@
-from grading import Grading
+from blackboard.grading import Grading
 
 
 class GradingDads(Grading):
