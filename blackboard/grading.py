@@ -186,13 +186,13 @@ class Grading(blackboard.Serializable):
             st = self.attempt_state[attempt.id]
         return {k: st[k] for k in keys}
 
-    def refresh_attempt_files(self, attempt):
-        assert isinstance(attempt, Attempt)
+    @staticmethod
+    def fetch_attempt(session, attempt_id):
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
-               '?course_id=%s' % self.session.course_id +
-               '&groupAttemptId=%s' % attempt.id)
-        response = self.session.get(url)
+               '?course_id=%s' % session.course_id +
+               '&groupAttemptId=%s' % attempt_id)
+        response = session.get(url)
         document = html5lib.parse(response.content, encoding=response.encoding)
         submission_text = document.find(
             './/h:div[@id="submissionTextView"]', NS)
@@ -242,12 +242,17 @@ class Grading(blackboard.Serializable):
                     raise blackboard.ParserError(
                         "No download link for file %r" % (filename,),
                         response)
-        logger.debug("refresh_attempt_files updating attempt_state[%r]",
-                     attempt.id)
-        self.attempt_state.setdefault(attempt.id, {}).update(
+        return dict(
             submission=submission_text,
             comments=comments,
             files=files)
+
+    def refresh_attempt_files(self, attempt):
+        assert isinstance(attempt, Attempt)
+        new_state = Grading.fetch_attempt(self.session, attempt.id)
+        logger.debug("refresh_attempt_files updating attempt_state[%r]",
+                     attempt.id)
+        self.attempt_state.setdefault(attempt.id, {}).update(new_state)
         self.autosave()
 
     def has_downloaded(self, attempt):
