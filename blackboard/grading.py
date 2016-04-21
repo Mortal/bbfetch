@@ -165,8 +165,16 @@ class Grading(blackboard.Serializable):
                 for chunk in response.iter_content(chunk_size=64*1024):
                     if chunk:
                         fp.write(chunk)
+            self.extract_archive(outfile)
             o['local_path'] = outfile
             self.autosave()
+
+    def extract_archive(self, filename):
+        path = os.path.dirname(filename)
+        if filename.endswith('.zip'):
+            import zipfile
+            with zipfile.open(filename) as zf:
+                zf.extractall(path)
 
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
