@@ -1,6 +1,7 @@
 import io
 import os
 import json
+import pprint
 import html5lib
 
 from requests.compat import urljoin
@@ -221,5 +222,8 @@ def submit_grade(session, attempt_id, is_group_assignment,
     document = html5lib.parse(response.content, encoding=response.encoding)
     msg = document.find('.//h:span[@id="goodMsg1"]', NS)
     if msg is None:
-        raise ParserError("No goodMsg1 in POST response", response)
+        raise ParserError(
+            "No goodMsg1 in POST response", response,
+            'Post data:\n%s' % pprint.pformat(data),
+            'Files:\n%s' % pprint.pformat(files))
     logger.debug("goodMsg1: %s", element_text_content(msg))
