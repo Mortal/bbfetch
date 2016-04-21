@@ -246,17 +246,18 @@ class Gradebook(blackboard.Serializable):
             prev = self._students
         except AttributeError:
             prev = None
-        self._assignments, self._students = self.fetch_overview()
+        self._assignments, self._students = Gradebook.fetch_overview(self.session)
         if prev is not None:
             self.copy_student_data(prev)
         self.refresh_attempts()
 
-    def fetch_overview(self):
+    @staticmethod
+    def fetch_overview(session):
         """Fetch gradebook information. Returns (assignments, students)."""
         url = (
             'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
-            '?course_id=%s' % self.session.course_id)
-        response = self.session.get(url)
+            '?course_id=%s' % session.course_id)
+        response = session.get(url)
         try:
             o = response.json()
         except json.decoder.JSONDecodeError:
