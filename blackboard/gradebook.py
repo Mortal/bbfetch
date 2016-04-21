@@ -173,16 +173,28 @@ class Assignment(ItemWrapper):
 
 
 class Attempt(ItemWrapper):
-    id = property(lambda self: self['groupAttemptId'])
+    id = property(lambda self:
+                  self['groupAttemptId']
+                  if self.assignment.group_assignment
+                  else self['id'])
     group_name = property(lambda self: self['groupName'])
     date = property(lambda self: self['date'])
-    score = property(lambda self: self['groupScore'])
-    needs_grading = property(lambda self: self['groupStatus'] == 'ng')
+    needs_grading = property(lambda self:
+                             self['groupStatus'] == 'ng'
+                             if self.assignment.group_assignment
+                             else self['status'] == 'ng')
+    score = property(lambda self:
+                     self['groupScore']
+                     if self.assignment.group_assignment
+                     else self['score'])
 
     assignment = property(lambda self: self._kwargs['assignment'])
 
     def __str__(self):
-        return 'Group Attempt %s %s' % (self.group_name, self.date)
+        if self.assignment.group_assignment:
+            return 'Group Attempt %s %s' % (self.group_name, self.date)
+        else:
+            return 'Attempt %s %s' % (self.group_name, self.date)
 
 
 class StudentAssignment(ItemWrapper):
