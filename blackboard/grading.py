@@ -109,7 +109,10 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_directory(self, attempt):
         assert isinstance(attempt, Attempt)
-        key = attempt.id
+        if attempt.assignment.group_assignment:
+            key = attempt.id
+        else:
+            key = attempt.id + 'I'
         st = self.attempt_state.setdefault(key, {})
         try:
             d = st['directory']
@@ -179,7 +182,10 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        key = attempt.id
+        if attempt.assignment.group_assignment:
+            key = attempt.id
+        else:
+            key = attempt.id + 'I'
         keys = 'submission comments files'.split()
         st = self.attempt_state.get(key, {})
         if not all(k in st for k in keys):
@@ -198,7 +204,10 @@ class Grading(blackboard.Serializable):
         assert isinstance(attempt, Attempt)
         new_state = fetch_attempt(
             self.session, attempt.id, True)
-        key = attempt.id
+        if attempt.assignment.group_assignment:
+            key = attempt.id
+        else:
+            key = attempt.id + 'I'
         logger.debug("refresh_attempt_files updating attempt_state[%r]", key)
         self.attempt_state.setdefault(key, {}).update(new_state)
         self.autosave()
