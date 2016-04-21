@@ -1,6 +1,26 @@
 import re
 import json
 
+from blackboard import logger
+
+
+def get_script_session_id(session):
+    try:
+        return session._script_session_id
+    except AttributeError:
+        pass
+    url = 'https://bb.au.dk/javascript/dwr/engine.js'
+    # Bypass BlackBoardSession.get and go straight to requests.Session instead
+    dwr_engine = session.session.get(url).text
+    mo = re.search('dwr.engine._origScriptSessionId = "(.*)";', dwr_engine)
+    if mo:
+        orig_id = mo.group(1)
+    else:
+        logger.warning("Could not find _origScriptSessionId")
+        orig_id = '8A22AEE4C7B3F9CA3A094735175A6B14'
+    session._script_session_id = '%s42' % orig_id
+    return session._script_session_id
+
 
 def parse_js(code):
     '''
@@ -100,7 +120,7 @@ def dwr_get_attempts_info_single_request(session, attempts):
         page='/webapps/gradebook/do/instructor/enterGradeCenter' +
              '?course_id=%s&cvid=fullGC' % session.course_id,
         httpSessionId=session_id,
-        scriptSessionId=session.get_script_session_id(),
+        scriptSessionId=get_script_session_id(session),
         batchId=42)
 
     course_id_raw = session.course_id.split('_')[1]
