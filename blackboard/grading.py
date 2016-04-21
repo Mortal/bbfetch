@@ -312,11 +312,35 @@ class Grading(blackboard.Serializable):
     def main(self, args, session, grading):
         if args.refresh:
             self.refresh()
+        if args.check:
+            self.check()
         if args.download:
             self.download_all_attempt_files()
         if args.upload:
             self.upload_all_feedback(dry_run=False)
         self.print_gradebook()
+
+    def check(self):
+        print("Username: %r" % (self.session.username,))
+        print("Course: %r" % (self.session.course_id,))
+        print("STUDENTS")
+        print('')
+        for s in self.gradebook.students:
+            print("Name: %s" % (s,))
+            print("Group: %r (%r)" %
+                  (s.group, self.get_group_name_display(s.group)))
+            print("Visible: %s" % (self.get_student_visible(s),))
+            print("Order by: %r" % (self.get_student_ordering(s),))
+            for assignment in self.gradebook.assignments:
+                try:
+                    student_assignment = s.assignments[assignment.id]
+                except KeyError:
+                    continue
+                for attempt in student_assignment.attempts:
+                    print("%r %r downloads to directory %r" %
+                          (student_assignment, attempt,
+                           self.get_attempt_directory_name(attempt)))
+            print('')
 
     @staticmethod
     def get_setting(filename, key):
@@ -338,6 +362,7 @@ class Grading(blackboard.Serializable):
         # parser.add_argument('--course', default=None)
         parser.add_argument('--cookiejar', default='cookies.txt')
         parser.add_argument('--dbpath', default='grading.json')
+        parser.add_argument('--check', '-c', action='store_true')
         parser.add_argument('--download', '-d', action='store_true')
         parser.add_argument('--upload', '-u', action='store_true')
         parser.add_argument('--no-refresh', '-n', action='store_false',
