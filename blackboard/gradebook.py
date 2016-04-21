@@ -161,6 +161,13 @@ class Assignment(ItemWrapper):
 
     name = property(lambda self: self['name'])
 
+    @property
+    def group_assignment(self):
+        try:
+            return self['groupActivity']
+        except KeyError:
+            return False
+
     def __str__(self):
         return self.name
 
