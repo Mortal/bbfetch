@@ -196,7 +196,7 @@ class Attempt(ItemWrapper):
         if self.assignment.group_assignment:
             return 'Group Attempt %s %s' % (self.group_name, self.date)
         else:
-            return 'Attempt %s %s' % (self.group_name, self.date)
+            return 'Attempt %s %s' % (self.student.name, self.date)
 
 
 class StudentAssignment(ItemWrapper):
