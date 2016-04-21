@@ -267,7 +267,7 @@ class Gradebook(blackboard.Serializable):
         for c in columns:
             if c.get('src') != 'resource/x-bb-assignment':
                 continue
-            elif not c['groupActivity']:
+            elif not c.get('groupActivity'):
                 logger.debug(
                     "Assignment %s is not a group activity -- skipping",
                     c['name'])
