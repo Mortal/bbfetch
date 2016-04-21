@@ -1,6 +1,5 @@
 import json
 import time
-import numbers
 
 import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
