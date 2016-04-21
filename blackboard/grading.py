@@ -1,18 +1,13 @@
-import io
 import os
 import re
 import json
 import numbers
 import argparse
-import html5lib
-from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
 from blackboard.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment)
-from blackboard.elementtext import (
-    element_to_markdown, element_text_content)
 from blackboard.backend import fetch_attempt, submit_grade
 
 

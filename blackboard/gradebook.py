@@ -1,8 +1,7 @@
-import json
 import time
 
 import blackboard
-from blackboard import logger, ParserError, BlackBoardSession
+from blackboard import BlackBoardSession
 from blackboard.dwr import dwr_get_attempts_info
 from blackboard.backend import fetch_overview
 
