@@ -174,7 +174,7 @@ class Grading(blackboard.Serializable):
         if filename.endswith('.zip'):
             logger.debug("Unzip archive %s", filename)
             import zipfile
-            with zipfile.open(filename) as zf:
+            with zipfile.ZipFile(filename) as zf:
                 zf.extractall(path)
 
     def get_attempt_files(self, attempt):
