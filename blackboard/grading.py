@@ -37,7 +37,10 @@ class Grading(blackboard.Serializable):
         cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
         for assignment in assignments:
             name = self.get_assignment_name_display(assignment)
-            cells.append(' %-4s' % name)
+            if len(name) <= 4:
+                cells.append(' %-4s' % name)
+            else:
+                cells.append(name[:5])
         rows = [cells]
         students = filter(self.get_student_visible, self.gradebook.students)
         students = sorted(students, key=self.get_student_ordering)
