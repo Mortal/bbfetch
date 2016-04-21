@@ -74,12 +74,18 @@ def fetch_overview(session):
     return assignments, users
 
 
-def fetch_attempt(session, attempt_id):
+def fetch_attempt(session, attempt_id, is_group_assignment):
     assert isinstance(session, BlackBoardSession)
-    url = ('https://bb.au.dk/webapps/assignment/' +
-           'gradeAssignmentRedirector' +
-           '?course_id=%s' % session.course_id +
-           '&groupAttemptId=%s' % attempt_id)
+    if is_group_assignment:
+        url = ('https://bb.au.dk/webapps/assignment/' +
+               'gradeAssignmentRedirector' +
+               '?course_id=%s' % session.course_id +
+               '&groupAttemptId=%s' % attempt_id)
+    else:
+        url = ('https://bb.au.dk/webapps/assignment/' +
+               'gradeAssignmentRedirector' +
+               '?course_id=%s' % session.course_id +
+               '&attempt_id=%s' % attempt_id)
     response = session.get(url)
     document = html5lib.parse(response.content, encoding=response.encoding)
     submission_text = document.find(

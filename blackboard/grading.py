@@ -184,7 +184,8 @@ class Grading(blackboard.Serializable):
 
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        new_state = fetch_attempt(self.session, attempt.id)
+        new_state = fetch_attempt(
+            self.session, attempt.id, True)
         logger.debug("refresh_attempt_files updating attempt_state[%r]",
                      attempt.id)
         self.attempt_state.setdefault(attempt.id, {}).update(new_state)
