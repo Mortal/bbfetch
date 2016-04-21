@@ -220,6 +220,12 @@ def submit_grade(session, attempt_id, is_group_assignment,
         logger.exception("data=%r files=%r", data, files)
         raise
     document = html5lib.parse(response.content, encoding=response.encoding)
+    badmsg = document.find('.//h:span[@id="badMsg1"]', NS)
+    if badmsg is not None:
+        raise ParserError(
+            "badMsg1: %s" % element_text_content(badmsg), response,
+            'Post data:\n%s' % pprint.pformat(data),
+            'Files:\n%s' % pprint.pformat(files))
     msg = document.find('.//h:span[@id="goodMsg1"]', NS)
     if msg is None:
         raise ParserError(
