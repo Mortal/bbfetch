@@ -31,12 +31,7 @@ def fetch_overview(session):
     for c in columns:
         if c.get('src') != 'resource/x-bb-assignment':
             continue
-        elif not c.get('groupActivity'):
-            logger.debug(
-                "Assignment %s is not a group activity -- skipping",
-                c['name'])
-        else:
-            assignments[c['id']] = c
+        assignments[c['id']] = c
 
     users = {}
     for row in o['rows']:

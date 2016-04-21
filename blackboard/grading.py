@@ -203,7 +203,7 @@ class Grading(blackboard.Serializable):
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
         new_state = fetch_attempt(
-            self.session, attempt.id, True)
+            self.session, attempt.id, attempt.assignment.group_assignment)
         if attempt.assignment.group_assignment:
             key = attempt.id
         else:
