@@ -109,7 +109,8 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_directory(self, attempt):
         assert isinstance(attempt, Attempt)
-        st = self.attempt_state.setdefault(attempt.id, {})
+        key = attempt.id
+        st = self.attempt_state.setdefault(key, {})
         try:
             d = st['directory']
         except KeyError:
@@ -178,20 +179,28 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
+        key = attempt.id
         keys = 'submission comments files'.split()
-        st = self.attempt_state.get(attempt.id, {})
+        st = self.attempt_state.get(key, {})
         if not all(k in st for k in keys):
             self.refresh_attempt_files(attempt)
-            st = self.attempt_state[attempt.id]
+            st = self.attempt_state[key]
         return {k: st[k] for k in keys}
+
+    def get_attempt_state(self, attempt):
+        if attempt.assignment.group_assignment:
+            key = attempt.id
+        else:
+            key = attempt.id + 'I'
+        return self.attempt_state.get(key, {})
 
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
         new_state = fetch_attempt(
             self.session, attempt.id, True)
-        logger.debug("refresh_attempt_files updating attempt_state[%r]",
-                     attempt.id)
-        self.attempt_state.setdefault(attempt.id, {}).update(new_state)
+        key = attempt.id
+        logger.debug("refresh_attempt_files updating attempt_state[%r]", key)
+        self.attempt_state.setdefault(key, {}).update(new_state)
         self.autosave()
 
     def has_downloaded(self, attempt):
@@ -217,7 +226,7 @@ class Grading(blackboard.Serializable):
         return all_exist
 
     def has_feedback(self, attempt):
-        st = self.attempt_state.get(attempt.id, {})
+        st = self.get_attempt_state(attempt)
         directory = st.get('directory')
         if not directory:
             return
@@ -225,7 +234,7 @@ class Grading(blackboard.Serializable):
         return os.path.exists(feedback_file)
 
     def get_feedback(self, attempt):
-        st = self.attempt_state.get(attempt.id, {})
+        st = self.get_attempt_state(attempt)
         directory = st.get('directory')
         if not directory:
             return
@@ -237,7 +246,7 @@ class Grading(blackboard.Serializable):
             return
 
     def get_feedback_attachments(self, attempt):
-        st = self.attempt_state.get(attempt.id, {})
+        st = self.get_attempt_state(attempt)
         files = st.get('files', [])
         try:
             filenames = [f['local_path'] for f in files]
