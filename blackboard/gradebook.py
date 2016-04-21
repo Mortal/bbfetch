@@ -4,6 +4,7 @@ import time
 import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
 from blackboard.dwr import dwr_get_attempts_info
+from blackboard.backend import fetch_overview
 
 
 def get_handin_attempt_counts(session, handin_id):
@@ -245,69 +246,10 @@ class Gradebook(blackboard.Serializable):
             prev = self._students
         except AttributeError:
             prev = None
-        self._assignments, self._students = Gradebook.fetch_overview(self.session)
+        self._assignments, self._students = fetch_overview(self.session)
         if prev is not None:
             self.copy_student_data(prev)
         self.refresh_attempts()
-
-    @staticmethod
-    def fetch_overview(session):
-        """Fetch gradebook information. Returns (assignments, students)."""
-        url = (
-            'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
-            '?course_id=%s' % session.course_id)
-        response = session.get(url)
-        try:
-            o = response.json()
-        except json.decoder.JSONDecodeError:
-            raise ParserError("Couldn't decode JSON", response)
-
-        columns = o['colDefs']
-        assignments = {}
-        for c in columns:
-            if c.get('src') != 'resource/x-bb-assignment':
-                continue
-            elif not c.get('groupActivity'):
-                logger.debug(
-                    "Assignment %s is not a group activity -- skipping",
-                    c['name'])
-            else:
-                assignments[c['id']] = c
-
-        users = {}
-        for row in o['rows']:
-            user_id = row[0]['uid']
-            user_available = row[0]['avail']
-
-            user_cells = {cell['c']: cell for cell in row if 'c' in cell}
-            user_data = {cell['c']: cell['v'] for cell in row if 'v' in cell}
-
-            user_assignments = {}
-
-            for a in assignments.keys():
-                try:
-                    cell = user_cells[a]
-                except KeyError:
-                    continue
-                needs_grading = bool(cell.get('ng'))
-                user_assignments[a] = {
-                    'score': cell['v'],
-                    'needs_grading': needs_grading,
-                    'attempts': None,
-                }
-
-            users[user_id] = dict(
-                first_name=user_data['FN'],
-                last_name=user_data['LN'],
-                username=user_data['UN'],
-                student_number=user_data['SI'],
-                last_access=user_data['LA'],
-                id=user_id,
-                available=user_available,
-                assignments=user_assignments,
-            )
-
-        return assignments, users
 
     def copy_student_data(self, prev):
         """After updating self._students, copy over old assignment data."""

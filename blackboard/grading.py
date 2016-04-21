@@ -13,6 +13,7 @@ from blackboard.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment)
 from blackboard.elementtext import (
     element_to_markdown, element_text_content)
+from blackboard.backend import fetch_attempt
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -186,70 +187,9 @@ class Grading(blackboard.Serializable):
             st = self.attempt_state[attempt.id]
         return {k: st[k] for k in keys}
 
-    @staticmethod
-    def fetch_attempt(session, attempt_id):
-        url = ('https://bb.au.dk/webapps/assignment/' +
-               'gradeAssignmentRedirector' +
-               '?course_id=%s' % session.course_id +
-               '&groupAttemptId=%s' % attempt_id)
-        response = session.get(url)
-        document = html5lib.parse(response.content, encoding=response.encoding)
-        submission_text = document.find(
-            './/h:div[@id="submissionTextView"]', NS)
-        if submission_text is not None:
-            submission_text = element_to_markdown(submission_text)
-        submission_list = document.find(
-            './/h:ul[@id="currentAttempt_submissionList"]', NS)
-        if submission_list is None:
-            raise ParserError("No currentAttempt_submissionList",
-                              response)
-        comments = document.find(
-            './/h:div[@id="currentAttempt_comments"]', NS)
-        if comments is not None:
-            xpath = './/h:div[@class="vtbegenerated"]'
-            comments = [
-                element_to_markdown(e)
-                for e in comments.findall(xpath, NS)
-            ]
-            if not comments:
-                raise blackboard.ParserError(
-                    "Page contains currentAttempt_comments, " +
-                    "but it contains no comments",
-                    response)
-            comments = '\n\n'.join(comments)
-        files = []
-        for submission in submission_list:
-            filename = element_text_content(submission)
-            download_button = submission.find(
-                './/h:a[@class="dwnldBtn"]', NS)
-            if download_button is not None:
-                download_link = urljoin(
-                    response.url, download_button.get('href'))
-                files.append(
-                    dict(filename=filename, download_link=download_link))
-            else:
-                s = 'currentAttempt_attemptFilesubmissionText'
-                a = submission.find(
-                    './/h:a[@id="' + s + '"]', NS)
-                if a is not None:
-                    # This <li> is for the submission_text
-                    if not submission_text:
-                        raise blackboard.ParserError(
-                            "%r in file list, but no " % (filename,) +
-                            "accompanying submission text contents",
-                            response)
-                else:
-                    raise blackboard.ParserError(
-                        "No download link for file %r" % (filename,),
-                        response)
-        return dict(
-            submission=submission_text,
-            comments=comments,
-            files=files)
-
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        new_state = Grading.fetch_attempt(self.session, attempt.id)
+        new_state = fetch_attempt(self.session, attempt.id)
         logger.debug("refresh_attempt_files updating attempt_state[%r]",
                      attempt.id)
         self.attempt_state.setdefault(attempt.id, {}).update(new_state)
