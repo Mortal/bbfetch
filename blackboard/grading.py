@@ -172,6 +172,7 @@ class Grading(blackboard.Serializable):
     def extract_archive(self, filename):
         path = os.path.dirname(filename)
         if filename.endswith('.zip'):
+            logger.debug("Unzip archive %s", filename)
             import zipfile
             with zipfile.open(filename) as zf:
                 zf.extractall(path)
