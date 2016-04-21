@@ -190,6 +190,8 @@ class Attempt(ItemWrapper):
 
     assignment = property(lambda self: self._kwargs['assignment'])
 
+    student = property(lambda self: self.assignment.student)
+
     def __str__(self):
         if self.assignment.group_assignment:
             return 'Group Attempt %s %s' % (self.group_name, self.date)
