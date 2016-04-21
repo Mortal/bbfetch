@@ -308,7 +308,9 @@ class Grading(blackboard.Serializable):
             print(uploads)
         else:
             for attempt, score, feedback, attachments in uploads:
-                submit_grade(attempt.id, score, feedback, attachments)
+                submit_grade(self.session, attempt.id,
+                             attempt.assignment.group_assignment,
+                             score, feedback, attachments)
 
     def main(self, args, session, grading):
         if args.refresh:
