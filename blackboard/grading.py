@@ -107,13 +107,9 @@ class Grading(blackboard.Serializable):
             # print("Would download %s to %s" %
             #       (attempt, self.get_attempt_directory_name(attempt)))
 
-    def get_attempt_directory(self, attempt):
+    def get_attempt_directory(self, attempt, create):
         assert isinstance(attempt, Attempt)
-        if attempt.assignment.group_assignment:
-            key = attempt.id
-        else:
-            key = attempt.id + 'I'
-        st = self.attempt_state.setdefault(key, {})
+        st = self.get_attempt_state(attempt, create=create)
         try:
             d = st['directory']
         except KeyError:
@@ -121,6 +117,8 @@ class Grading(blackboard.Serializable):
         else:
             if os.path.exists(d):
                 return d
+        if not create:
+            return
         d = self.get_attempt_directory_name(attempt)
         os.makedirs(d)
         st['directory'] = d
@@ -142,25 +140,22 @@ class Grading(blackboard.Serializable):
 
     def download_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        data = self.get_attempt_files(attempt)
-        d = self.get_attempt_directory(attempt)
-        if data['comments']:
-            with open(os.path.join(d, 'student_comments.txt'), 'w') as fp:
-                fp.write(data['comments'])
-            logger.info("Saving student_comments.txt for attempt %s", attempt)
-        if data['submission']:
-            with open(os.path.join(d, 'submission.txt'), 'w') as fp:
-                fp.write(data['submission'])
-            logger.info("Saving submission.txt for attempt %s", attempt)
-        for o in data['files']:
+        files = self.get_attempt_files(attempt)
+        d = self.get_attempt_directory(attempt, create=True)
+        for o in files:
             filename = o['filename']
-            download_link = o['download_link']
-            if 'local_path' in o:
-                continue
             outfile = os.path.join(d, filename)
             if os.path.exists(outfile):
                 logger.info("%s already exists; skipping", outfile)
                 continue
+
+            if 'contents' in o:
+                with open(outfile, 'w') as fp:
+                    fp.write(o['contents'])
+                logger.info("Saving %s for attempt %s", filename, attempt)
+                continue
+
+            download_link = o['download_link']
             response = self.session.session.get(download_link, stream=True)
             logger.info("Download %s %s (%s bytes)", attempt,
                         outfile, response.headers.get('content-length'))
@@ -169,8 +164,6 @@ class Grading(blackboard.Serializable):
                     if chunk:
                         fp.write(chunk)
             self.extract_archive(outfile)
-            o['local_path'] = outfile
-            self.autosave()
 
     def extract_archive(self, filename):
         path = os.path.dirname(filename)
@@ -182,23 +175,39 @@ class Grading(blackboard.Serializable):
 
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        if attempt.assignment.group_assignment:
-            key = attempt.id
-        else:
-            key = attempt.id + 'I'
         keys = 'submission comments files'.split()
-        st = self.attempt_state.get(key, {})
+        st = self.get_attempt_state(attempt)
         if not all(k in st for k in keys):
             self.refresh_attempt_files(attempt)
-            st = self.attempt_state[key]
-        return {k: st[k] for k in keys}
+            st = self.get_attempt_state(attempt)
+        used_filenames = set('comments.txt')
+        files = []
 
-    def get_attempt_state(self, attempt):
+        def add_file(name, **data):
+            if name in used_filenames:
+                base, ext = os.path.splitext(name)
+                name = base + attempt.id + ext
+            data['filename'] = name
+            used_filenames.add(name)
+            files.append(data)
+
+        if st['submission']:
+            add_file('submission.txt', contents=st['submission'])
+        if st['comments']:
+            add_file('student_comments.txt', contents=st['submission'])
+        for o in st['files']:
+            add_file(o['filename'], **o)
+        return files
+
+    def get_attempt_state(self, attempt, create=False):
         if attempt.assignment.group_assignment:
             key = attempt.id
         else:
             key = attempt.id + 'I'
-        return self.attempt_state.get(key, {})
+        if create:
+            return self.attempt_state.setdefault(key, {})
+        else:
+            return self.attempt_state.get(key, {})
 
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
@@ -218,33 +227,22 @@ class Grading(blackboard.Serializable):
         downloaded.
         """
 
-        st = self.get_attempt_files(attempt)
-        files = st['files']
-        all_claimed = all('local_path' in f for f in files)
-        if not all_claimed:
+        directory = self.get_attempt_directory(attempt, create=False)
+        if not directory:
             return False
-        # Claims they all exist; do they really?
-        for f in files:
-            if not os.path.exists(f['local_path']):
-                del f['local_path']
-        # Now, all files have only existing local_path
-        all_exist = all('local_path' in f for f in files)
-        if not all_exist:
-            # We deleted some local_paths
-            self.autosave()
-        return all_exist
+        files = self.get_attempt_files(attempt)
+        filenames = [os.path.join(directory, o['filename']) for o in files]
+        return all(os.path.exists(f) for f in filenames)
 
     def has_feedback(self, attempt):
-        st = self.get_attempt_state(attempt)
-        directory = st.get('directory')
+        directory = self.get_attempt_directory(attempt, create=False)
         if not directory:
-            return
+            return False
         feedback_file = os.path.join(directory, 'comments.txt')
         return os.path.exists(feedback_file)
 
     def get_feedback(self, attempt):
-        st = self.get_attempt_state(attempt)
-        directory = st.get('directory')
+        directory = self.get_attempt_directory(attempt, create=False)
         if not directory:
             return
         feedback_file = os.path.join(directory, 'comments.txt')
@@ -255,12 +253,11 @@ class Grading(blackboard.Serializable):
             return
 
     def get_feedback_attachments(self, attempt):
-        st = self.get_attempt_state(attempt)
-        files = st.get('files', [])
-        try:
-            filenames = [f['local_path'] for f in files]
-        except KeyError:
-            raise ValueError("Not all files downloaded")
+        directory = self.get_attempt_directory(attempt, create=False)
+        if not directory:
+            raise ValueError("Files not downloaded")
+        files = self.get_attempt_files(attempt)
+        filenames = [os.path.join(directory, o['filename']) for o in files]
         annotated_filenames = [
             self.get_annotated_filename(filename)
             for filename in filenames]
