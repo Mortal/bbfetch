@@ -194,7 +194,7 @@ class Grading(blackboard.Serializable):
         if st['submission']:
             add_file('submission.txt', contents=st['submission'])
         if st['comments']:
-            add_file('student_comments.txt', contents=st['submission'])
+            add_file('student_comments.txt', contents=st['comments'])
         for o in st['files']:
             add_file(o['filename'], **o)
         return files
