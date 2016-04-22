@@ -318,6 +318,10 @@ class Grading(blackboard.Serializable):
             self.download_all_attempt_files()
         if args.upload:
             self.upload_all_feedback(dry_run=False)
+            if args.refresh:
+                # Refresh after upload to show that feedback
+                # has been uploaded
+                self.refresh()
         self.print_gradebook()
 
     def check(self):
