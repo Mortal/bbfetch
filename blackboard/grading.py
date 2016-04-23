@@ -3,6 +3,7 @@ import re
 import json
 import numbers
 import argparse
+import requests
 import blackboard
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
@@ -310,7 +311,11 @@ class Grading(blackboard.Serializable):
 
     def main(self, args, session, grading):
         if args.refresh:
-            self.refresh()
+            try:
+                self.refresh()
+            except requests.ConnectionError:
+                print("Connection failed; continuing in offline mode (-n)")
+                args.refresh = False
         if args.check:
             self.check()
         if args.download:
