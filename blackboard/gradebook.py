@@ -261,14 +261,17 @@ class Gradebook(blackboard.Serializable):
 
     def refresh(self):
         """Fetch gradebook information from BlackBoard website."""
-        self.fetch_time = time.time()
+        new_fetch_time = time.time()
         try:
             prev = self._students
         except AttributeError:
             prev = None
+        # The following may raise requests.ConnectionError
         self._assignments, self._students = fetch_overview(self.session)
         if prev is not None:
             self.copy_student_data(prev)
+        # No exception raised; store fetch_time
+        self.fetch_time = new_fetch_time
         self.refresh_attempts()
 
     def copy_student_data(self, prev):
