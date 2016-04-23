@@ -320,6 +320,8 @@ class Grading(blackboard.Serializable):
             self.check()
         if args.download:
             self.download_all_attempt_files()
+        if args.upload_check:
+            self.upload_all_feedback(dry_run=True)
         if args.upload:
             self.upload_all_feedback(dry_run=False)
             if args.refresh:
@@ -373,6 +375,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--check', '-c', action='store_true')
         parser.add_argument('--download', '-d', action='store_true')
         parser.add_argument('--upload', '-u', action='store_true')
+        parser.add_argument('--upload-check', '-U', action='store_true')
         parser.add_argument('--no-refresh', '-n', action='store_false',
                             dest='refresh')
         return parser
