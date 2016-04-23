@@ -213,12 +213,9 @@ class Grading(blackboard.Serializable):
         assert isinstance(attempt, Attempt)
         new_state = fetch_attempt(
             self.session, attempt.id, attempt.assignment.group_assignment)
-        if attempt.assignment.group_assignment:
-            key = attempt.id
-        else:
-            key = attempt.id + 'I'
+        st = self.get_attempt_state(attempt, create=True)
         logger.debug("refresh_attempt_files updating attempt_state[%r]", key)
-        self.attempt_state.setdefault(key, {}).update(new_state)
+        st.update(new_state)
         self.autosave()
 
     def has_downloaded(self, attempt):
