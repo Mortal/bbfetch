@@ -298,7 +298,10 @@ class Grading(blackboard.Serializable):
             else:
                 uploads.append((attempt, score, feedback, attachments))
         if dry_run:
-            print(uploads)
+            for attempt, score, feedback, attachments in uploads:
+                print("%s %s:" % (attempt.assignment, attempt,))
+                print("score: %s, feedback: %s words, %s attachment(s)" %
+                      (score, len(feedback.split()), len(attachments)))
         else:
             for attempt, score, feedback, attachments in uploads:
                 submit_grade(self.session, attempt.id,
