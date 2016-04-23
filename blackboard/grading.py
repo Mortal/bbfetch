@@ -214,7 +214,6 @@ class Grading(blackboard.Serializable):
         new_state = fetch_attempt(
             self.session, attempt.id, attempt.assignment.group_assignment)
         st = self.get_attempt_state(attempt, create=True)
-        logger.debug("refresh_attempt_files updating attempt_state[%r]", key)
         st.update(new_state)
         self.autosave()
 
