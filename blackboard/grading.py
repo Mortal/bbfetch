@@ -32,6 +32,9 @@ class Grading(blackboard.Serializable):
             self.attempt_state = {}
         self.autosave()
 
+    def get_student_group_display(self, student):
+        return self.get_group_name_display(student.group)
+
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
         cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
@@ -75,7 +78,7 @@ class Grading(blackboard.Serializable):
                 cells.append('%-5s' % ''.join(cell))
             username = u['username'][:8]
             name = truncate_name(name, 30)
-            group_name = self.get_group_name_display(u.group)[:6]
+            group_name = self.get_student_group_display(u)[:6]
             rows.append(
                 ['%-8s %-30s %-6s' % (username, name, group_name or '')] +
                 cells)
