@@ -35,8 +35,6 @@ def iter_datatable(session, url, **kwargs):
     l = blackboard.slowlog()
     response = session.get(url)
     l("Fetching datatable page 1 took %.4f s")
-    for r in list(response.history) + [response]:
-        print("%s %s" % (r.status_code, r.url))
     history = list(response.history) + [response]
     document = html5lib.parse(response.content, encoding=response.encoding)
     keys, rows = parse_datatable(document, **kwargs)
