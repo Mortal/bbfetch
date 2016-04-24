@@ -283,6 +283,12 @@ def submit_grade(session, attempt_id, is_group_assignment,
 
 
 def fetch_groups(session):
+    """
+    Computes a mapping from usernames (au123) to dictionaries,
+    each dictionary containing the first/last name, role and group
+    memberships of the particular user.
+    The 'groups' entry is a list of (name, group id) pairs.
+    """
     def strip_prefix(s, prefix):
         if s.startswith(prefix):
             return s[len(prefix):]
