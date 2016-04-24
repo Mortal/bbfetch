@@ -139,7 +139,8 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     return dict(
         submission=submission_text,
         comments=comments,
-        files=files)
+        files=files,
+    )
 
 
 def submit_grade(session, attempt_id, is_group_assignment,
