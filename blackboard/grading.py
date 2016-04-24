@@ -121,7 +121,7 @@ class Grading(blackboard.Serializable):
         if not create:
             return
         d = self.get_attempt_directory_name(attempt)
-        os.makedirs(d)
+        os.makedirs(d, exist_ok=True)
         st['directory'] = d
         self.autosave()
         return d
