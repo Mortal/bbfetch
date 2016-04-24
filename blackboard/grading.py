@@ -428,3 +428,14 @@ class Grading(blackboard.Serializable):
         else:
             grading.save(args.dbpath)
         session.save_cookies()
+
+    @classmethod
+    def init(cls):
+        course = cls.get_course(None)
+        username = cls.get_username(None)
+        cookiejar = 'cookies.txt'
+        dbpath = 'grading.json'
+        session = BlackBoardSession(cookiejar, username, course)
+        grading = cls(session)
+        grading.load(dbpath)
+        return grading
