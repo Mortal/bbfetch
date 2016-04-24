@@ -26,7 +26,7 @@ class DictWrapper:
     >>> from collections import namedtuple
     >>> Foo = namedtuple('Foo', 'inner meta data_key')
     >>> foo_data = {'bar': ('bar', 2), 'baz': ('baz', 3)}
-    >>> foos = DictWrapper(Foo, foo_data, meta=42)
+    >>> foos = DictWrapper(Foo, foo_data, meta=42, order_by=str)
 
     Iterating over the DictWrapper will yield the values of foo_data,
     wrapped in item_class.
