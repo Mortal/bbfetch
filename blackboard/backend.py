@@ -84,15 +84,12 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                '&attempt_id=%s' % attempt_id)
     response = session.get(url)
     document = html5lib.parse(response.content, encoding=response.encoding)
+
     submission_text = document.find(
         './/h:div[@id="submissionTextView"]', NS)
     if submission_text is not None:
         submission_text = element_to_markdown(submission_text)
-    submission_list = document.find(
-        './/h:ul[@id="currentAttempt_submissionList"]', NS)
-    if submission_list is None:
-        raise ParserError("No currentAttempt_submissionList",
-                          response)
+
     comments = document.find(
         './/h:div[@id="currentAttempt_comments"]', NS)
     if comments is not None:
@@ -107,7 +104,13 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                 "but it contains no comments",
                 response)
         comments = '\n\n'.join(comments)
+
     files = []
+    submission_list = document.find(
+        './/h:ul[@id="currentAttempt_submissionList"]', NS)
+    if submission_list is None:
+        raise ParserError("No currentAttempt_submissionList",
+                          response)
     for submission in submission_list:
         filename = element_text_content(submission)
         download_button = submission.find(
@@ -132,6 +135,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                 raise blackboard.ParserError(
                     "No download link for file %r" % (filename,),
                     response)
+
     return dict(
         submission=submission_text,
         comments=comments,
