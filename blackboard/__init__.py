@@ -1,2 +1,2 @@
-from blackboard.base import *
-from blackboard.session import BlackBoardSession
+from blackboard.base import *  # NOQA
+from blackboard.session import BlackBoardSession  # NOQA
