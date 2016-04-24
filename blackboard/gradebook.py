@@ -31,7 +31,7 @@ class DictWrapper:
     Iterating over the DictWrapper will yield the values of foo_data,
     wrapped in item_class.
 
-    >>> for foo in foos:
+    >>> for foo in foos.values():
     ...     print(foo)
     Foo(inner=('bar', 2), meta=42, data_key='bar')
     Foo(inner=('baz', 3), meta=42, data_key='baz')
@@ -57,7 +57,7 @@ class DictWrapper:
         except AttributeError:
             return len(self._data)
 
-    def __iter__(self):
+    def values(self):
         try:
             return iter(self._items)
         except AttributeError:
@@ -132,7 +132,7 @@ class Student(ItemWrapper):
 
     @property
     def group(self):
-        attempts = [attempt for assignment in self.assignments
+        attempts = [attempt for assignment in self.assignments.values()
                     for attempt in assignment.attempts]
         # Attempts are ordered first by assignment (latest last)
         # and then by attempt within the assignment (most recent last).
@@ -309,7 +309,7 @@ class Gradebook(blackboard.Serializable):
         """Bulk-refresh all missing assignment data."""
         attempt_keys = []
         if students is None:
-            students = self.students
+            students = self.students.values()
         elif isinstance(students, type(self).student_class):
             students = [students]
         for user in students:

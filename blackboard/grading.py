@@ -34,23 +34,23 @@ class Grading(blackboard.Serializable):
 
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
-        assignments = self.gradebook.assignments
         cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
-        for assignment in assignments:
+        for assignment in self.gradebook.assignments.values():
             name = self.get_assignment_name_display(assignment)
             if len(name) <= 4:
                 cells.append(' %-4s' % name)
             else:
                 cells.append(name[:5])
         rows = [cells]
-        students = filter(self.get_student_visible, self.gradebook.students)
+        students = filter(self.get_student_visible,
+                          self.gradebook.students.values())
         students = sorted(students, key=self.get_student_ordering)
         for u in students:
             name = str(u)
             if not u['available']:
                 name = '(%s)' % name
             cells = []
-            for assignment in assignments:
+            for assignment in self.gradebook.assignments.values():
                 try:
                     student_assignment = u.assignments[assignment.id]
                 except KeyError:
@@ -84,11 +84,11 @@ class Grading(blackboard.Serializable):
 
     def get_attempts(self, visible=True, needs_grading=None,
                      needs_download=None, needs_upload=None):
-        students = self.gradebook.students
+        students = self.gradebook.students.values()
         if visible is True:
             students = filter(self.get_student_visible, students)
         attempts = (attempt for student in students
-                    for assignment in student.assignments
+                    for assignment in student.assignments.values()
                     for attempt in assignment.attempts)
         attempts = set(attempts)
         if needs_grading is True:
@@ -347,13 +347,13 @@ class Grading(blackboard.Serializable):
         print("Course: %r" % (self.session.course_id,))
         print("STUDENTS")
         print('')
-        for s in self.gradebook.students:
+        for s in self.gradebook.students.values():
             print("Name: %s" % (s,))
             print("Group: %r (%r)" %
                   (s.group, self.get_group_name_display(s.group)))
             print("Visible: %s" % (self.get_student_visible(s),))
             print("Order by: %r" % (self.get_student_ordering(s),))
-            for assignment in self.gradebook.assignments:
+            for assignment in self.gradebook.assignments.values():
                 try:
                     student_assignment = s.assignments[assignment.id]
                 except KeyError:
