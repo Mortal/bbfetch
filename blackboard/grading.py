@@ -5,6 +5,7 @@ import numbers
 import argparse
 import requests
 import blackboard
+import collections
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
 from blackboard.gradebook import (
@@ -37,6 +38,15 @@ class Grading(blackboard.Serializable):
         if key == 'groups':
             return {}
         return super().deserialize_default(key)
+
+    def get_student_groups(self, student):
+        Group = collections.namedtuple('Group', 'name id')
+        try:
+            groups = [Group(g[0], g[1])
+                      for g in self.groups[student.username]['groups']]
+        except KeyError:
+            groups = []
+        return groups
 
     def get_student_group_display(self, student):
         return self.get_group_name_display(student.group)
