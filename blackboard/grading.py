@@ -181,7 +181,7 @@ class Grading(blackboard.Serializable):
         if not all(k in st for k in keys):
             self.refresh_attempt_files(attempt)
             st = self.get_attempt_state(attempt)
-        used_filenames = set('comments.txt')
+        used_filenames = set(['comments.txt'])
         files = []
 
         def add_file(name, **data):
