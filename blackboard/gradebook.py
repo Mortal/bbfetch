@@ -251,7 +251,6 @@ class Gradebook(blackboard.Serializable):
 
     FIELDS = '_students fetch_time _assignments'.split()
 
-    student_class = Student
     assignment_class = Assignment
 
     def __init__(self, session):
@@ -260,7 +259,7 @@ class Gradebook(blackboard.Serializable):
 
     @property
     def students(self):
-        return DictWrapper(type(self).student_class, self._students,
+        return DictWrapper(Student, self._students,
                            assignments=self.assignments)
 
     @property
@@ -310,7 +309,7 @@ class Gradebook(blackboard.Serializable):
         attempt_keys = []
         if students is None:
             students = self.students.values()
-        elif isinstance(students, type(self).student_class):
+        elif isinstance(students, Student):
             students = [students]
         for user in students:
             for assignment_id, assignment in user['assignments'].items():
