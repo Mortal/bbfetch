@@ -9,14 +9,14 @@ from blackboard import logger, ParserError, BadAuth, BlackBoardSession
 # from groups import get_groups
 from blackboard.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment)
-from blackboard.backend import fetch_attempt, submit_grade
+from blackboard.backend import fetch_attempt, submit_grade, fetch_groups
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
 class Grading(blackboard.Serializable):
-    FIELDS = ('attempt_state', 'gradebook', 'username')
+    FIELDS = ('attempt_state', 'gradebook', 'username', 'groups')
 
     gradebook_class = Gradebook
 
@@ -30,7 +30,13 @@ class Grading(blackboard.Serializable):
         self.gradebook.refresh()
         if not self.attempt_state:
             self.attempt_state = {}
+        self.groups = fetch_groups(self.session)
         self.autosave()
+
+    def deserialize_default(self, key):
+        if key == 'groups':
+            return {}
+        return super().deserialize_default(key)
 
     def get_student_group_display(self, student):
         return self.get_group_name_display(student.group)
