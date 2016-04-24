@@ -10,20 +10,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Next, copy `dads-rav.py` to `YOURCOURSE.py`
-and edit it, filling out the details.
+Next, copy the two files in `rav-dADS2` to
+your own directory and adjust them, filling out the details.
 
 ### Usage
 
-Activate the virtual environment and run `YOURCOURSE.py`:
-
+Simply run the shell script `./grading`,
+which will activate the virtual environment
+and run your file `grading.py`:
 ```
-source venv/bin/activate
-python YOURCOURSE.py --help
+cd path/to/grading
+./grading --help
 ```
 
 The useful options are `-d` (download new handins),
-`-u` (upload feedback) and `-n` (do not refresh gradebook).
+`-u` (upload feedback) and `-n` (offline mode).
 
 When handins are downloaded, they are stored in the directories
 pointed to by `get_attempt_directory_name`.
