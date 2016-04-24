@@ -1,5 +1,0 @@
-#!/bin/sh
-set -e
-source /home/rav/bbfetch/venv/bin/activate
-cd /home/rav/TA/dADS2-2016
-python /home/rav/bbfetch/dads-rav.py "$@"

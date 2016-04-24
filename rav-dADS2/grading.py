@@ -1,9 +1,11 @@
 import os
 import re
-from blackboard.grading import Grading
+import sys
+sys.path += [os.path.expanduser('~/work/bbfetch')]
+import blackboard.grading
 
 
-class GradingDads(Grading):
+class Grading(blackboard.grading.Grading):
     @classmethod
     def get_username(cls, args):
         """Username to log in to BlackBoard with."""
@@ -14,16 +16,11 @@ class GradingDads(Grading):
         """BlackBoard course ID including leading "_" and trailing "_1"."""
         return '_49446_1'
 
-    def get_group_name_display(self, group_name):
-        """Given a group name, compute an abbreviation of the name."""
-        if group_name is None:
-            return group_name
-        elif group_name.startswith('Gruppe'):
-            # Translate "Gruppe DAx - yy" into "DAx-yy"
-            x = group_name.split()
-            return '%s-%s' % (x[1], x[3])
-        else:
-            return group_name
+    def get_student_group_display(self, student):
+        for g in self.get_student_groups(student):
+            if g.name.startswith('Gruppe'):
+                return '%s-%s' % (g.name.split()[1], g.name.split()[3])
+        return ''
 
     def get_student_visible(self, student):
         """
@@ -32,7 +29,7 @@ class GradingDads(Grading):
         """
         # Add your classes to the following list, e.g. ["DA1", "DA2"]
         classes = ['2']
-        group_name = self.get_group_name_display(student.group) or ''
+        group_name = self.get_student_group_display(student)
         return any(group_name.startswith(c + '-') for c in classes)
 
     def get_student_ordering(self, student):
@@ -41,7 +38,7 @@ class GradingDads(Grading):
         indicating how students should be sorted when displayed.
         Typically you want to sort by group, then by name.
         """
-        return (student.group, student.name)
+        return (self.get_student_group_display(student), student.name)
 
     def get_assignment_name_display(self, assignment):
         """
@@ -60,7 +57,7 @@ class GradingDads(Grading):
         """
 
         # expanduser translates "~" into your home directory
-        base = os.path.expanduser('~/TA/dADS2-2016')
+        base = os.path.expanduser('~/uni/6q4/dADS2')
 
         group_name = attempt.group_name
         if group_name.startswith('Gruppe'):
@@ -94,4 +91,4 @@ class GradingDads(Grading):
 
 
 if __name__ == "__main__":
-    GradingDads.execute_from_command_line()
+    Grading.execute_from_command_line()
