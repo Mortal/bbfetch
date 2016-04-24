@@ -137,11 +137,7 @@ def dwr_get_attempts_info_single_request(session, attempts):
     url = ('https://bb.au.dk/webapps/gradebook/dwr/call/plaincall/' +
            'GradebookDWRFacade.getAttemptsInfo.dwr')
     response = session.post(url, payload)
-    with open('dwr_get_attempts_info.txt', 'wb') as fp:
-        fp.write(response.content)
     results = parse_js(response.text)
-    with open('dwr_get_attempts_info.json', 'w') as fp:
-        json.dump(results, fp, indent=2)
     return [results[i] for i in range(len(attempts))]
 
 
