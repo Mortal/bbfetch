@@ -108,11 +108,19 @@ class Serializable:
             o.append((f, v))
         return collections.OrderedDict(o)
 
+    def warn_superfluous_key(self, key):
+        logger.warning("deserialize() skipping superfluous key %r", key)
+
+    def deserialize_default(self, key):
+        raise Exception("deserialize() missing key for %r", key)
+
     def deserialize(self, o):
-        if frozenset(o.keys()) != frozenset(self.FIELDS):
-            raise Exception(
-                "%s.deserialize got incorrect fields: " % type(self).__name__ +
-                "%s" % ', '.join(o.keys()))
+        o_k = frozenset(o.keys())
+        e_k = frozenset(self.FIELDS)
+        for k in o_k - e_k:
+            self.warn_superfluous_key(k)
+        for k in e_k - o_k:
+            o[k] = self.deserialize_default(k)
         for k, v in o.items():
             try:
                 getattr(self, k).deserialize(v)
