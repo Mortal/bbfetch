@@ -108,13 +108,13 @@ class ItemWrapper:
 
 class Student(ItemWrapper):
     """
-    >>> s = Student(dict(first_name="Foo", last_name="Bar", id="123"))
+    >>> s = Student(dict(first_name="Foo", last_name="Bar", id="au123"))
     >>> s
     <Student Foo Bar>
     >>> print(s)
     Foo Bar
     >>> s.id
-    '123'
+    'au123'
     """
 
     first_name = property(lambda self: self['first_name'])
