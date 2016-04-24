@@ -9,7 +9,7 @@ from requests.compat import urljoin
 import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
 from blackboard.elementtext import (
-    element_to_markdown, element_text_content)
+    element_to_markdown, element_text_content, form_field_value)
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -136,10 +136,51 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                     "No download link for file %r" % (filename,),
                     response)
 
+    score_input = document.find(
+        './/h:input[@id="currentAttempt_grade"]', NS)
+    if score_input is None:
+        score = None
+    else:
+        score = form_field_value(score_input)
+        try:
+            score = float(score)
+        except ValueError:
+            if score:
+                raise blackboard.ParserError(
+                    "Couldn't parse currentAttempt_grade: %r" % (score,),
+                    response)
+            score = None
+
+    feedbacktext_input = document.find(
+        './/*[@id="feedbacktext"]', NS)
+    if feedbacktext_input is None:
+        feedback = ''
+    else:
+        feedback = form_field_value(feedbacktext_input)
+
+    feedbackfiles_rows = document.find(
+        './/h:tbody[@id="feedbackFiles_table_body"]', NS)
+    feedbackfiles = []
+    for i, row in enumerate(feedbackfiles_rows or []):
+        try:
+            link = row.findall('.//h:a', NS)[0]
+        except IndexError:
+            raise blackboard.ParserError(
+                "feedbackFiles_table_body row %s: no link" % i,
+                response)
+        download_link = urljoin(
+            response.url, link.get('href'))
+        filename = element_text_content(link)
+        feedbackfiles.append(
+            dict(filename=filename, download_link=download_link))
+
     return dict(
         submission=submission_text,
         comments=comments,
         files=files,
+        feedback=feedback,
+        feedbackfiles=feedbackfiles,
+        score=score,
     )
 
 
