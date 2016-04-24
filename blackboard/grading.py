@@ -323,8 +323,15 @@ class Grading(blackboard.Serializable):
                 args.refresh = False
         if args.check:
             self.check()
-        if args.download:
-            self.download_all_attempt_files()
+        if args.download >= 3:
+            self.download_all_attempt_files(
+                visible=None, needs_grading=None)
+        elif args.download >= 2:
+            self.download_all_attempt_files(
+                visible=True, needs_grading=None)
+        elif args.download >= 1:
+            self.download_all_attempt_files(
+                visible=True, needs_grading=True)
         if args.upload_check:
             self.upload_all_feedback(dry_run=True)
         if args.upload:
@@ -378,7 +385,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--cookiejar', default='cookies.txt')
         parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--check', '-c', action='store_true')
-        parser.add_argument('--download', '-d', action='store_true')
+        parser.add_argument('--download', '-d', action='count')
         parser.add_argument('--upload', '-u', action='store_true')
         parser.add_argument('--upload-check', '-U', action='store_true')
         parser.add_argument('--no-refresh', '-n', action='store_false',
