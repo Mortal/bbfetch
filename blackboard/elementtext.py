@@ -27,3 +27,15 @@ def element_to_html(element):
 
 def element_to_markdown(element):
     return html2text.html2text(element_to_html(element))
+
+
+def form_field_value(element):
+    NS = {'h': 'http://www.w3.org/1999/xhtml'}
+    tag_input = '{%s}input' % NS['h']
+    tag_textarea = '{%s}textarea' % NS['h']
+    if element.tag == tag_input:
+        return element.get('value') or ''
+    elif element.tag == tag_textarea:
+        return element_text_content(element)
+    else:
+        raise ValueError("Unknown tag %s" % element.tag)
