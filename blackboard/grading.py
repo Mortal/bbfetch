@@ -385,7 +385,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--cookiejar', default='cookies.txt')
         parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--check', '-c', action='store_true')
-        parser.add_argument('--download', '-d', action='count')
+        parser.add_argument('--download', '-d', action='count', default=0)
         parser.add_argument('--upload', '-u', action='store_true')
         parser.add_argument('--upload-check', '-U', action='store_true')
         parser.add_argument('--no-refresh', '-n', action='store_false',
