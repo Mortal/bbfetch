@@ -312,13 +312,13 @@ def fetch_groups(session):
     last_name = keys.index('lastname')
     role = keys.index('Role')
     groups = keys.index('Groups')
-    users = []
+    users = {}
     for row in rows:
-        users.append(dict(
+        users[row[username]] = dict(
             username=row[username],
             first_name=row[first_name],
             last_name=row[last_name],
             role=row[role],
             groups=row[groups],
-        ))
+        )
     return users
