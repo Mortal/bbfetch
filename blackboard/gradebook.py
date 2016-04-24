@@ -119,6 +119,7 @@ class Student(ItemWrapper):
 
     first_name = property(lambda self: self['first_name'])
     last_name = property(lambda self: self['last_name'])
+    username = property(lambda self: self['username'])
 
     @property
     def assignments(self):
