@@ -8,6 +8,7 @@ from requests.compat import urljoin
 
 import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
+from blackboard.datatable import fetch_datatable
 from blackboard.elementtext import (
     element_to_markdown, element_text_content, form_field_value)
 
@@ -279,3 +280,45 @@ def submit_grade(session, attempt_id, is_group_assignment,
             'Post data:\n%s' % pprint.pformat(data),
             'Files:\n%s' % pprint.pformat(files))
     logger.debug("goodMsg1: %s", element_text_content(msg))
+
+
+def fetch_groups(session):
+    def strip_prefix(s, prefix):
+        if s.startswith(prefix):
+            return s[len(prefix):]
+        else:
+            raise ValueError("%r does not start with %r" % (s, prefix))
+
+    def extract(key, cell, d):
+        if key != 'Groups':
+            return d
+        groups = cell.findall(
+            './/h:a[@class="userGroupNameListItemRemove"]', NS)
+        res = []
+        for g in groups:
+            name = ' '.join(''.join(g.itertext()).split())
+            i = g.get('id')
+            res.append((name, strip_prefix(i, 'rmv_')))
+        return res
+
+    url = ('https://bb.au.dk/webapps/bb-group-mgmt-LEARN/execute/' +
+           'groupInventoryList?course_id=%s' % session.course_id +
+           '&toggleType=users&chkAllRoles=on')
+
+    response, keys, rows = fetch_datatable(
+        session, url, extract=extract, table_id='userGroupList_datatable')
+    username = keys.index('userorgroupname')
+    first_name = keys.index('firstname')
+    last_name = keys.index('lastname')
+    role = keys.index('Role')
+    groups = keys.index('Groups')
+    users = []
+    for row in rows:
+        users.append(dict(
+            username=row[username],
+            first_name=row[first_name],
+            last_name=row[last_name],
+            role=row[role],
+            groups=row[groups],
+        ))
+    return users
