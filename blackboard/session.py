@@ -78,8 +78,6 @@ class BlackBoardSession:
         history += list(response.history) + [response]
         logger.debug("WAYF login -> %s", response.url)
         logger.debug("WAYF response %s", response.status_code)
-        # with open('wayftmp.html', 'wb') as fp:
-        #     fp.write(response.content)
         if 'Forkert brugernavn eller kodeord' in response.text:
             raise BadAuth()
 
