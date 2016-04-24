@@ -192,6 +192,14 @@ class Attempt(ItemWrapper):
 
     student = property(lambda self: self.assignment.student)
 
+    def __repr__(self):
+        if self.assignment.group_assignment:
+            return '<Attempt id=%s assignment=%s group=%r score=%s>' % (
+                self.id, self.assignment, self.group_name, self.score)
+        else:
+            return '<Attempt id=%s assignment=%s student=%s score=%s>' % (
+                self.id, self.assignment, self.student, self.score)
+
     def __str__(self):
         if self.assignment.group_assignment:
             return 'Group Attempt %s %s' % (self.group_name, self.date)
