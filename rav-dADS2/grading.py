@@ -29,8 +29,11 @@ class Grading(blackboard.grading.Grading):
         """
         # Add your classes to the following list, e.g. ["DA1", "DA2"]
         classes = ['2']
-        group_name = self.get_student_group_display(student)
-        return any(group_name.startswith(c + '-') for c in classes)
+        for g in self.get_student_groups(student):
+            for c in classes:
+                if g.name == 'Hold ' + c:
+                    return True
+        return False
 
     def get_student_ordering(self, student):
         """
