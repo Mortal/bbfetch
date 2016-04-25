@@ -31,8 +31,11 @@ class Grading(blackboard.Serializable):
         self.gradebook.refresh()
         if not self.attempt_state:
             self.attempt_state = {}
-        self.groups = fetch_groups(self.session)
+        self.refresh_groups()
         self.autosave()
+
+    def refresh_groups(self):
+        self.groups = fetch_groups(self.session)
 
     def deserialize_default(self, key):
         if key == 'groups':
