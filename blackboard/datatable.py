@@ -34,6 +34,8 @@ def iter_datatable(session, url, **kwargs):
     url += '&numResults=1000&startIndex=0'
     l = blackboard.slowlog()
     response = session.get(url)
+    if kwargs.pop('edit_mode', False):
+        response = session.ensure_edit_mode(response)
     l("Fetching datatable page 1 took %.4f s")
     history = list(response.history) + [response]
     document = html5lib.parse(response.content, encoding=response.encoding)
