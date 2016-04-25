@@ -206,6 +206,25 @@ class BlackBoardSession:
             response = self.wayf_login(response)
         return response
 
+    def get_edit_mode(self, response):
+        document = html5lib.parse(response.content, encoding=response.encoding)
+        mode_switch = document.find('.//*[@id="editModeToggleLink"]', NS)
+        if mode_switch is not None:
+            return 'read-on' in (mode_switch.get('class') or '').split()
+
+    def ensure_edit_mode(self, response):
+        if self.get_edit_mode(response) is False:
+            url = ('https://bb.au.dk/webapps/blackboard/execute/' +
+                   'doCourseMenuAction?cmd=setDesignerParticipantViewMode' +
+                   '&courseId=' + self.course_id +
+                   '&mode=designer');
+            logger.debug("Switch to edit mode")
+            r = self.get(url)
+            history = list(response.history) + [response]
+            response = self.get(history[0].url)
+            response.history = history + list(response.history)
+        return response
+
     def get(self, url):
         response = self.autologin(self.session.get(url))
         if self.detect_login(response) is False:
