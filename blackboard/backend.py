@@ -253,8 +253,12 @@ def submit_grade(session, attempt_id, is_group_assignment,
         with open(filename, 'rb') as fp:
             fdata = fp.read()
         files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
-    post_url = (
-        'https://bb.au.dk/webapps/assignment//gradeGroupAssignment/submit')
+    if is_group_assignment:
+        post_url = (
+            'https://bb.au.dk/webapps/assignment//gradeGroupAssignment/submit')
+    else:
+        post_url = (
+            'https://bb.au.dk/webapps/assignment//gradeAssignment/submit')
     if not files:
         # BlackBoard requires the POST to be
         # Content-Type: multipart/form-data.
