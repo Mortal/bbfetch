@@ -312,7 +312,8 @@ def fetch_groups(session):
            '&toggleType=users&chkAllRoles=on')
 
     response, keys, rows = fetch_datatable(
-        session, url, extract=extract, table_id='userGroupList_datatable')
+        session, url, extract=extract, table_id='userGroupList_datatable',
+        edit_mode=True)
     username = keys.index('userorgroupname')
     first_name = keys.index('firstname')
     last_name = keys.index('lastname')
