@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-sys.path += [os.path.expanduser('~/work/bbfetch')]
+sys.path += [os.path.expanduser('~/bbfetch')]
 import blackboard.grading
 
 

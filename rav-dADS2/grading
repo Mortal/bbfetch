@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
 source /home/rav/work/bbfetch/venv/bin/activate
-cd /home/rav/uni/6q4/dADS2
+cd /home/rav/TA/dADS2-2016
 python grading.py "$@"
