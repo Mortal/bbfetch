@@ -31,7 +31,8 @@ class Grading(blackboard.Serializable):
         self.gradebook.refresh()
         if not self.attempt_state:
             self.attempt_state = {}
-        self.refresh_groups()
+        if not hasattr(self, 'groups'):
+            self.refresh_groups()
         self.autosave()
 
     def refresh_groups(self):
@@ -343,6 +344,8 @@ class Grading(blackboard.Serializable):
             except requests.ConnectionError:
                 print("Connection failed; continuing in offline mode (-n)")
                 args.refresh = False
+        if args.refresh_groups:
+            self.refresh_groups()
         if args.check:
             self.check()
         if args.download >= 3:
@@ -412,6 +415,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--upload-check', '-U', action='store_true')
         parser.add_argument('--no-refresh', '-n', action='store_false',
                             dest='refresh')
+        parser.add_argument('--refresh-groups', '-g', action='store_true')
         return parser
 
     @classmethod
