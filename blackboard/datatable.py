@@ -37,7 +37,7 @@ def iter_datatable(session, url, **kwargs):
     l("Fetching datatable page 1 took %.4f s")
     history = list(response.history) + [response]
     document = html5lib.parse(response.content, encoding=response.encoding)
-    keys, rows = parse_datatable(document, **kwargs)
+    keys, rows = parse_datatable(response, document, **kwargs)
     yield keys
     yield from rows
     next_id = 'listContainer_nextpage_top'
@@ -51,7 +51,7 @@ def iter_datatable(session, url, **kwargs):
         l("Fetching datatable page %d took %.4f s", page_number)
         history += list(response.history) + [response]
         document = html5lib.parse(response.content, encoding=response.encoding)
-        keys_, rows = parse_datatable(document, **kwargs)
+        keys_, rows = parse_datatable(response, document, **kwargs)
         if keys != keys_:
             raise ValueError(
                 "Page %d keys (%r) do not match page 1 keys (%r)" %
@@ -62,10 +62,13 @@ def iter_datatable(session, url, **kwargs):
     yield response
 
 
-def parse_datatable(document, extract=None, table_id=None):
+def parse_datatable(response, document, extract=None, table_id=None):
     if table_id is None:
         table_id = 'listContainer_datatable'
     table = document.find('.//h:table[@id="%s"]' % table_id, NS)
+    if table is None:
+        raise blackboard.ParserError(
+            "No table with id %r" % (table_id,), response)
     header = table.find('./h:thead', NS)
     keys = []
     for h in header[0]:
