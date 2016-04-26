@@ -8,10 +8,12 @@ import blackboard.grading
 class Grading(blackboard.grading.Grading):
     @classmethod
     def get_username(cls, args):
+        """Username to log in to BlackBoard with."""
         return '20094480'
 
     @classmethod
     def get_course(cls, args):
+        """BlackBoard course ID including leading "_" and trailing "_1"."""
         return '_49454_1'
 
     def get_group_name_display(self, group_name):
