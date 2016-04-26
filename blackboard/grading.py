@@ -348,7 +348,7 @@ class Grading(blackboard.Serializable):
     def main(self, args, session, grading):
         if args.refresh:
             try:
-                self.refresh()
+                self.refresh(refresh_attempts=args.refresh_attempts)
             except requests.ConnectionError:
                 print("Connection failed; continuing in offline mode (-n)")
                 args.refresh = False
@@ -424,6 +424,7 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--no-refresh', '-n', action='store_false',
                             dest='refresh')
         parser.add_argument('--refresh-groups', '-g', action='store_true')
+        parser.add_argument('--refresh-attempts', '-a', action='store_true')
         return parser
 
     @classmethod
