@@ -38,9 +38,13 @@ class Grading(blackboard.Serializable):
     def should_refresh_groups(self):
         if not hasattr(self, 'groups'):
             return True
+        if any(k.startswith('Access the profile') for k in self.groups.keys()):
+            return True
 
     def refresh_groups(self):
         self.groups = fetch_groups(self.session)
+        if any(k.startswith('Access the profile') for k in self.groups.keys()):
+            raise Exception("fetch_groups returned bad usernames")
 
     def deserialize_default(self, key):
         if key == 'groups':
