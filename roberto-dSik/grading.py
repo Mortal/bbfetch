@@ -1,8 +1,8 @@
 import re
-from blackboard.grading import Grading
+import blackboard.grading
 
 
-class GradingDsik(Grading):
+class Grading(blackboard.grading.Grading):
     @classmethod
     def get_username(cls, args):
         return '20094480'
@@ -84,4 +84,4 @@ class GradingDsik(Grading):
 
 
 if __name__ == "__main__":
-    GradingDsik.execute_from_command_line()
+    Grading.execute_from_command_line()
