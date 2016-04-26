@@ -31,9 +31,13 @@ class Grading(blackboard.Serializable):
         self.gradebook.refresh()
         if not self.attempt_state:
             self.attempt_state = {}
-        if not hasattr(self, 'groups'):
+        if self.should_refresh_groups():
             self.refresh_groups()
         self.autosave()
+
+    def should_refresh_groups(self):
+        if not hasattr(self, 'groups'):
+            return True
 
     def refresh_groups(self):
         self.groups = fetch_groups(self.session)
