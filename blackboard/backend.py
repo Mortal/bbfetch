@@ -300,6 +300,8 @@ def fetch_groups(session):
             raise ValueError("%r does not start with %r" % (s, prefix))
 
     def extract(key, cell, d):
+        if key == 'userorgroupname':
+            return d.split()[-1]
         if key != 'Groups':
             return d
         groups = cell.findall(
