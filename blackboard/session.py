@@ -237,7 +237,16 @@ class BlackBoardSession:
             history = list(response.history) + [response]
             response = self.session.get(url)
             response.history = history + list(response.history)
+        self.log_error(response)
         return response
+
+    def log_error(self, response):
+        document = html5lib.parse(response.content, encoding=response.encoding)
+        content = document.find('.//h:div[@id="contentPanel"]', NS)
+        if content is not None:
+            class_list = (content.get('class') or '').split()
+            if 'error' in class_list:
+                logger.info("contentPanel indicates an error has occurred")
 
     def post(self, url, data, files=None, headers=None):
         response = self.session.post(
