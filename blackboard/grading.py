@@ -26,9 +26,9 @@ class Grading(blackboard.Serializable):
         self.gradebook = type(self).gradebook_class(self.session)
         self.username = session.username
 
-    def refresh(self):
+    def refresh(self, **kwargs):
         logger.info("Refresh gradebook")
-        self.gradebook.refresh()
+        self.gradebook.refresh(**kwargs)
         if not self.attempt_state:
             self.attempt_state = {}
         if self.should_refresh_groups():
