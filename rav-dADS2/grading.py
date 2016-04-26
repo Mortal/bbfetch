@@ -92,6 +92,14 @@ class Grading(blackboard.grading.Grading):
         elif accept:
             return 1
 
+    def get_feedback(self, attempt):
+        feedback = super().get_feedback(attempt)
+        if feedback is None:
+            return feedback
+        # Example of how to add HTML to comments.txt input:
+        # return '<br />'.join(feedback.splitlines())
+        return feedback
+
 
 if __name__ == "__main__":
     Grading.execute_from_command_line()
