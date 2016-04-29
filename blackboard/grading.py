@@ -114,6 +114,36 @@ class Grading(blackboard.Serializable):
         for row in rows:
             print(' | '.join(row))
 
+    def get_attempt(self, group, assignment, attempt_index=-1):
+        assert isinstance(group, str)
+        if isinstance(assignment, int):
+            assignment = str(assignment)
+        assert isinstance(assignment, str)
+        students = self.gradebook.students.values()
+        students = filter(self.get_student_visible, students)
+        students = [
+            student for student in students
+            if self.get_student_group_display(student) == group
+        ]
+        if not students:
+            names = sorted(set(self.get_student_group_display(s)
+                               for s in students))
+            raise ValueError("No students in a group named %r. " % (group,) +
+                             "Must be one of: %s" % (names,))
+        student = students[0]
+        assignments = [
+            a for a in self.gradebook.assignments.values()
+            if self.get_assignment_name_display(a) == assignment
+        ]
+        if not assignments:
+            names = [self.get_assignment_name_display(a)
+                     for a in self.gradebook.assignments.values()]
+            raise ValueError("No assignments named %r. " % (assignment,) +
+                             "Must be one of: %s" % (names,))
+        assignment = assignments[0]
+        attempts = student.assignments[assignment.id].attempts
+        return attempts[attempt_index]
+
     def get_attempts(self, visible=True, needs_grading=None,
                      needs_download=None, needs_upload=None):
         students = self.gradebook.students.values()
