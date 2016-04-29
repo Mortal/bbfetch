@@ -1,7 +1,7 @@
 import time
 
 import blackboard
-from blackboard import BlackBoardSession
+from blackboard import BlackBoardSession, logger
 from blackboard.dwr import dwr_get_attempts_info
 from blackboard.backend import fetch_overview
 
@@ -314,6 +314,8 @@ class Gradebook(blackboard.Serializable):
             for assignment_id, assignment in user['assignments'].items():
                 if refresh_all or assignment['attempts'] is None:
                     attempt_keys.append((user.id, assignment_id))
+        logger.info("Fetching %d attempt list%s",
+                    len(attempt_keys), '' if len(attempt_keys) == 1 else 's')
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
             self.students[user_id]['assignments'][aid]['attempts'] = attempts

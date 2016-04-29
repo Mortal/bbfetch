@@ -42,6 +42,7 @@ class Grading(blackboard.Serializable):
             return True
 
     def refresh_groups(self):
+        logger.info("Fetching student group memberships")
         self.groups = fetch_groups(self.session)
         if any(k.startswith('Access the profile') for k in self.groups.keys()):
             raise Exception("fetch_groups returned bad usernames")
@@ -248,6 +249,7 @@ class Grading(blackboard.Serializable):
 
     def refresh_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
+        logger.info("Fetch details for attempt %s", attempt)
         new_state = fetch_attempt(
             self.session, attempt.id, attempt.assignment.group_assignment)
         st = self.get_attempt_state(attempt, create=True)
