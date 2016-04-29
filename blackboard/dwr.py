@@ -1,6 +1,7 @@
 import re
 import json
 
+import blackboard
 from blackboard import logger
 
 
@@ -145,6 +146,8 @@ def dwr_get_attempts_info(session, attempts, batch_size=20):
     results = []
     for i in range(0, len(attempts), batch_size):
         j = min(len(attempts), i + batch_size)
+        l = blackboard.slowlog()
         results.extend(
             dwr_get_attempts_info_single_request(session, attempts[i:j]))
+        l("Fetching %d attempt lists took %%.1f s" % (j - i))
     return results
