@@ -398,9 +398,9 @@ class Grading(blackboard.Serializable):
             print('')
 
     @staticmethod
-    def get_setting(filename, key):
+    def get_setting(key):
         try:
-            with open(filename) as fp:
+            with open('grading.json') as fp:
                 o = json.load(fp)
             try:
                 return o[key]
@@ -415,8 +415,8 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--quiet', action='store_true')
         # parser.add_argument('--username', default=None)
         # parser.add_argument('--course', default=None)
-        parser.add_argument('--cookiejar', default='cookies.txt')
-        parser.add_argument('--dbpath', default='grading.json')
+        # parser.add_argument('--cookiejar', default='cookies.txt')
+        # parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--check', '-c', action='store_true')
         parser.add_argument('--download', '-d', action='count', default=0)
         parser.add_argument('--upload', '-u', action='store_true')
@@ -438,7 +438,7 @@ class Grading(blackboard.Serializable):
     def get_course(cls, args):
         course = args.course
         if course is None:
-            course = cls.get_setting(args.dbpath, 'course')
+            course = cls.get_setting('grading.json', 'course')
         if course is None:
             raise Exception("--course is required")
         return course
@@ -447,7 +447,7 @@ class Grading(blackboard.Serializable):
     def get_username(cls, args):
         username = args.username
         if username is None:
-            username = cls.get_setting(args.dbpath, 'username')
+            username = cls.get_setting('username')
         if username is None:
             raise Exception("--username is required")
         return username
@@ -461,9 +461,9 @@ class Grading(blackboard.Serializable):
         except Exception as exn:
             parser.error(str(exn))
 
-        session = BlackBoardSession(args.cookiejar, username, course)
+        session = BlackBoardSession('cookies.txt', username, course)
         grading = cls(session)
-        grading.load(args.dbpath)
+        grading.load('grading.json')
         try:
             grading.main(args, session, grading)
         except ParserError as exn:
@@ -473,7 +473,7 @@ class Grading(blackboard.Serializable):
             print("Bad username or password. Forgetting password.")
             session.forget_password()
         else:
-            grading.save(args.dbpath)
+            grading.save('grading.json')
         session.save_cookies()
 
     @classmethod
