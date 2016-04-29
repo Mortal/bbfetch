@@ -36,7 +36,6 @@ def iter_datatable(session, url, **kwargs):
     response = session.get(url)
     if kwargs.pop('edit_mode', False):
         response = session.ensure_edit_mode(response)
-    l("Fetching datatable page 1 took %.4f s")
     history = list(response.history) + [response]
     document = html5lib.parse(response.content, encoding=response.encoding)
     keys, rows = parse_datatable(response, document, **kwargs)
@@ -44,6 +43,10 @@ def iter_datatable(session, url, **kwargs):
     yield from rows
     next_id = 'listContainer_nextpage_top'
     next_o = document.find('.//h:a[@id="%s"]' % next_id, NS)
+    if next_o is None:
+        l("Fetching datatable took %.1f s")
+    else:
+        l("Fetching datatable page 1 took %.1f s")
     page_number = 1
     while next_o:
         page_number += 1
