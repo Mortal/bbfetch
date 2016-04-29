@@ -344,8 +344,11 @@ class Grading(blackboard.Serializable):
             return 1
 
     def upload_all_feedback(self, dry_run=False):
+        return self.upload_attempts(self.get_attempts(needs_upload=True),
+                                    dry_run=dry_run)
+
+    def upload_attempts(self, attempts, dry_run):
         uploads = []
-        attempts = self.get_attempts(needs_upload=True)
         for attempt in attempts:
             feedback = self.get_feedback(attempt)
             errors = []
