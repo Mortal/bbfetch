@@ -36,7 +36,7 @@ class Grading(blackboard.Serializable):
         self.autosave()
 
     def should_refresh_groups(self):
-        if not hasattr(self, 'groups'):
+        if not hasattr(self, 'groups') or self.groups is None:
             return True
         if any(k.startswith('Access the profile') for k in self.groups.keys()):
             return True
