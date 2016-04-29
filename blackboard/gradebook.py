@@ -314,6 +314,8 @@ class Gradebook(blackboard.Serializable):
             for assignment_id, assignment in user['assignments'].items():
                 if refresh_all or assignment['attempts'] is None:
                     attempt_keys.append((user.id, assignment_id))
+        if not attempt_keys:
+            return
         logger.info("Fetching %d attempt list%s",
                     len(attempt_keys), '' if len(attempt_keys) == 1 else 's')
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
