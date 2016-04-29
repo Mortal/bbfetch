@@ -241,6 +241,8 @@ def submit_grade(session, attempt_id, is_group_assignment,
 
     data_set('grade', str(grade))
     data_set('feedbacktext', text)
+    data_set('gradingNotestext',
+             'Submitted with https://github.com/Mortal/bbfetch')
 
     files = []
 
