@@ -13,6 +13,13 @@ pip install -r requirements.txt
 Next, copy the two files in `rav-dADS2` to
 your own directory and adjust them, filling out the details.
 
+The course ID of a BlackBoard courses is found by inspecting the course URL.
+If it looks like:
+
+`https://bb.au.dk/webapps/blackboard/execute/content/blankPage?cmd=view&content_id=_347138_1&course_id=_43290_1`
+
+then the course id is `_43290_1`.
+
 ### Usage
 
 Simply run the shell script `./grading`,
@@ -163,13 +170,27 @@ auxxxxxx xxxxxxxxxxxxxxxxx              DA2-11 | ✔     | ✔     | ✘     |  
 
 ## Implementation
 
-Python module to access the BlackBoard installation at Aarhus University
-from the command line.
+This project contains classes to access
+the BlackBoard installation at Aarhus University
+with the Python Requests framework, and is useful for teaching assistants and
+teachers who wish to automate the BlackBoard tedium.
 
-Useful for teaching assistants and teachers who wish to automate the BlackBoard
-tedium.
+The main component is a wrapper around `requests.Session`
+named `blackboard.BlackBoardSession`
+with methods to automatically login and resubmit an HTTP request,
+automatically follow HTML redirects,
+save and load cookies, save and load login passwords.
 
-Uses the following 3rd party modules:
+For grading handins, the class `blackboard.grading.Grading`
+should be extended with information on which course and students
+should have their handins graded by the user.
+
+For other BlackBoard automation purposes, the `blackboard/examples/` directory
+contains examples of how to download all forum posts for a course,
+how to download the list of groups,
+and how to download the list of when students last accessed the course website.
+
+The project uses the following 3rd party modules:
 
 * requests (HTTP client for Python 2/3)
 * html5lib (to parse and query HTML)
@@ -177,11 +198,4 @@ Uses the following 3rd party modules:
 * [html2text](https://github.com/Alir3z4/html2text) (to convert HTML forum posts to Markdown)
 * six (bridges incompatibilities between Python 2 and 3)
 
-Install with `pip install -r requirements.txt`.
-
-To find the course id to pass to `--course`,
-inspect the course URL. If it looks like:
-
-`https://bb.au.dk/webapps/blackboard/execute/content/blankPage?cmd=view&content_id=_347138_1&course_id=_43290_1`
-
-then the course id is `_43290_1`.
+Install these requirements with `pip install -r requirements.txt`.
