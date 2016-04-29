@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 source /home/rav/work/bbfetch/venv/bin/activate
 cd /home/rav/TA/dADS2-2016
