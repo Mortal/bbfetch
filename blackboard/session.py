@@ -220,7 +220,8 @@ class BlackBoardSession:
                    '&mode=designer')
             logger.debug("Switch to edit mode")
             r = self.get(url)
-            history = list(response.history) + [response]
+            history = (list(response.history) + [response] +
+                       list(r.history) + [r])
             response = self.get(history[0].url)
             response.history = history + list(response.history)
         return response
