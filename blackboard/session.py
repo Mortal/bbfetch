@@ -217,7 +217,7 @@ class BlackBoardSession:
             url = ('https://bb.au.dk/webapps/blackboard/execute/' +
                    'doCourseMenuAction?cmd=setDesignerParticipantViewMode' +
                    '&courseId=' + self.course_id +
-                   '&mode=designer');
+                   '&mode=designer')
             logger.debug("Switch to edit mode")
             r = self.get(url)
             history = list(response.history) + [response]
