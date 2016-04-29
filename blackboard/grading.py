@@ -417,14 +417,21 @@ class Grading(blackboard.Serializable):
         # parser.add_argument('--course', default=None)
         # parser.add_argument('--cookiejar', default='cookies.txt')
         # parser.add_argument('--dbpath', default='grading.json')
-        parser.add_argument('--check', '-c', action='store_true')
-        parser.add_argument('--download', '-d', action='count', default=0)
-        parser.add_argument('--upload', '-u', action='store_true')
-        parser.add_argument('--upload-check', '-U', action='store_true')
+        parser.add_argument('--check', '-c', action='store_true',
+                            help='Test that Grading methods work ' +
+                                 '(for debugging)')
+        parser.add_argument('--download', '-d', action='count', default=0,
+                            help='Download handins that need grading')
+        parser.add_argument('--upload', '-u', action='store_true',
+                            help='Upload handins that have been graded')
+        parser.add_argument('--upload-check', '-U', action='store_true',
+                            help='Display what would be uploaded with -u')
         parser.add_argument('--no-refresh', '-n', action='store_false',
-                            dest='refresh')
-        parser.add_argument('--refresh-groups', '-g', action='store_true')
-        parser.add_argument('--refresh-attempts', '-a', action='store_true')
+                            dest='refresh', help='Run in offline mode')
+        parser.add_argument('--refresh-groups', '-g', action='store_true',
+                            help='Refresh list of student groups')
+        parser.add_argument('--refresh-attempts', '-a', action='store_true',
+                            help='Refresh list of student attempts')
         return parser
 
     @classmethod
