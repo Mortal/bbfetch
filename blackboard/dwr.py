@@ -143,8 +143,8 @@ def dwr_get_attempts_info_single_request(session, attempts):
 
 def dwr_get_attempts_info(session, attempts, batch_size=20):
     results = []
-    for i in range(0, len(attempts), 20):
-        j = min(len(attempts), i + 20)
+    for i in range(0, len(attempts), batch_size):
+        j = min(len(attempts), i + batch_size)
         results.extend(
             dwr_get_attempts_info_single_request(session, attempts[i:j]))
     return results
