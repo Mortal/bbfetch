@@ -22,7 +22,9 @@ def fetch_overview(session):
     url = (
         'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
         '?course_id=%s' % session.course_id)
+    l = blackboard.slowlog()
     response = session.get(url)
+    l("Fetching gradebook took %.1f s")
     try:
         o = response.json()
     except json.decoder.JSONDecodeError:
@@ -83,7 +85,9 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&attempt_id=%s' % attempt_id)
+    l = blackboard.slowlog()
     response = session.get(url)
+    l("Fetching attempt took %.1f s")
     document = html5lib.parse(response.content, encoding=response.encoding)
 
     submission_text = document.find(
