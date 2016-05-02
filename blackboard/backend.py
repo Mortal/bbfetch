@@ -163,6 +163,13 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     else:
         feedback = form_field_value(feedbacktext_input)
 
+    gradingNotestext_input = document.find(
+        './/*[@id="gradingNotestext"]', NS)
+    if gradingNotestext_input is None:
+        grading_notes = ''
+    else:
+        grading_notes = form_field_value(gradingNotestext_input)
+
     feedbackfiles_rows = document.find(
         './/h:tbody[@id="feedbackFiles_table_body"]', NS)
     feedbackfiles = []
@@ -186,6 +193,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         feedback=feedback,
         feedbackfiles=feedbackfiles,
         score=score,
+        grading_notes=grading_notes,
     )
 
 
