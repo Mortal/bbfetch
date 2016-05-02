@@ -100,17 +100,15 @@ class Grading(blackboard.Serializable):
         """Print a representation of the gradebook state."""
         columns = [
             ('Username', lambda u: u['username'], 8),
-            ('Name', str, 30),
+            ('Name', str, 24),
             ('Group', self.get_student_group_display, 6),
         ]
         for assignment in self.gradebook.assignments.values():
             name = self.get_assignment_name_display(assignment)
-            if len(name) < 5:
-                name = ' ' + name
             display = functools.partial(self.get_assignment_display,
                                         assignment=assignment)
             columns.append(('|', lambda u: '|', 1))
-            columns.append((name, display, 5))
+            columns.append((name, display, 3))
         students = filter(self.get_student_visible,
                           self.gradebook.students.values())
         students = sorted(students, key=self.get_student_ordering)
@@ -131,7 +129,7 @@ class Grading(blackboard.Serializable):
                 header_width = c[2]
                 row_fmt.append(
                     truncate_name(cell, header_width).ljust(header_width))
-            print(' '.join(row_fmt))
+            print(' '.join(row_fmt).rstrip())
 
     def get_attempt(self, group, assignment, attempt_index=-1):
         assert isinstance(group, str)
