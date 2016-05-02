@@ -478,10 +478,6 @@ class Grading(blackboard.Serializable):
     def get_argument_parser(cls):
         parser = argparse.ArgumentParser()
         parser.add_argument('--quiet', action='store_true')
-        # parser.add_argument('--username', default=None)
-        # parser.add_argument('--course', default=None)
-        # parser.add_argument('--cookiejar', default='cookies.txt')
-        # parser.add_argument('--dbpath', default='grading.json')
         parser.add_argument('--check', '-c', action='store_true',
                             help='Test that Grading methods work ' +
                                  '(for debugging)')
