@@ -209,7 +209,8 @@ class Grading(blackboard.Serializable):
             filename = o['filename']
             outfile = os.path.join(d, filename)
             if os.path.exists(outfile):
-                logger.info("%s already exists; skipping", outfile)
+                logger.info("Skip downloading %s %s (already exists)",
+                            attempt, outfile)
                 continue
 
             if 'contents' in o:
@@ -218,13 +219,12 @@ class Grading(blackboard.Serializable):
                     s += '\n'
                 with open(outfile, 'w') as fp:
                     fp.write(s)
-                logger.info("Saving %s for attempt %s", filename, attempt)
+                logger.info("Storing %s %s (text content)", attempt, filename)
                 continue
 
             download_link = o['download_link']
             response = self.session.session.get(download_link, stream=True)
-            logger.info("Download %s %s (%s bytes)", attempt,
-                        outfile, response.headers.get('content-length'))
+            logger.info("Download %s %s", attempt, outfile)
             with open(outfile, 'wb') as fp:
                 for chunk in response.iter_content(chunk_size=64*1024):
                     if chunk:
