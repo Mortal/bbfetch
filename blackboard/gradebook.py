@@ -265,7 +265,7 @@ class Gradebook(blackboard.Serializable):
     def assignments(self):
         return DictWrapper(Assignment, self._assignments)
 
-    def refresh(self, refresh_attempts=False):
+    def refresh(self, refresh_attempts=False, student_visible=None):
         """Fetch gradebook information from BlackBoard website."""
         new_fetch_time = time.time()
         try:
@@ -278,7 +278,8 @@ class Gradebook(blackboard.Serializable):
             self.copy_student_data(prev)
         # No exception raised; store fetch_time
         self.fetch_time = new_fetch_time
-        self.refresh_attempts(refresh_all=refresh_attempts)
+        self.refresh_attempts(refresh_all=refresh_attempts,
+                              student_visible=student_visible)
 
     def copy_student_data(self, prev):
         """After updating self._students, copy over old assignment data."""
