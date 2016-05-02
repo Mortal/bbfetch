@@ -76,19 +76,13 @@ class BlackBoardSession:
         logger.info("Sending login details to WAYF")
         response = self.session.post(response.url, self.get_auth())
         history += list(response.history) + [response]
-        logger.debug("WAYF login -> %s", response.url)
-        logger.debug("WAYF response %s", response.status_code)
         if 'Forkert brugernavn eller kodeord' in response.text:
             raise BadAuth()
 
         response = self.post_hidden_form(response)
         history += list(response.history) + [response]
-        logger.debug("Hidden form 1 -> %s %s",
-                     response.status_code, response.url)
         response = self.post_hidden_form(response)
         history += list(response.history) + [response]
-        logger.debug("Hidden form 2 -> %s %s",
-                     response.status_code, response.url)
         response.history = history[:-1]
         return response
 
@@ -128,7 +122,6 @@ class BlackBoardSession:
         form = document.find('.//h:form', NS)
         url = form.get('action')
         inputs = form.findall('.//h:input[@name]', NS)
-        logger.debug("Response page form has %d inputs", len(inputs))
         if not inputs:
             raise ParserError("No <input> with name", response)
         post_data = {
@@ -167,7 +160,6 @@ class BlackBoardSession:
                 t = ''.join(s.itertext())
                 mo = re.match(js_redirect_pattern, t)
                 if mo:
-                    logger.debug("Detected JavaScript redirect")
                     next_url = mo.group('url')
                     break
             if next_url is not None:
@@ -184,7 +176,6 @@ class BlackBoardSession:
                         dict(returnUrl=return_url,
                              authProviderId='_102_1'))
                     next_url = '%s?%s' % (real_login_url, new_qs)
-                    logger.debug("Changing redirect to %r", next_url)
                 response = self.session.get(next_url)
                 history += list(response.history) + [response]
                 continue
