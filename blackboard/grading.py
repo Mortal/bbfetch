@@ -28,7 +28,9 @@ class Grading(blackboard.Serializable):
 
     def refresh(self, **kwargs):
         logger.info("Refresh gradebook")
-        self.gradebook.refresh(**kwargs)
+        self.gradebook.refresh(
+            student_visible=self.get_student_visible,
+            **kwargs)
         if not self.attempt_state:
             self.attempt_state = {}
         if self.should_refresh_groups():
