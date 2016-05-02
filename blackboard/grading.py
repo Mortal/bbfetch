@@ -211,25 +211,24 @@ class Grading(blackboard.Serializable):
             if os.path.exists(outfile):
                 logger.info("Skip downloading %s %s (already exists)",
                             attempt, outfile)
-                continue
 
-            if 'contents' in o:
+            elif 'contents' in o:
                 s = o['contents']
                 if s and not s.endswith('\n'):
                     s += '\n'
                 with open(outfile, 'w') as fp:
                     fp.write(s)
                 logger.info("Storing %s %s (text content)", attempt, filename)
-                continue
 
-            download_link = o['download_link']
-            response = self.session.session.get(download_link, stream=True)
-            logger.info("Download %s %s", attempt, outfile)
-            with open(outfile, 'wb') as fp:
-                for chunk in response.iter_content(chunk_size=64*1024):
-                    if chunk:
-                        fp.write(chunk)
-            self.extract_archive(outfile)
+            else:
+                download_link = o['download_link']
+                response = self.session.session.get(download_link, stream=True)
+                logger.info("Download %s %s", attempt, outfile)
+                with open(outfile, 'wb') as fp:
+                    for chunk in response.iter_content(chunk_size=64*1024):
+                        if chunk:
+                            fp.write(chunk)
+                self.extract_archive(outfile)
 
     def extract_archive(self, filename):
         path = os.path.dirname(filename)
