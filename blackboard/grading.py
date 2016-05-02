@@ -96,8 +96,7 @@ class Grading(blackboard.Serializable):
                 cell.append('%g' % attempt.score)
         return ''.join(cell)
 
-    def print_gradebook(self):
-        """Print a representation of the gradebook state."""
+    def get_gradebook_columns(self):
         columns = [
             ('Username', lambda u: u['username'], 8),
             ('Name', str, 24),
@@ -109,9 +108,9 @@ class Grading(blackboard.Serializable):
                                         assignment=assignment)
             columns.append(('|', lambda u: '|', 1))
             columns.append((name, display, 3))
-        students = filter(self.get_student_visible,
-                          self.gradebook.students.values())
-        students = sorted(students, key=self.get_student_ordering)
+        return columns
+
+    def get_gradebook_cells(self, columns, students):
         header_row = []
         for c in columns:
             header_name = c[0]
@@ -123,6 +122,15 @@ class Grading(blackboard.Serializable):
                 header_value = c[1]
                 cells.append(header_value(u))
             rows.append(cells)
+        return rows
+
+    def print_gradebook(self):
+        """Print a representation of the gradebook state."""
+        columns = self.get_gradebook_columns()
+        students = filter(self.get_student_visible,
+                          self.gradebook.students.values())
+        students = sorted(students, key=self.get_student_ordering)
+        rows = self.get_gradebook_cells(columns, students)
         for row in rows:
             row_fmt = []
             for cell, c in zip(row, columns):
