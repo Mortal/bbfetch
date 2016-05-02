@@ -4,6 +4,7 @@ import json
 import numbers
 import argparse
 import requests
+import functools
 import blackboard
 import collections
 from blackboard import logger, ParserError, BadAuth, BlackBoardSession
@@ -72,55 +73,65 @@ class Grading(blackboard.Serializable):
     def get_student_visible(self, student):
         raise NotImplementedError
 
+    def get_assignment_display(self, u, assignment):
+        try:
+            student_assignment = u.assignments[assignment.id]
+        except KeyError:
+            return ''
+        assert isinstance(student_assignment, StudentAssignment)
+        cell = []
+        for attempt in student_assignment.attempts:
+            if attempt.needs_grading:
+                if self.has_feedback(attempt):
+                    cell.append('\u21A5')  # UPWARDS ARROW FROM BAR
+                elif self.has_downloaded(attempt):
+                    cell.append('!')
+                else:
+                    cell.append('\u2913')  # DOWNWARDS ARROW TO BAR
+            elif attempt.score == 0:
+                cell.append('\u2718')  # HEAVY BALLOT X
+            elif attempt.score == 1:
+                cell.append('\u2714')  # HEAVY CHECK MARK
+            elif isinstance(attempt.score, numbers.Real):
+                cell.append('%g' % attempt.score)
+        return ''.join(cell)
+
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
-        cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
+        columns = [
+            ('Username', lambda u: u['username'], 8),
+            ('Name', str, 30),
+            ('Group', self.get_student_group_display, 6),
+        ]
         for assignment in self.gradebook.assignments.values():
             name = self.get_assignment_name_display(assignment)
-            if len(name) <= 4:
-                cells.append(' %-4s' % name)
-            else:
-                cells.append(name[:5])
-        rows = [cells]
+            if len(name) < 5:
+                name = ' ' + name
+            display = functools.partial(self.get_assignment_display,
+                                        assignment=assignment)
+            columns.append(('|', lambda u: '|', 1))
+            columns.append((name, display, 5))
         students = filter(self.get_student_visible,
                           self.gradebook.students.values())
         students = sorted(students, key=self.get_student_ordering)
+        header_row = []
+        for c in columns:
+            header_name = c[0]
+            header_row.append(header_name)
+        rows = [header_row]
         for u in students:
-            name = str(u)
-            if not u['available']:
-                name = '(%s)' % name
             cells = []
-            for assignment in self.gradebook.assignments.values():
-                try:
-                    student_assignment = u.assignments[assignment.id]
-                except KeyError:
-                    cells.append('     ')
-                    continue
-                assert isinstance(student_assignment, StudentAssignment)
-                cell = []
-                for attempt in student_assignment.attempts:
-                    if attempt.needs_grading:
-                        if self.has_feedback(attempt):
-                            cell.append('\u21A5')  # UPWARDS ARROW FROM BAR
-                        elif self.has_downloaded(attempt):
-                            cell.append('!')
-                        else:
-                            cell.append('\u2913')  # DOWNWARDS ARROW TO BAR
-                    elif attempt.score == 0:
-                        cell.append('\u2718')  # HEAVY BALLOT X
-                    elif attempt.score == 1:
-                        cell.append('\u2714')  # HEAVY CHECK MARK
-                    elif isinstance(attempt.score, numbers.Real):
-                        cell.append('%g' % attempt.score)
-                cells.append('%-5s' % ''.join(cell))
-            username = u['username'][:8]
-            name = truncate_name(name, 30)
-            group_name = self.get_student_group_display(u)[:6]
-            rows.append(
-                ['%-8s %-30s %-6s' % (username, name, group_name or '')] +
-                cells)
+            for c in columns:
+                header_value = c[1]
+                cells.append(header_value(u))
+            rows.append(cells)
         for row in rows:
-            print(' | '.join(row))
+            row_fmt = []
+            for cell, c in zip(row, columns):
+                header_width = c[2]
+                row_fmt.append(
+                    truncate_name(cell, header_width).ljust(header_width))
+            print(' '.join(row_fmt))
 
     def get_attempt(self, group, assignment, attempt_index=-1):
         assert isinstance(group, str)
