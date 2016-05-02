@@ -213,8 +213,11 @@ class Grading(blackboard.Serializable):
                 continue
 
             if 'contents' in o:
+                s = o['contents']
+                if s and not s.endswith('\n'):
+                    s += '\n'
                 with open(outfile, 'w') as fp:
-                    fp.write(o['contents'])
+                    fp.write(s)
                 logger.info("Saving %s for attempt %s", filename, attempt)
                 continue
 
