@@ -497,21 +497,11 @@ class Grading(blackboard.Serializable):
 
     @classmethod
     def get_course(cls, args):
-        course = args.course
-        if course is None:
-            course = cls.get_setting('grading.json', 'course')
-        if course is None:
-            raise Exception("--course is required")
-        return course
+        raise NotImplementedError
 
     @classmethod
     def get_username(cls, args):
-        username = args.username
-        if username is None:
-            username = cls.get_setting('username')
-        if username is None:
-            raise Exception("--username is required")
-        return username
+        raise NotImplementedError
 
     @classmethod
     def execute_from_command_line(cls):
