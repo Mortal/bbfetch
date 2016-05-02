@@ -66,6 +66,12 @@ class Grading(blackboard.Serializable):
     def get_student_group_display(self, student):
         return self.get_group_name_display(student.group)
 
+    def get_group_name_display(self, group_name):
+        raise NotImplementedError
+
+    def get_student_visible(self, student):
+        raise NotImplementedError
+
     def print_gradebook(self):
         """Print a representation of the gradebook state."""
         cells = ['%-8s %-30s %-6s' % ('Username', 'Name', 'Group')]
