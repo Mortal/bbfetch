@@ -496,13 +496,6 @@ class Grading(blackboard.Serializable):
         return parser
 
     @classmethod
-    def parse_args(cls):
-        parser = cls.get_argument_parser()
-        args = parser.parse_args()
-        blackboard.configure_logging(quiet=args.quiet)
-        return parser, args
-
-    @classmethod
     def get_course(cls, args):
         course = args.course
         if course is None:
@@ -522,7 +515,9 @@ class Grading(blackboard.Serializable):
 
     @classmethod
     def execute_from_command_line(cls):
-        parser, args = cls.parse_args()
+        parser = cls.get_argument_parser()
+        args = parser.parse_args()
+        blackboard.configure_logging(quiet=args.quiet)
         try:
             course = cls.get_course(args)
             username = cls.get_username(args)
