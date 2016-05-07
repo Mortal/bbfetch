@@ -73,7 +73,7 @@ def wrapper(fun):
     parser = argparse.ArgumentParser()
     parser.add_argument('--quiet', action='store_true')
     parser.add_argument('--username', '-u')
-    parser.add_argument('--course', default='_43290_1')
+    parser.add_argument('--course')
     parser.add_argument('--cookiejar', default='cookies.txt')
     args = parser.parse_args()
     configure_logging(quiet=args.quiet)
