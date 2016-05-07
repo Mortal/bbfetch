@@ -43,7 +43,7 @@ def get_thread_posts(session, forum_id, nonce, threads):
         '?conf_id=%s&forum_id=%s&action=collect' % forum_id +
         '&blackboard.platform.security.NonceUtil.nonce=%s' % nonce +
         ''.join('&formCBs=%s' % t for t in ids) +
-        '&requestType=thread&course_id=%s&' % session.course_id)
+        '&requestType=thread&course_id=%s' % session.course_id)
     r = session.get(url)
     document = html5lib.parse(r.content, encoding=r.encoding)
     return parse_thread_posts(document)
