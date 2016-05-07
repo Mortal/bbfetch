@@ -69,7 +69,7 @@ def parse_thread_posts(document):
                 elif c.tag == h_dd:
                     data.append((key, text))
         body = post.find('.//h:div[@class="vtbegenerated"]', NS)
-        if body:
+        if body is not None:
             body = element_to_markdown(body)
         else:
             body = ''
