@@ -4,7 +4,8 @@ import html2text
 
 
 def element_hidden(element):
-    if 'hideoff' in element.get('class', ''):
+    class_list = element.get('class', '').split()
+    if 'hideoff' in class_list:
         return True
     if 'display: none' in element.get('style', ''):
         return True
