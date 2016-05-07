@@ -11,6 +11,23 @@ def element_hidden(element):
 
 
 def element_text_content(element, element_hidden=element_hidden):
+    """
+    >>> s = '''
+    ... <th><span><a><span class="hideoff">
+    ...         Access the profile card for user: au1234567</span>
+    ...     <img alt="" src="/images/ci/ng/avatar_150.gif" /></a>
+    ... au1234567</span>
+    ... <span class="contextMenuContainer">
+    ...   <a><img src="/images/ci/icons/cmlink_generic.gif" alt="" /></a>
+    ...   <div style="display: none;">Remove Users from Course</div>
+    ... </span>
+    ... </th>
+    ... '''
+    >>> from xml.etree.ElementTree import fromstring
+    >>> element_text_content(fromstring(s))
+    'au1234567'
+    """
+
     def visit(e):
         if not element_hidden(e):
             yield e.text or ''
