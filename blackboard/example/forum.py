@@ -32,6 +32,12 @@ def print_forum_posts(session):
 def get_thread_posts(session, forum_id, nonce, threads):
     ids = [i for i, name in threads]
 
+    # action=collect_sort&collect_order=ascending&collect_type=date
+    # sorts the list of posts by date, but unfortunately this disregards
+    # the conf_id, forum_id, formCBs, and instead it simply sorts
+    # the previously displayed list of posts.
+    # Therefore we use action=collect instead, which by default
+    # sorts by date in descending order.
     url = (
         'https://bb.au.dk/webapps/discussionboard/do/message' +
         '?conf_id=%s&forum_id=%s&action=collect' % forum_id +
