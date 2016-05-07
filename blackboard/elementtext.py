@@ -3,9 +3,16 @@ from six import BytesIO
 import html2text
 
 
-def element_text_content(element):
+def element_hidden(element):
+    if 'hideoff' in element.get('class', ''):
+        return True
+    if 'display: none' in element.get('style', ''):
+        return True
+
+
+def element_text_content(element, element_hidden=element_hidden):
     def visit(e):
-        if True:
+        if not element_hidden(e):
             yield e.text or ''
             for c in e:
                 yield ''.join(visit(c))
