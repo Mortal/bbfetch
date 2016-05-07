@@ -421,6 +421,10 @@ class Grading(blackboard.Serializable):
             self.refresh_groups()
         if args.check:
             self.check()
+        if args.download_attempt:
+            group, assignment, attempt_index = args.download_attempt
+            self.download_attempt_files(
+                self.get_attempt(group, assignment, attempt_index))
         if args.download >= 3:
             self.download_all_attempt_files(
                 visible=None, needs_grading=None)
@@ -481,6 +485,15 @@ class Grading(blackboard.Serializable):
         parser.add_argument('--check', '-c', action='store_true',
                             help='Test that Grading methods work ' +
                                  '(for debugging)')
+
+        def attempt_type(s):
+            group, assignment, index = s.split('/')
+            return (group, assignment, int(index))
+
+        parser.add_argument('--download-attempt', '-D', metavar='ATTEMPT',
+                            help='Download attempt of particular group: ' +
+                                 '"10/2/0" for group 10, assignment 2, ' +
+                                 'attempt index 0', type=attempt_type)
         parser.add_argument('--download', '-d', action='count', default=0,
                             help='Download handins that need grading')
         parser.add_argument('--upload', '-u', action='store_true',
