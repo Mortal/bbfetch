@@ -7,6 +7,8 @@ def element_hidden(element):
     class_list = element.get('class', '').split()
     if 'hideoff' in class_list:
         return True
+    if 'author_highlight' in class_list:
+        return True
     if 'display: none' in element.get('style', ''):
         return True
 
