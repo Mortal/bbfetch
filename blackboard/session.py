@@ -239,6 +239,7 @@ class BlackBoardSession:
             class_list = (content.get('class') or '').split()
             if 'error' in class_list:
                 logger.info("contentPanel indicates an error has occurred")
+                # raise ParserError("Error", response)
 
     def post(self, url, data, files=None, headers=None):
         response = self.session.post(
