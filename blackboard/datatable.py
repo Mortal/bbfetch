@@ -4,6 +4,7 @@ import html5lib
 from requests.compat import urljoin
 
 import blackboard
+from blackboard.elementtext import element_text_content
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -77,7 +78,7 @@ def parse_datatable(response, document, extract=None, table_id=None):
     header = table.find('./h:thead', NS)
     keys = []
     for h in header[0]:
-        text = ' '.join(''.join(h.itertext()).split())
+        text = element_text_content(h)
         sortheader = h.find('./h:a[@class="sortheader"]', NS)
         if sortheader:
             mo = re.search(r'sortCol=([^&]*)', sortheader.get('href'))
@@ -90,7 +91,7 @@ def parse_datatable(response, document, extract=None, table_id=None):
         r = []
         res.append(r)
         for key, cell in zip(keys, row):
-            v = ' '.join(''.join(cell.itertext()).split())
+            v = element_text_content(cell)
             if extract is not None:
                 v = extract(key, cell, v)
             r.append(v)

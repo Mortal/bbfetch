@@ -4,7 +4,7 @@ from xml.etree.ElementTree import ElementTree
 from six import BytesIO
 import blackboard
 from blackboard.datatable import fetch_datatable
-from elementtext import element_to_markdown
+from blackboard.elementtext import element_to_markdown, element_text_content
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -95,7 +95,7 @@ def get_forum_ids(session):
         if key != 'title':
             return d
         link = cell.find('./h:span/h:a', NS)
-        v = ' '.join(''.join(link.itertext()).split())
+        v = element_text_content(link)
         mo = re.search(
             r'conf_id=([^&]+)&forum_id=([^&]+)', link.get('href'))
         if not mo:

@@ -322,7 +322,7 @@ def fetch_groups(session):
             './/h:a[@class="userGroupNameListItemRemove"]', NS)
         res = []
         for g in groups:
-            name = ' '.join(''.join(g.itertext()).split())
+            name = element_text_content(g)
             i = g.get('id')
             res.append((name, strip_prefix(i, 'rmv_')))
         return res
