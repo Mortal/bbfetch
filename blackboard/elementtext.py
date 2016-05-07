@@ -4,7 +4,14 @@ import html2text
 
 
 def element_text_content(element):
-    return ' '.join(''.join(element.itertext()).split())
+    def visit(e):
+        if True:
+            yield e.text or ''
+            for c in e:
+                yield ''.join(visit(c))
+            yield e.tail or ''
+
+    return ' '.join(''.join(visit(element)).split())
 
 
 def element_to_html(element):
