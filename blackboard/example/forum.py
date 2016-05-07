@@ -57,23 +57,7 @@ def parse_thread_posts(document):
         for dl in post.findall('.//h:dl', NS):
             key = None
             for c in dl:
-                if key == 'Author:':
-                    span = c.find('./h:span', NS)
-                    if span:
-                        data.append(('role', span.get('class')))
-                        span = span.find(
-                            './h:span[@class="profileCardAvatarThumb"]', NS)
-                        direct_text = (
-                            [span.text or ''] + [cc.tail or '' for cc in span])
-                        raw_text = ''.join(direct_text)
-                    else:
-                        data.append(('role', 'anonymous'))
-                        raw_text = ''.join(c.itertext())
-                else:
-                    raw_text = ''.join(c.itertext())
-
-                text = ' '.join(raw_text.split())
-
+                text = element_text_content(c)
                 if c.tag == h_dt:
                     key = text
                 elif c.tag == h_dd:
