@@ -9,12 +9,17 @@ def fetch_users(session):
     url = ('https://bb.au.dk/webapps/blackboard/execute/userManager' +
            '?course_id=%s' % session.course_id)
     response, keys, rows = fetch_datatable(session, url)
-    return parse_users(keys, rows)
+    try:
+        return parse_users(keys, rows)
+    except ValueError as exn:
+        raise blackboard.ParserError(exn.args[0], response)
 
 
 def extract_username(s):
-    s = re.sub(r'^Access the profile card for user: \S+ ', '', s)
-    s = re.sub(r' Remove Users from Course$', '', s)
+    if s.startswith('Access the profile card for user:'):
+        raise ValueError("element_text_content did not strip prefix")
+    if s.endswith('Remove Users from Course'):
+        raise ValueError("element_text_content did not strip suffix: %r" % (s,))
     return s
 
 
