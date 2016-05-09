@@ -304,16 +304,29 @@ class Gradebook(blackboard.Serializable):
                 if a1['attempts'] is None:
                     a1['attempts'] = a2['attempts']
 
-    def refresh_attempts(self, student_visible=None, refresh_all=False):
+    def refresh_attempts(self, student_visible=None, refresh_all=False,
+                         student_assignment=None, student_assignments=None):
         """Bulk-refresh all missing assignment data."""
+        if student_assignment is not None and student_assignments is not None:
+            raise TypeError(
+                "Cannot pass both student_assignment and student_assignments")
+        if student_assignment is not None:
+            student_assignments = [student_assignment]
+        elif student_assignments is None:
+            student_assignments = [student_assignment]
+        TODO
         attempt_keys = []
         students = self.students.values()
         if student_visible is not None:
             students = list(filter(student_visible, students))
-        for user in students:
-            for assignment_id, assignment in user['assignments'].items():
-                if refresh_all or assignment['attempts'] is None:
-                    attempt_keys.append((user.id, assignment_id))
+        if student_assignment is None and student_assignments is None:
+            for user in students:
+                for assignment_id, assignment in user['assignments'].items():
+                    if refresh_all or assignment['attempts'] is None:
+                        attempt_keys.append((user.id, assignment_id))
+        else:
+            if student_assignment:
+                student_assignments TODO
         if not attempt_keys:
             return
         logger.info("Fetching %d attempt list%s",
@@ -321,3 +334,9 @@ class Gradebook(blackboard.Serializable):
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
             self.students[user_id]['assignments'][aid]['attempts'] = attempts
+
+    def invalidate_attempt_list(self, attempt):
+        assert isinstance(attempt, Attempt)
+        student = self.students[attempt.student.id]
+        student_assignment = student['assignments'][attempt.assignment.id]
+        student_assignment['attempts'] = None
