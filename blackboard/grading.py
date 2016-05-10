@@ -533,11 +533,14 @@ class Grading(blackboard.Serializable):
         try:
             grading.main(args, session, grading)
         except ParserError as exn:
+            logging.error("Parsing error")
             print(exn)
             exn.save()
         except BadAuth:
-            print("Bad username or password. Forgetting password.")
+            logging.error("Bad username or password. Forgetting password.")
             session.forget_password()
+        except Exception:
+            logging.exception("Uncaught exception")
         else:
             grading.save('grading.json')
         session.save_cookies()
