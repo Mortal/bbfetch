@@ -175,6 +175,8 @@ class BlackBoardSession:
                     # It seems that making a GET request to this page
                     # logs you out?
                     if return_url == '/webapps/login/?action=relogin':
+                        logging.debug(
+                            "Not setting returnUrl to %r", return_url)
                         return_url = ''
                     new_qs = urlencode(
                         dict(returnUrl=return_url,
