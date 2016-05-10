@@ -172,6 +172,10 @@ class BlackBoardSession:
                     except KeyError:
                         print("We are being redirected to %r" % (next_url,))
                         return_url = ''
+                    # It seems that making a GET request to this page
+                    # logs you out?
+                    if return_url == '/webapps/login/?action=relogin':
+                        return_url = ''
                     new_qs = urlencode(
                         dict(returnUrl=return_url,
                              authProviderId='_102_1'))
