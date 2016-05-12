@@ -211,8 +211,14 @@ class Attempt(ItemWrapper):
 class StudentAssignment(ItemWrapper):
     id = property(lambda self: self._kwargs['data_key'])
     student = property(lambda self: self._kwargs['student'])
-    score = property(lambda self: self['score'])
     needs_grading = property(lambda self: self['needs_grading'])
+
+    @property
+    def score(self):
+        try:
+            return float(self['score'])
+        except ValueError:
+            return 0
 
     @staticmethod
     def ordering(item):
