@@ -99,7 +99,7 @@ class Grading(blackboard.Serializable):
     def get_gradebook_columns(self):
         columns = [
             ('Username', lambda u: u.username, 8),
-            ('Name', str, 24),
+            ('Name', str, 27),
             ('Group', self.get_student_group_display, 6),
         ]
         for assignment in self.gradebook.assignments.values():
