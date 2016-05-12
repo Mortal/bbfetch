@@ -59,8 +59,16 @@ class Grading(blackboard.grading.Grading):
         relating to the given handin.
         """
 
+        try:
+            hostname = self.hostname
+        except AttributeError:
+            from socket import gethostname
+            hostname = self.hostname = gethostname()
+
         # expanduser translates "~" into your home directory
         base = os.path.expanduser('~/uni/6q4/dADS2')
+        if hostname == 'novascotia':
+            base = os.path.expanduser('~/TA/dADS2-2016')
 
         group_name = attempt.group_name
         if group_name.startswith('Gruppe'):
