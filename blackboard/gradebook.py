@@ -194,6 +194,7 @@ class Attempt(ItemWrapper):
                      else self['score'])
 
     assignment = property(lambda self: self._kwargs['assignment'])
+    attempt_index = property(lambda self: self._kwargs['attempt_index'])
 
     student = property(lambda self: self.assignment.student)
 
@@ -237,7 +238,8 @@ class StudentAssignment(ItemWrapper):
         if r is None:
             self._fetch_attempts()
             r = self['attempts']
-        return [Attempt(a, assignment=self) for a in r]
+        return [Attempt(a, assignment=self, attempt_index=i)
+                for i, a in enumerate(r)]
 
     def _fetch_attempts(self):
         raise NotImplementedError(
