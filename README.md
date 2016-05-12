@@ -99,12 +99,6 @@ and 30 seconds to upload the feedback (but your mileage may vary).
 rav@novascotia:~/TA/dADS2-2016$ ./grading -d
 [2016-04-29 08:29:42,808 INFO] Refresh gradebook
 [2016-04-29 08:29:43,189 INFO] Sending login details to WAYF
-[2016-04-29 08:29:43,529 DEBUG] WAYF login -> https://wayf.au.dk/module.php/core/loginuserpass.php?AuthState=...
-[2016-04-29 08:29:43,530 DEBUG] WAYF response 200
-[2016-04-29 08:29:43,538 DEBUG] Response page form has 1 inputs
-[2016-04-29 08:29:43,622 DEBUG] Hidden form 1 -> 200 https://wayf.wayf.dk/module.php/saml/sp/saml2-acs.php/wayf.wayf.dk
-[2016-04-29 08:29:43,630 DEBUG] Response page form has 2 inputs
-[2016-04-29 08:29:44,258 DEBUG] Hidden form 2 -> 200 https://bb.au.dk/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1
 [2016-04-29 08:29:52,556 INFO] Download Group Attempt Gruppe 2 - 01 28/04/16 /home/rav/TA/dADS2-2016/A3-2/01_26421/afl3.pdf (None bytes)
 [2016-04-29 08:29:55,132 INFO] Download Group Attempt Gruppe 2 - 03 28/04/16 /home/rav/TA/dADS2-2016/A3-2/03_26348/main.pdf (None bytes)
 [2016-04-29 08:29:57,650 INFO] Saving student_comments.txt for attempt Group Attempt Gruppe 2 - 04 26/04/16
@@ -188,6 +182,7 @@ should have their handins graded by the user.
 For other BlackBoard automation purposes, the `blackboard/examples/` directory
 contains examples of how to download all forum posts for a course,
 how to download the list of groups,
+how to download a list of email addresses for each group of students,
 and how to download the list of when students last accessed the course website.
 
 The project uses the following 3rd party modules:
