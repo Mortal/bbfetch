@@ -108,6 +108,9 @@ class Grading(blackboard.Serializable):
                                         assignment=assignment)
             columns.append(('|', lambda u: '|', 1))
             columns.append((name, display, 3))
+        columns.append(('|', lambda u: '|', 1))
+        columns.append(
+            ('Pts', lambda u: '%g' % u.score, 3))
         return columns
 
     def get_gradebook_cells(self, columns, students):
