@@ -143,6 +143,10 @@ class Student(ItemWrapper):
         if group_names:
             return group_names[-1]
 
+    @property
+    def score(self):
+        return sum(a.score for a in self.assignments.values())
+
     def __str__(self):
         return self.name
 
