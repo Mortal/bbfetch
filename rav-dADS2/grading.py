@@ -85,13 +85,13 @@ class Grading(blackboard.grading.Grading):
         attempt_id = re.sub(r'_(.*)_1', r'\1', attempt.id)
         assignment = self.get_assignment_name_display(attempt.assignment)
 
-        # Translate Handin 1, Class DA2, Group 3, attempt id 456 into
-        # ~/TA/dADS2-2016/A1-DA2/03_456
-        fmt = '{base}/A{assignment}{hyphen_class_name}/{group}_{id}'
+        # Translate Handin 1, Class DA2, Group 3, first attempt, id 456 into
+        # ~/TA/dADS2-2016/A1-DA2/03_1_456
+        fmt = '{base}/A{assignment}{hyphen_class_name}/{group}_{idx}_{id}'
         return fmt.format(
             base=base, assignment=assignment,
             hyphen_class_name=hyphen_class_name, group=group_number,
-            id=attempt_id)
+            id=attempt_id, idx=attempt.attempt_index + 1)
 
     def get_feedback_score(self, comments):
         """
