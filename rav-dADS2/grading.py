@@ -75,17 +75,20 @@ class Grading(blackboard.grading.Grading):
             # Translate "Gruppe DAx - yy" into "DAx" and "yy"
             class_name = group_name.split()[1]
             group_number = group_name.split()[3]
+            hyphen_class_name = '-' + class_name
         else:
-            class_name = group_number = None
+            hyphen_class_name = class_name = group_number = None
 
         attempt_id = re.sub(r'_(.*)_1', r'\1', attempt.id)
         assignment = self.get_assignment_name_display(attempt.assignment)
 
         # Translate Handin 1, Class DA2, Group 3, attempt id 456 into
-        # ~/TA/dADS2-2016/A1-DA2/03-456
-        return '{base}/A{assignment}-{class_name}/{group}_{id}'.format(
+        # ~/TA/dADS2-2016/A1-DA2/03_456
+        fmt = '{base}/A{assignment}{hyphen_class_name}/{group}_{id}'
+        return fmt.format(
             base=base, assignment=assignment,
-            class_name=class_name, group=group_number, id=attempt_id)
+            hyphen_class_name=hyphen_class_name, group=group_number,
+            id=attempt_id)
 
     def get_feedback_score(self, comments):
         """
