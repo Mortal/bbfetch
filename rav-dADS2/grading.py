@@ -75,7 +75,10 @@ class Grading(blackboard.grading.Grading):
             # Translate "Gruppe DAx - yy" into "DAx" and "yy"
             class_name = group_name.split()[1]
             group_number = group_name.split()[3]
-            hyphen_class_name = '-' + class_name
+            if class_name == '2':
+                hyphen_class_name = ''
+            else:
+                hyphen_class_name = '-' + class_name
         else:
             hyphen_class_name = class_name = group_number = None
 
