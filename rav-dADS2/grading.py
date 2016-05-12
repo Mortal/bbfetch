@@ -2,7 +2,7 @@ import os
 import re
 import sys
 sys.path += [os.path.expanduser('~/bbfetch')]
-import blackboard.grading
+import blackboard.grading  # NOQA
 
 
 class Grading(blackboard.grading.Grading):
