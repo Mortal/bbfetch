@@ -108,6 +108,34 @@ class Grading(blackboard.grading.Grading):
         # return '<br />'.join(feedback.splitlines())
         return feedback
 
+    def get_gradebook_cells(self, columns, students):
+        rows = super().get_gradebook_cells(columns, students)
+        return rows
+        # header_row = rows[0]
+        # group_column = header_row.index('Group')
+
+        # def get_group(row):
+        #     return row[group_column]
+
+        # result = []
+
+        # from itertools import groupby
+        # for group, group_rows in groupby(rows, key=get_group):
+        #     group_rows = list(group_rows)
+        #     columns = list(zip(*group_rows))
+        #     print(columns[group_column:])
+        #     all_same = all(
+        #         all(c == column[0] for c in column)
+        #         for column in columns[group_column:])
+        #     if all_same:
+        #         for row in group_rows[1:]:
+        #             for i in range(group_column, len(row)):
+        #                 if row[i] != '|':
+        #                     row[i] = ''
+        #     result.extend(group_rows)
+        #     result.append([''] * len(header_row))
+        # return result
+
 
 if __name__ == "__main__":
     Grading.execute_from_command_line()
