@@ -136,7 +136,7 @@ class Grading(blackboard.Serializable):
             for cell, c in zip(row, columns):
                 header_width = c[2]
                 row_fmt.append(
-                    truncate_name(cell, header_width).ljust(header_width))
+                    truncate_name(str(cell), header_width).ljust(header_width))
             print(' '.join(row_fmt).rstrip())
 
     def get_attempt(self, group, assignment, attempt_index=-1):
