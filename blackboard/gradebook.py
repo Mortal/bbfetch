@@ -328,16 +328,19 @@ class Gradebook(blackboard.Serializable):
                 if a1['attempts'] is None:
                     a1['attempts'] = a2['attempts']
 
-    def refresh_attempts(self, student_visible=None, refresh_all=False):
+    def refresh_attempts(self, attempts=None, student_visible=None, refresh_all=False):
         """Bulk-refresh all missing assignment data."""
-        attempt_keys = []
-        students = self.students.values()
-        if student_visible is not None:
-            students = list(filter(student_visible, students))
-        for user in students:
-            for assignment_id, assignment in user['assignments'].items():
-                if refresh_all or assignment['attempts'] is None:
-                    attempt_keys.append((user.id, assignment_id))
+        if attempts is None:
+            attempt_keys = []
+            students = self.students.values()
+            if student_visible is not None:
+                students = list(filter(student_visible, students))
+            for user in students:
+                for assignment_id, assignment in user['assignments'].items():
+                    if refresh_all or assignment['attempts'] is None:
+                        attempt_keys.append((user.id, assignment_id))
+        else:
+            for attempt in attempts:
         if not attempt_keys:
             return
         logger.info("Fetching %d attempt list%s",

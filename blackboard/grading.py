@@ -416,6 +416,8 @@ class Grading(blackboard.Serializable):
                 submit_grade(self.session, attempt.id,
                              attempt.assignment.group_assignment,
                              score, feedback, attachments)
+            self.gradebook.refresh_attempts(
+                [attempt for attempt, score, feedback, attachments in uploads])
 
     def main(self, args, session, grading):
         if args.refresh:
