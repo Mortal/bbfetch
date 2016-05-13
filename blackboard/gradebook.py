@@ -233,13 +233,19 @@ class StudentAssignment(ItemWrapper):
         return getattr(self._kwargs['assignments'][self.id], key)
 
     @property
-    def attempts(self):
+    def cached_attempts(self):
         r = self['attempts']
-        if r is None:
-            self._fetch_attempts()
-            r = self['attempts']
-        return [Attempt(a, assignment=self, attempt_index=i)
-                for i, a in enumerate(r)]
+        if r is not None:
+            return [Attempt(a, assignment=self, attempt_index=i)
+                    for i, a in enumerate(r)]
+
+    @property
+    def attempts(self):
+        a = self.cached_attempts
+        if a is not None:
+            return a
+        self._fetch_attempts()
+        return self.cached_attempts
 
     def _fetch_attempts(self):
         raise NotImplementedError(
