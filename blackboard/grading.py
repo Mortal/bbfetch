@@ -65,7 +65,11 @@ class Grading(blackboard.Serializable):
         return groups
 
     def get_student_group_display(self, student):
-        return self.get_group_name_display(student.group)
+        groups = self.get_student_groups(student)
+        if not groups:
+            return '-'
+        else:
+            return self.get_group_name_display(groups[0])
 
     def get_group_name_display(self, group_name):
         raise NotImplementedError
