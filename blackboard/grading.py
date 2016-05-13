@@ -458,8 +458,8 @@ class Grading(blackboard.Serializable):
         print('')
         for s in self.gradebook.students.values():
             print("Name: %s" % (s,))
-            print("Group: %r (%r)" %
-                  (s.group, self.get_group_name_display(s.group)))
+            print("Group: %r" %
+                  (self.get_student_group_display(s),))
             print("Visible: %s" % (self.get_student_visible(s),))
             print("Order by: %r" % (self.get_student_ordering(s),))
             for assignment in self.gradebook.assignments.values():
