@@ -467,10 +467,14 @@ class Grading(blackboard.Serializable):
                     student_assignment = s.assignments[assignment.id]
                 except KeyError:
                     continue
-                for attempt in student_assignment.attempts:
-                    print("%r %r downloads to directory %r" %
-                          (student_assignment, attempt,
-                           self.get_attempt_directory_name(attempt)))
+                a = student_assignment.cached_attempts
+                if a is not None:
+                    for attempt in a:
+                        print("%r %r downloads to directory %r" %
+                              (student_assignment, attempt,
+                               self.get_attempt_directory_name(attempt)))
+                else:
+                    print("Student attempts not loaded")
             print('')
 
     @staticmethod
