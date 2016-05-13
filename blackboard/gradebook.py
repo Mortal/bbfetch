@@ -134,7 +134,7 @@ class Student(ItemWrapper):
     @property
     def group(self):
         attempts = [attempt for assignment in self.assignments.values()
-                    for attempt in assignment.attempts]
+                    for attempt in (assignment.cached_attempts or [])]
         # Attempts are ordered first by assignment (latest last)
         # and then by attempt within the assignment (most recent last).
         # Thus, we take the last group_name.
