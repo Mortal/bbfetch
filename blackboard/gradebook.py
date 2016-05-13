@@ -132,7 +132,7 @@ class Student(ItemWrapper):
         return '%s %s' % (self.first_name, self.last_name)
 
     @property
-    def group(self):
+    def group_from_cached_attempts(self):
         attempts = [attempt for assignment in self.assignments.values()
                     for attempt in (assignment.cached_attempts or [])]
         # Attempts are ordered first by assignment (latest last)
@@ -142,6 +142,12 @@ class Student(ItemWrapper):
                        if attempt.group_name]
         if group_names:
             return group_names[-1]
+
+    @property
+    def group(self):
+        raise Exception(
+            "Student.group is deprecated; use Grading.get_student_groups " +
+            "or Student.group_from_cached_attempts instead")
 
     @property
     def score(self):
