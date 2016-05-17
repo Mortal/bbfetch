@@ -426,6 +426,7 @@ class Grading(blackboard.Serializable):
                              score, feedback, attachments)
             self.gradebook.refresh_attempts(
                 attempts=[attempt for attempt, _s, _f, _a in uploads])
+            self.autosave()
 
     def main(self, args, session, grading):
         if args.refresh:
