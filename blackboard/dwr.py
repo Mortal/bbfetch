@@ -126,6 +126,14 @@ def parse_js(code):
     ... """)
     {1234: []}
     >>> parse_js("""
+    ... throw 'allowScriptTagRemoting is false.';
+    ... //#DWR-INSERT
+    ... //#DWR-REPLY
+    ... var s3=[];s3[0]=1234;s3[1]=2345;
+    ... dwr.engine._remoteHandleCallback('16','1234',{'42':s3});
+    ... """)
+    {1234: [('42', [1234, 2345])]}
+    >>> parse_js("""
     ... dwr.engine._remoteHandleException('42','5',{javaClassName:\\
     ... "java.lang.Throwable",message:"Error"});
     ... """)  # doctest: +ELLIPSIS
@@ -136,13 +144,18 @@ def parse_js(code):
 
     id = r'[a-zA-Z_][a-zA-Z0-9_]*'
     obj = r'(?:[^;\'"]|\'(?:[^\\\']|\\.)*\'|"(?:[^\\"]|\\.)*")*'
+    kv = '(?:' + obj + '):(?:' + id + ')'
     patterns = [
         ('throw', "throw "+obj+";"),
         ('comment', '//(.*)'),
         ('var', 'var ('+id+')=('+obj+');'),
         ('setattr', '('+id+')\\.('+id+')=('+obj+');'),
+        ('setitem', '('+id+r')\[('+obj+r')\]=('+obj+');'),
         ('call', r"dwr\.engine\._remoteHandleCallback\(" +
                  r"'(\d+)','(\d+)',\[((?:"+id+r"(?:,"+id+r")*)?)\]\);"),
+        ('calldict', r"dwr\.engine\._remoteHandleCallback\(" +
+                     r"'(\d+)','(\d+)',\{" +
+                     r"((?:" + kv + r"(?:," + kv + r")*)?)\}\);"),
         ('exception', r"dwr\.engine\._remoteHandleException\(" +
                       r"'(\d+)','(\d+)',\{javaClassName:(" + obj +
                       r"),message:(" + obj + r")\}\);"),
@@ -174,6 +187,16 @@ def parse_js(code):
             key = groups[2]
             value = js_object_parse(groups[3])
             locals[name][key] = value
+        elif key == 'setitem':
+            name = groups[1]
+            key = js_object_parse(groups[2])
+            value = js_object_parse(groups[3])
+            if isinstance(locals[name], list) and len(locals[name]) <= key:
+                locals[name].extend([None] * (key - len(locals[name])))
+                locals[name].append(value)
+            else:
+                # Either a dictionary or a list with length > key
+                locals[name][key] = value
         elif key == 'call':
             batch_id = int(groups[1])
             call_id = int(groups[2])
@@ -181,6 +204,15 @@ def parse_js(code):
                 data = [locals[n] for n in groups[3].split(',')]
             else:
                 data = []
+            results.append((batch_id, call_id, data))
+        elif key == 'calldict':
+            batch_id = int(groups[1])
+            call_id = int(groups[2])
+            data = []
+            if groups[3]:
+                for kv_string in groups[3].split(','):
+                    k, v = kv_string.split(':')
+                    data.append((js_object_parse(k), locals[v]))
             results.append((batch_id, call_id, data))
         elif key == 'exception':
             batch_id = int(groups[1])
