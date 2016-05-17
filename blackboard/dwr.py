@@ -5,6 +5,10 @@ import blackboard
 from blackboard import logger, ParserError
 
 
+def js_object_parse(s):
+    return json.loads(s)
+
+
 def get_script_session_id(session):
     try:
         return session._script_session_id
@@ -102,12 +106,12 @@ def parse_js(code):
             pass
         elif key == 'var':
             name = groups[1]
-            value = json.loads(groups[2])
+            value = js_object_parse(groups[2])
             locals[name] = value
         elif key == 'setattr':
             name = groups[1]
             key = groups[2]
-            value = json.loads(groups[3])
+            value = js_object_parse(groups[3])
             locals[name][key] = value
         elif key == 'call':
             batch_id = int(groups[1])
@@ -120,8 +124,8 @@ def parse_js(code):
         elif key == 'exception':
             batch_id = int(groups[1])
             call_id = int(groups[2])
-            class_name = json.loads(groups[3])
-            message = json.loads(groups[4])
+            class_name = js_object_parse(groups[3])
+            message = js_object_parse(groups[4])
             exceptions.append((batch_id, call_id, class_name, message))
 
     skipped = code[i:]
