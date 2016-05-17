@@ -57,14 +57,17 @@ class DictWrapper:
         except AttributeError:
             return len(self._data)
 
+    def _init(self):
+        self._values = [self._item_class(v, data_key=k, **self._kwargs)
+                        for k, v in self._data.items()]
+        self._values.sort(key=self._order_by)
+
     def values(self):
         try:
-            return iter(self._items)
+            return iter(self._values)
         except AttributeError:
-            self._items = [self._item_class(v, data_key=k, **self._kwargs)
-                           for k, v in self._data.items()]
-            self._items.sort(key=self._order_by)
-            return iter(self._items)
+            self._init()
+            return iter(self._values)
 
     def __getitem__(self, key):
         return self._item_class(self._data[key], data_key=key, **self._kwargs)
