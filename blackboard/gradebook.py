@@ -201,10 +201,6 @@ class Attempt(ItemWrapper):
                   else self['id'])
     group_name = property(lambda self: self['groupName'])
     date = property(lambda self: self['date'])
-    needs_grading = property(lambda self:
-                             self['groupStatus'] == 'ng'
-                             if self.assignment.group_assignment
-                             else self['status'] == 'ng')
     individual_score = property(lambda self:
                                 None if self['status'] == 'ng'
                                 else self['score'])
@@ -214,6 +210,7 @@ class Attempt(ItemWrapper):
     score = property(lambda self:
                      self.group_score if self.assignment.group_assignment
                      else self.individual_score)
+    needs_grading = property(lambda self: self.score is None)
 
     assignment = property(lambda self: self._kwargs['assignment'])
     attempt_index = property(lambda self: self._kwargs['attempt_index'])
