@@ -271,3 +271,30 @@ def dwr_get_attempts_info(session, attempts, batch_size=20):
             dwr_get_attempts_info_single_request(session, attempts[i:j]))
         l("Fetching %d attempt lists took %%.1f s" % (j - i))
     return results
+
+
+def dwr_get_groups(session):
+    session_id = session.get_cookie('JSESSIONID', '/webapps/gradebook')
+    payload = dict(
+        callCount=1,
+        page='/webapps/gradebook/do/instructor/enterGradeCenter' +
+             '?course_id=%s&cvid=fullGC' % session.course_id,
+        httpSessionId=session_id,
+        scriptSessionId=get_script_session_id(session),
+        batchId=42)
+    course_id_raw = session.course_id.split('_')[1]
+    i = 0
+    call_data = dict(
+        scriptName='GradebookDWRFacade',
+        methodName='getGroups',
+        id=i,
+        param0='string:%s' % course_id_raw)
+    payload.update(('c%d-%s' % (i, k), v) for k, v in call_data.items())
+    url = ('https://bb.au.dk/webapps/gradebook/dwr/call/plaincall/' +
+           'GradebookDWRFacade.getGroups.dwr')
+    response = session.post(url, payload)
+    try:
+        results = parse_js(response.text)
+    except ValueError as exn:
+        raise ParserError(exn.args[0], response)
+    return results[i]
