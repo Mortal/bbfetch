@@ -7,6 +7,16 @@ import blackboard.grading  # NOQA
 
 
 class Grading(blackboard.grading.Grading):
+    def __init__(self, session):
+        super().__init__(session)
+
+        # Use https://www.passwordstore.org/ to get password
+        import subprocess
+        s = subprocess.check_output(
+            ('pass', 'au'), universal_newlines=True)
+        session.password = s.splitlines()[0].strip()
+        session.forget_password = lambda self: print("keyring not used")
+
     @classmethod
     def get_username(cls, args):
         """Username to log in to BlackBoard with."""
