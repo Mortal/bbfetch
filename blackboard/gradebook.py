@@ -241,10 +241,12 @@ class Attempt(ItemWrapper):
     def __repr__(self):
         if self.assignment.group_assignment:
             return '<Attempt id=%s assignment=%s group=%r score=%s>' % (
-                self.id, self.assignment, self.group_name, self.score)
+                self.id, self.assignment, self.group_name,
+                self.score if self.is_graded else self.status)
         else:
             return '<Attempt id=%s assignment=%s student=%s score=%s>' % (
-                self.id, self.assignment, self.student, self.score)
+                self.id, self.assignment, self.student,
+                self.score if self.is_graded else self.status)
 
     def __str__(self):
         if self.assignment.group_assignment:
