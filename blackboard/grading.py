@@ -277,8 +277,12 @@ class Grading(blackboard.Serializable):
         if all(k in st for k in keys) and 'score' not in st:
             logger.debug("Refresh attempt %s since it was fetched in an old " +
                          "version of bbfetch", attempt.id)
+        elif all(k in st for k in keys) and st['score'] != attempt.score:
+            logger.debug("Refresh attempt %s since its score has changed",
+                         attempt.id)
         if (not all(k in st for k in keys) or
-                'score' not in st):
+                'score' not in st or
+                st['score'] != attempt.score):
             self.refresh_attempt_files(attempt)
             st = self.get_attempt_state(attempt)
         used_filenames = set(['comments.txt'])
