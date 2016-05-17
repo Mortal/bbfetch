@@ -205,10 +205,15 @@ class Attempt(ItemWrapper):
                              self['groupStatus'] == 'ng'
                              if self.assignment.group_assignment
                              else self['status'] == 'ng')
+    individual_score = property(lambda self:
+                                None if self['status'] == 'ng'
+                                else self['score'])
+    group_score = property(lambda self:
+                           None if self['groupStatus'] == 'ng'
+                           else self['groupScore'])
     score = property(lambda self:
-                     self['groupScore']
-                     if self.assignment.group_assignment
-                     else self['score'])
+                     self.group_score if self.assignment.group_assignment
+                     else self.individual_score)
 
     assignment = property(lambda self: self._kwargs['assignment'])
     attempt_index = property(lambda self: self._kwargs['attempt_index'])
