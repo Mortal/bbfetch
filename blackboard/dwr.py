@@ -1,12 +1,73 @@
 import re
-import json
+import ast
+import sys
+import collections
 
 import blackboard
 from blackboard import logger, ParserError
 
 
+class JsObjectParser(ast.NodeVisitor):
+    def visit(self, node):
+        try:
+            return super().visit(node)
+        except Exception:
+            self.source_backtrace(node, sys.stderr)
+            raise
+
+    def generic_visit(self, node):
+        raise ValueError("Unhandled node type %s" % (node,))
+
+    def source_backtrace(self, node, file):
+        try:
+            lineno = node.lineno
+            col_offset = node.col_offset
+        except AttributeError:
+            lineno = col_offset = None
+        print('At node %s' % node, file=file)
+        if lineno is not None and lineno > 0:
+            print(self._source, file=file)
+            print(' ' * col_offset + '^', file=file)
+
+    def visit_Expression(self, node):
+        return self.visit(node.body)
+
+    def visit_Name(self, node):
+        js_constants = dict(
+            null=None,
+            false=False,
+            true=True,
+        )
+        return js_constants[node.id]
+
+    def visit_Num(self, node):
+        return node.n
+
+    def visit_Str(self, node):
+        return node.s
+
+    def visit_List(self, node):
+        return [self.visit(v) for v in node.elts]
+
+    def visit_Dict(self, node):
+        return collections.OrderedDict(
+            [(self.visit(k), self.visit(v))
+             for k, v in zip(node.keys, node.values)])
+
+
 def js_object_parse(s):
-    return json.loads(s)
+    """
+    >>> import json
+    >>> def json_same(s):
+    ...     return js_object_parse(s) == json.loads(s)
+    >>> json_same('[null, 42, 42.5, true, "hello", {"a": false}, {}]')
+    True
+    >>> js_object_parse("'hello'")
+    'hello'
+    """
+    parser = JsObjectParser()
+    parser._source = s
+    return parser.visit(ast.parse(s, mode='eval'))
 
 
 def get_script_session_id(session):
