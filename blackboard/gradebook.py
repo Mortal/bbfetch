@@ -61,6 +61,7 @@ class DictWrapper:
         self._values = [self._item_class(v, data_key=k, **self._kwargs)
                         for k, v in self._data.items()]
         self._values.sort(key=self._order_by)
+        self._keys = [x._kwargs['data_key'] for x in self._values]
 
     def values(self):
         try:
@@ -68,6 +69,13 @@ class DictWrapper:
         except AttributeError:
             self._init()
             return iter(self._values)
+
+    def items(self):
+        try:
+            return zip(self._keys, self._values)
+        except AttributeError:
+            self._init()
+            return zip(self._keys, self._values)
 
     def __getitem__(self, key):
         return self._item_class(self._data[key], data_key=key, **self._kwargs)
