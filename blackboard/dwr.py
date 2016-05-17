@@ -2,7 +2,7 @@ import re
 import json
 
 import blackboard
-from blackboard import logger
+from blackboard import logger, ParserError
 
 
 def get_script_session_id(session):
@@ -138,7 +138,10 @@ def dwr_get_attempts_info_single_request(session, attempts):
     url = ('https://bb.au.dk/webapps/gradebook/dwr/call/plaincall/' +
            'GradebookDWRFacade.getAttemptsInfo.dwr')
     response = session.post(url, payload)
-    results = parse_js(response.text)
+    try:
+        results = parse_js(response.text)
+    except ValueError as exn:
+        raise ParserError(exn.args[0], response)
     return [results[i] for i in range(len(attempts))]
 
 
