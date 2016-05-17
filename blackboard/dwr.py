@@ -60,6 +60,13 @@ def parse_js(code):
     ... dwr.engine._remoteHandleCallback('16','1234',[]);
     ... """)
     {1234: []}
+    >>> parse_js("""
+    ... dwr.engine._remoteHandleException('42','5',{javaClassName:\\
+    ... "java.lang.Throwable",message:"Error"});
+    ... """)  # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    ValueError: DWR returned exceptions: [(42, 5, 'java.lang...', 'Error')]
     '''
 
     id = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -71,11 +78,15 @@ def parse_js(code):
         ('setattr', '('+id+')\\.('+id+')=('+obj+');'),
         ('call', r"dwr\.engine\._remoteHandleCallback\(" +
                  r"'(\d+)','(\d+)',\[((?:"+id+r"(?:,"+id+r")*)?)\]\);"),
+        ('exception', r"dwr\.engine\._remoteHandleException\(" +
+                      r"'(\d+)','(\d+)',\{javaClassName:(" + obj +
+                      r"),message:(" + obj + r")\}\);"),
     ]
     pattern = '|'.join('(?P<%s>%s)' % (k, v) for k, v in patterns)
     i = 0
     locals = {}
     results = []
+    exceptions = []
     for mo in re.finditer(pattern, code):
         j = mo.start(0)
         skipped = code[i:j]
@@ -106,10 +117,19 @@ def parse_js(code):
             else:
                 data = []
             results.append((batch_id, call_id, data))
+        elif key == 'exception':
+            batch_id = int(groups[1])
+            call_id = int(groups[2])
+            class_name = json.loads(groups[3])
+            message = json.loads(groups[4])
+            exceptions.append((batch_id, call_id, class_name, message))
 
     skipped = code[i:]
     if skipped.strip():
         raise ValueError("Did not parse %r" % (skipped.strip()))
+
+    if exceptions:
+        raise ValueError("DWR returned exceptions: %r" % (exceptions,))
 
     return {call_id: data for batch_id, call_id, data in results}
 
