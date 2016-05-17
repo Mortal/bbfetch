@@ -346,8 +346,8 @@ class Gradebook(blackboard.Serializable):
         if student_visible is not None:
             students = list(filter(student_visible, students))
         for user in students:
-            for assignment_id, assignment in user['assignments'].items():
-                if refresh_all or assignment['attempts'] is None:
+            for assignment_id, assignment in user.assignments.items():
+                if refresh_all or assignment.cached_attempts is None:
                     attempt_keys.append((user.id, assignment_id))
         if not attempt_keys:
             return
