@@ -201,16 +201,37 @@ class Attempt(ItemWrapper):
                   else self['id'])
     group_name = property(lambda self: self['groupName'])
     date = property(lambda self: self['date'])
-    individual_score = property(lambda self:
-                                None if self['status'] == 'ng'
-                                else self['score'])
-    group_score = property(lambda self:
-                           None if self['groupStatus'] == 'ng'
-                           else self['groupScore'])
+
+    status_string = property(lambda self:
+                             self['groupStatus']
+                             if self.assignment.group_assignment
+                             else self['status'])
+    # The following interpretation of status_string
+    # adheres to the Gradebook.AttemptInfo JavaScript class.
+    @property
+    def status(self):
+        s = self.status_string
+        if s == 'ip':
+            return 'attempt_in_progress'
+        elif s == 'nr':
+            return 'needs_reconciliation'
+        elif s:
+            return 'needs_grading'
+        else:
+            return 'graded'
+
+    needs_grading = property(lambda self: self.status == 'needs_grading')
+    is_graded = property(lambda self: self.status == 'graded')
     score = property(lambda self:
-                     self.group_score if self.assignment.group_assignment
-                     else self.individual_score)
-    needs_grading = property(lambda self: self.score is None)
+                     None if not self.is_graded else
+                     self['groupScore'] if self.assignment.group_assignment
+                     else self['score'])
+
+    # In all observed cases, status_string is 'ng' when the attempt needs
+    # grading, but the JavaScript implementation doesn't seem to require this.
+    unknown_status = property(lambda self:
+                              self.needs_grading and
+                              self.status_string != 'ng')
 
     assignment = property(lambda self: self._kwargs['assignment'])
     attempt_index = property(lambda self: self._kwargs['attempt_index'])
