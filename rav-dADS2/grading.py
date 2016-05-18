@@ -11,10 +11,14 @@ class Grading(blackboard.grading.Grading):
         super().__init__(session)
 
         # Use https://www.passwordstore.org/ to get password
-        import subprocess
-        s = subprocess.check_output(
-            ('pass', 'au'), universal_newlines=True)
-        session.password = s.splitlines()[0].strip()
+        if '-n' not in sys.argv:
+            import subprocess
+            s = subprocess.check_output(
+                ('pass', 'au'), universal_newlines=True)
+            session.password = s.splitlines()[0].strip()
+        else:
+            # No connections should be made, so there is no need to call pass
+            session.password = ''
         session.forget_password = lambda self: print("keyring not used")
 
     @classmethod
