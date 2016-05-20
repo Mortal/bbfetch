@@ -543,11 +543,22 @@ class Grading(blackboard.Serializable):
         parser = cls.get_argument_parser()
         args = parser.parse_args()
         blackboard.configure_logging(quiet=args.quiet)
+
+        not_implemented = []
         try:
-            course = cls.get_course(args)
-            username = cls.get_username(args)
+            try:
+                course = cls.get_course(args)
+            except NotImplementedError:
+                not_implemented.append('Grading.get_course')
+            try:
+                username = cls.get_username(args)
+            except NotImplementedError:
+                not_implemented.append('Grading.get_username')
         except Exception as exn:
             parser.error(str(exn))
+        if not_implemented:
+            parser.error("You must implement %s" %
+                         ' and '.join(not_implemented))
 
         session = BlackBoardSession('cookies.txt', username, course)
         grading = cls(session)
