@@ -43,19 +43,23 @@ class BlackBoardSession:
             print(self.session.cookies._cookies)
             raise
 
-    def get_auth(self):
-        if self.password is None:
-            if self.username is None:
-                self.username = input("WAYF username: ")
-            self.password = keyring.get_password(
-                "fetch.py WAYF", self.username)
-            if self.password is None:
-                print("Please enter password for %s to store in keyring." %
-                      self.username)
-                self.password = getpass.getpass()
-                keyring.set_password(
-                    "fetch.py WAYF", self.username, self.password)
+    def get_username(self):
+        return input("WAYF username: ")
 
+    def get_password(self):
+        p = keyring.get_password("fetch.py WAYF", self.username)
+        if p is None:
+            print("Please enter password for %s to store in keyring." %
+                  self.username)
+            p = getpass.getpass()
+            keyring.set_password("fetch.py WAYF", self.username, p)
+        return p
+
+    def get_auth(self):
+        if self.username is None:
+            self.username = self.get_username()
+        if self.password is None:
+            self.password = self.get_password()
         return dict(username=self.username, password=self.password)
 
     def forget_password(self):
