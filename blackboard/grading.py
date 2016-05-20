@@ -539,6 +539,34 @@ class Grading(blackboard.Serializable):
         raise NotImplementedError
 
     @classmethod
+    def get_password(cls, **kwargs):
+        raise NotImplementedError
+
+    def override_get_password(self, args):
+        """
+        Override the get_password method of BlackBoardSession
+        to call Grading.get_password instead; if Grading.get_password
+        raises NotImplementedError, revert to calling the default
+        implementation in BlackBoardSession instead.
+        """
+
+        session = self.session
+        # The default implementation
+        super_get_password = session.get_password
+
+        def session_get_password(session):
+            # Ensure that get_password takes args and username as keyword args
+            # for forward-compatibility
+            kwargs = dict(args=args, username=session.username)
+            try:
+                return type(self).get_password(**kwargs)
+            except NotImplementedError:
+                # Call the default implementation
+                return super_get_password()
+
+        session.get_password = lambda: session_get_password(session)
+
+    @classmethod
     def execute_from_command_line(cls):
         parser = cls.get_argument_parser()
         args = parser.parse_args()
@@ -562,6 +590,7 @@ class Grading(blackboard.Serializable):
 
         session = BlackBoardSession('cookies.txt', username, course)
         grading = cls(session)
+        grading.override_get_password(args)
         grading.load('grading.json')
         try:
             grading.main(args, session, grading)
