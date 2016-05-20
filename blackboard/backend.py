@@ -10,7 +10,8 @@ import blackboard
 from blackboard import logger, ParserError, BlackBoardSession
 from blackboard.datatable import fetch_datatable
 from blackboard.elementtext import (
-    element_to_markdown, element_text_content, form_field_value)
+    element_to_markdown, element_text_content, form_field_value,
+    html_to_markdown)
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -162,6 +163,8 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         feedback = ''
     else:
         feedback = form_field_value(feedbacktext_input)
+        if '<' in feedback:
+            feedback = html_to_markdown(feedback)
 
     gradingNotestext_input = document.find(
         './/*[@id="gradingNotestext"]', NS)
