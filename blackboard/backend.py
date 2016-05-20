@@ -22,7 +22,7 @@ def fetch_overview(session):
     assert isinstance(session, BlackBoardSession)
     url = (
         'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
-        '?course_id=%s' % session.course_id)
+        f'?course_id={session.course_id}')
     l = blackboard.slowlog()
     response = session.get(url)
     l("Fetching gradebook took %.1f s")
@@ -79,13 +79,13 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     if is_group_assignment:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
-               '?course_id=%s' % session.course_id +
-               '&groupAttemptId=%s' % attempt_id)
+               f'?course_id={session.course_id}' +
+               f'&groupAttemptId={attempt_id}')
     else:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
-               '?course_id=%s' % session.course_id +
-               '&attempt_id=%s' % attempt_id)
+               f'?course_id={session.course_id}' +
+               f'&attempt_id={attempt_id}')
     l = blackboard.slowlog()
     response = session.get(url)
     l("Fetching attempt took %.1f s")
@@ -134,12 +134,12 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                 # This <li> is for the submission_text
                 if not submission_text:
                     raise blackboard.ParserError(
-                        "%r in file list, but no " % (filename,) +
+                        f"{filename!r} in file list, but no " +
                         "accompanying submission text contents",
                         response)
             else:
                 raise blackboard.ParserError(
-                    "No download link for file %r" % (filename,),
+                    f"No download link for file {filename!r}",
                     response)
 
     score_input = document.find(
@@ -153,7 +153,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         except ValueError:
             if score:
                 raise blackboard.ParserError(
-                    "Couldn't parse currentAttempt_grade: %r" % (score,),
+                    f"Couldn't parse currentAttempt_grade: {score!r}",
                     response)
             score = None
 
@@ -181,7 +181,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             link = row.findall('.//h:a', NS)[0]
         except IndexError:
             raise blackboard.ParserError(
-                "feedbackFiles_table_body row %s: no link" % i,
+                f"feedbackFiles_table_body row {i}: no link",
                 response)
         download_link = urljoin(
             response.url, link.get('href'))
@@ -206,13 +206,13 @@ def submit_grade(session, attempt_id, is_group_assignment,
     if is_group_assignment:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
-               '?course_id=%s' % session.course_id +
-               '&groupAttemptId=%s' % attempt_id)
+               f'?course_id={session.course_id}' +
+               f'&groupAttemptId={attempt_id}')
     else:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
-               '?course_id=%s' % session.course_id +
-               '&attempt_id=%s' % attempt_id)
+               f'?course_id={session.course_id}' +
+               f'&attempt_id={attempt_id}')
     # We need to fetch the page to get the nonce
     response = session.get(url)
     document = html5lib.parse(response.content, encoding=response.encoding)
@@ -269,7 +269,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
         ])
         with open(filename, 'rb') as fp:
             fdata = fp.read()
-        files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
+        files.append((f'feedbackFiles_LocalFile{i}', (base, fdata)))
     if is_group_assignment:
         post_url = (
             'https://bb.au.dk/webapps/assignment//gradeGroupAssignment/submit')
@@ -291,9 +291,9 @@ def submit_grade(session, attempt_id, is_group_assignment,
     badmsg = document.find('.//h:span[@id="badMsg1"]', NS)
     if badmsg is not None:
         raise ParserError(
-            "badMsg1: %s" % element_text_content(badmsg), response,
-            'Post data:\n%s' % pprint.pformat(data),
-            'Files:\n%s' % pprint.pformat(files))
+            f"badMsg1: {element_text_content(badmsg)}", response,
+            f'Post data:\n{pprint.pformat(data)}',
+            f'Files:\n{pprint.pformat(files)}')
     msg = document.find('.//h:span[@id="goodMsg1"]', NS)
     if msg is None:
         raise ParserError(
