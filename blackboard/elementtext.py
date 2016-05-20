@@ -1,6 +1,6 @@
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
-import html2text
+from html2text import html2text as html_to_markdown
 
 
 def element_hidden(element):
@@ -60,7 +60,7 @@ def element_to_html(element):
 
 
 def element_to_markdown(element):
-    return html2text.html2text(element_to_html(element))
+    return html_to_markdown(element_to_html(element))
 
 
 def form_field_value(element):
