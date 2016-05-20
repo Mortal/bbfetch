@@ -18,6 +18,8 @@ class Grading(blackboard.grading.Grading):
 
     @classmethod
     def get_password(cls, **kwargs):
+        """This method may be overridden to use something other than
+        the keyring module to store your login password."""
         # Use https://www.passwordstore.org/ to get password
         import subprocess
         s = subprocess.check_output(
