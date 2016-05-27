@@ -146,6 +146,39 @@ class Grading(blackboard.Serializable):
                     truncate_name(str(cell), header_width).ljust(header_width))
             print(' '.join(row_fmt).rstrip())
 
+    def dump_gradebook(self, fp):
+        columns = [
+            ('Group', self.get_student_group_display),
+            ('Username', lambda u: u.username),
+            ('Student number', lambda u: u.student_number),
+            ('First name', lambda u: u.first_name),
+            ('Last name', lambda u: u.last_name),
+            ('Score', lambda u: '%g' % u.score),
+        ]
+
+        def display(u, assignment):
+            try:
+                student_assignment = u.assignments[assignment.id]
+            except KeyError:
+                return ''
+            score = sum(a.score or 0 for a in student_assignment.attempts)
+            if score:
+                return len(student_assignment.attempts)
+            else:
+                return -len(student_assignment.attempts)
+
+        for assignment in self.gradebook.assignments.values():
+            name = self.get_assignment_name_display(assignment)
+            columns.append(
+                (name, functools.partial(display, assignment=assignment)))
+
+        students = filter(self.get_student_visible,
+                          self.gradebook.students.values())
+        students = sorted(students, key=self.get_student_ordering)
+        rows = self.get_gradebook_cells(columns, students)
+        for row in rows:
+            print('\t'.join(map(str, row)), file=fp)
+
     def get_attempt(self, group, assignment, attempt_index=-1):
         assert isinstance(group, str)
         if isinstance(assignment, int):
@@ -461,6 +494,9 @@ class Grading(blackboard.Serializable):
                 # has been uploaded
                 self.refresh()
         self.print_gradebook()
+        if args.save is not None:
+            with open(args.save, 'w') as fp:
+                self.dump_gradebook(fp)
 
     def check(self):
         print("Username: %r" % (self.session.username,))
@@ -528,6 +564,9 @@ class Grading(blackboard.Serializable):
                             help='Refresh list of student groups')
         parser.add_argument('--refresh-attempts', '-a', action='store_true',
                             help='Refresh list of student attempts')
+        parser.add_argument('--save', '-o',
+                            help='Output TSV file with gradebook info')
+
         return parser
 
     @classmethod
