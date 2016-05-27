@@ -11,8 +11,8 @@ def get_handin_attempt_counts(session, handin_id):
            'getJSONUniqueAttemptData?course_id=%s' % session.course_id +
            '&itemId=%s' % handin_id)
     o = session.get(url).json()
-    assert set(o.keys()) == set(['totalStudentsOrGroups', 'needsGradingCount',
-                                 'numberOfUniqueAttempts'])
+    assert set(o.keys()) == {'totalStudentsOrGroups', 'needsGradingCount',
+                             'numberOfUniqueAttempts'}
     return o
 
 
