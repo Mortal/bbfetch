@@ -207,6 +207,7 @@ class Attempt(ItemWrapper):
                              self['groupStatus']
                              if self.assignment.group_assignment
                              else self['status'])
+
     # The following interpretation of status_string
     # adheres to the Gradebook.AttemptInfo JavaScript class.
     @property
