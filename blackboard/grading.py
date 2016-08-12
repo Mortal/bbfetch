@@ -66,16 +66,53 @@ class Grading(blackboard.Serializable):
 
     def get_student_group_display(self, student):
         groups = self.get_student_groups(student)
-        if not groups:
-            return '-'
+        if self.student_group_display_regex is None:
+            if not groups:
+                return '-'
+            else:
+                return self.get_group_name_display(groups[0])
         else:
-            return self.get_group_name_display(groups[0])
+            pattern, repl = self.student_group_display_regex
+            for g in groups:
+                mo = re.fullmatch(pattern, g.name)
+                if mo:
+                    return re.sub(pattern, repl, g.name)
+            return ''
+
+    def get_assignment_name_display(self, assignment):
+        if self.assignment_name_display_regex is None:
+            raise NotImplementedError
+        else:
+            pattern, repl = self.assignment_name_display_regex
+            mo = re.fullmatch(pattern, assignment.name)
+            if mo is None:
+                return assignment.name
+            else:
+                return re.sub(pattern, repl, assignment.name)
 
     def get_group_name_display(self, group_name):
         raise NotImplementedError
 
     def get_student_visible(self, student):
-        raise NotImplementedError
+        if self.classes is None:
+            raise NotImplementedError
+        if isinstance(self.classes, str):
+            classes = (self.classes,)
+        else:
+            classes = self.classes
+        for g in self.get_student_groups(student):
+            for c in classes:
+                if g.name == c:
+                    return True
+        return False
+
+    def get_student_ordering(self, student):
+        """
+        Return a sorting key for the student
+        indicating how students should be sorted when displayed.
+        Typically you want to sort by group, then by name.
+        """
+        return (self.get_student_group_display(student), student.name)
 
     def get_assignment_display(self, u, assignment):
         try:
@@ -259,12 +296,29 @@ class Grading(blackboard.Serializable):
         files are to be stored.
         """
         assert isinstance(attempt, Attempt)
-        cwd = os.getcwd()
-        assignment = attempt.assignment
-        assignment_name = assignment.name
-        group_name = attempt.student.group_name
-        return os.path.join(cwd, assignment_name,
-                            '%s (%s)' % (group_name, attempt.id))
+
+        if self.attempt_directory_name is None:
+            cwd = os.getcwd()
+            assignment = attempt.assignment
+            assignment_name = assignment.name
+            group_name = attempt.student.group_name
+            return os.path.join(cwd, assignment_name,
+                                '%s (%s)' % (group_name, attempt.id))
+
+        else:
+            group_name = attempt.group_name
+            if group_name.startswith('Gruppe'):
+                class_name = group_name.split()[1]
+                group_number = group_name.split()[3]
+            else:
+                class_name = group_number = None
+
+            attempt_id = re.sub(r'_(.*)_1', r'\1', attempt.id)
+            assignment = self.get_assignment_name_display(attempt.assignment)
+
+            return os.path.expanduser(self.attempt_directory_name.format(
+                assignment=assignment,
+                class_name=class_name, group=group_number, id=attempt_id))
 
     def download_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
@@ -408,9 +462,12 @@ class Grading(blackboard.Serializable):
         base, ext = os.path.splitext(filename)
         return base + '_ann' + ext
 
+    rehandin_regex = r'genaflevering|re-?handin'
+    accept_regex = r'accepted|godkendt'
+
     def get_feedback_score(self, comments):
-        rehandin = re.search(r'genaflevering|re-?handin', comments, re.I)
-        accept = re.search(r'accepted|godkendt', comments, re.I)
+        rehandin = re.search(self.rehandin_regex, comments, re.I)
+        accept = re.search(self.accept_regex, comments, re.I)
         if rehandin and accept:
             raise ValueError("Both rehandin and accept")
         elif rehandin:
@@ -571,11 +628,17 @@ class Grading(blackboard.Serializable):
 
     @classmethod
     def get_course(cls, args):
-        raise NotImplementedError
+        if cls.course is None:
+            raise NotImplementedError
+        else:
+            return cls.course
 
     @classmethod
     def get_username(cls, args):
-        raise NotImplementedError
+        if cls.username is None:
+            raise NotImplementedError
+        else:
+            return cls.username
 
     @classmethod
     def get_password(cls, **kwargs):
