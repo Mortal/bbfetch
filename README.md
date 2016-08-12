@@ -10,7 +10,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Next, copy the two files in `rav-dADS2` to
+Next, copy the two files in `roberto-dSik` to
 your own directory and adjust them, filling out the details.
 
 The course ID of a Blackboard courses is found by inspecting the course URL.
@@ -36,12 +36,14 @@ The useful options are `-d` (download new handins),
 #### Grading handins
 
 When handins are downloaded, they are stored in the directories
-pointed to by `get_attempt_directory_name`.
+pointed to by `attempt_directory_name`.
 
 In order to upload feedback to the students, you must create a new file in this
 directory named `comments.txt` and include either the word "Accepted"
 or "re-handin" ("Godkendt"/"Genaflevering" in Danish).
-The `get_feedback_score` function may be modified to change this behavior.
+To use other words, adjust `rehandin_regex` and `accept_regex`,
+or override the `get_feedback_score` function to change the scoring behavior.
+
 The `-u` (`--upload`) argument will look for handins that need grading
 and have a `comments.txt` file, and then upload the comments to the student.
 
