@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+source ~/Repos/bbfetch/venv/bin/activate
+cd ~/dSik2016
+python3 grading.py "$@"
