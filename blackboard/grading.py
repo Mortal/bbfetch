@@ -7,7 +7,7 @@ import requests
 import functools
 import blackboard
 import collections
-from blackboard import logger, ParserError, BadAuth, BlackBoardSession
+from blackboard import logger, ParserError, BadAuth, BlackboardSession
 # from groups import get_groups
 from blackboard.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment)
@@ -646,10 +646,10 @@ class Grading(blackboard.Serializable):
 
     def override_get_password(self, args):
         """
-        Override the get_password method of BlackBoardSession
+        Override the get_password method of BlackboardSession
         to call Grading.get_password instead; if Grading.get_password
         raises NotImplementedError, revert to calling the default
-        implementation in BlackBoardSession instead.
+        implementation in BlackboardSession instead.
         """
 
         session = self.session
@@ -690,7 +690,7 @@ class Grading(blackboard.Serializable):
             parser.error("You must implement %s" %
                          ' and '.join(not_implemented))
 
-        session = BlackBoardSession('cookies.txt', username, course)
+        session = BlackboardSession('cookies.txt', username, course)
         grading = cls(session)
         grading.override_get_password(args)
         grading.load('grading.json')
@@ -715,7 +715,7 @@ class Grading(blackboard.Serializable):
         username = cls.get_username(None)
         cookiejar = 'cookies.txt'
         dbpath = 'grading.json'
-        session = BlackBoardSession(cookiejar, username, course)
+        session = BlackboardSession(cookiejar, username, course)
         grading = cls(session)
         grading.load(dbpath)
         return grading

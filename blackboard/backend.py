@@ -7,7 +7,7 @@ import html5lib
 from requests.compat import urljoin
 
 import blackboard
-from blackboard import logger, ParserError, BlackBoardSession
+from blackboard import logger, ParserError, BlackboardSession
 from blackboard.datatable import fetch_datatable
 from blackboard.elementtext import (
     element_to_markdown, element_text_content, form_field_value,
@@ -19,7 +19,7 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 def fetch_overview(session):
     """Fetch gradebook information. Returns (assignments, students)."""
-    assert isinstance(session, BlackBoardSession)
+    assert isinstance(session, BlackboardSession)
     url = (
         'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
         '?course_id=%s' % session.course_id)
@@ -75,7 +75,7 @@ def fetch_overview(session):
 
 
 def fetch_attempt(session, attempt_id, is_group_assignment):
-    assert isinstance(session, BlackBoardSession)
+    assert isinstance(session, BlackboardSession)
     if is_group_assignment:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
@@ -202,7 +202,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
 
 def submit_grade(session, attempt_id, is_group_assignment,
                  grade, text, filenames):
-    assert isinstance(session, BlackBoardSession)
+    assert isinstance(session, BlackboardSession)
     if is_group_assignment:
         url = ('https://bb.au.dk/webapps/assignment/' +
                'gradeAssignmentRedirector' +
@@ -277,7 +277,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
         post_url = (
             'https://bb.au.dk/webapps/assignment//gradeAssignment/submit')
     if not files:
-        # BlackBoard requires the POST to be
+        # Blackboard requires the POST to be
         # Content-Type: multipart/form-data.
         # Unfortunately, requests can only make a form-data POST
         # if it has file-like input in the files list.

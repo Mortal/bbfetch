@@ -1,7 +1,7 @@
 import time
 
 import blackboard
-from blackboard import BlackBoardSession, logger
+from blackboard import BlackboardSession, logger
 from blackboard.dwr import dwr_get_attempts_info
 from blackboard.backend import fetch_overview
 
@@ -310,12 +310,12 @@ def truncate_name(name, n):
 
 
 class Gradebook(blackboard.Serializable):
-    """Provides a view of what is accessible in the BlackBoard gradebook."""
+    """Provides a view of what is accessible in the Blackboard gradebook."""
 
     FIELDS = '_students fetch_time _assignments'.split()
 
     def __init__(self, session):
-        assert isinstance(session, BlackBoardSession)
+        assert isinstance(session, BlackboardSession)
         self.session = session
 
     @property
@@ -328,7 +328,7 @@ class Gradebook(blackboard.Serializable):
         return DictWrapper(Assignment, self._assignments)
 
     def refresh(self, refresh_attempts=False, student_visible=None):
-        """Fetch gradebook information from BlackBoard website."""
+        """Fetch gradebook information from Blackboard website."""
         new_fetch_time = time.time()
         try:
             prev = self._students

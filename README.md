@@ -1,4 +1,4 @@
-## BlackBoard Grade Centre command line interface
+## Blackboard Grade Centre command line interface
 
 ### Setup
 
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 Next, copy the two files in `rav-dADS2` to
 your own directory and adjust them, filling out the details.
 
-The course ID of a BlackBoard courses is found by inspecting the course URL.
+The course ID of a Blackboard courses is found by inspecting the course URL.
 If it looks like:
 
 `https://bb.au.dk/webapps/blackboard/execute/content/blankPage?cmd=view&content_id=_347138_1&course_id=_43290_1`
@@ -64,7 +64,7 @@ automatically, you need to override `Grading.extract_archive`.
 With no arguments, `grading` will refetch the list of students that have
 assignments that need to be graded.
 
-If you have deleted student attempts in BlackBoard,
+If you have deleted student attempts in Blackboard,
 you need to run `grading -a` to refresh the list of old attempts.
 This is not refreshed automatically since it takes longer than
 simply getting the list of assignments needing grading.
@@ -77,9 +77,9 @@ This is not refreshed automatically since it can take a while.
 ### Password security
 
 This project uses the `keyring` 3rd party module from the Python package index (PyPI)
-to store your login password to BlackBoard so you don't have to enter it every time.
+to store your login password to Blackboard so you don't have to enter it every time.
 
-Thus, your BlackBoard password will be accessible to all Python programs,
+Thus, your Blackboard password will be accessible to all Python programs,
 making it possible for anyone with access to your computer to read your
 password. Keep your computer safe from malicious people!
 
@@ -91,7 +91,7 @@ is run with `-d` to download new student handins.
 Then, the handins are graded (not shown), and finally, the feedback is uploaded
 to the students with `./grading -u`.
 
-In this way, no browser interaction with BlackBoard is needed,
+In this way, no browser interaction with Blackboard is needed,
 and the script takes just 30 seconds to download the 9 handins
 and 30 seconds to upload the feedback (but your mileage may vary).
 
@@ -165,12 +165,12 @@ auxxxxxx xxxxxxxxxxxxxxxxx              DA2-11 | ✔     | ✔     | ✘     |  
 ## Implementation
 
 This project contains classes to access
-the BlackBoard installation at Aarhus University
+the Blackboard installation at Aarhus University
 with the Python Requests framework, and is useful for teaching assistants and
-teachers who wish to automate the BlackBoard tedium.
+teachers who wish to automate the Blackboard tedium.
 
 The main component is a wrapper around `requests.Session`
-named `blackboard.BlackBoardSession`
+named `blackboard.BlackboardSession`
 with methods to automatically login and resubmit an HTTP request,
 automatically follow HTML redirects,
 save and load cookies, save and load login passwords.
@@ -179,7 +179,7 @@ For grading handins, the class `blackboard.grading.Grading`
 should be extended with information on which course and students
 should have their handins graded by the user.
 
-For other BlackBoard automation purposes, the `blackboard/examples/` directory
+For other Blackboard automation purposes, the `blackboard/examples/` directory
 contains examples of how to download all forum posts for a course,
 how to download the list of groups,
 how to download a list of email addresses for each group of students,
@@ -189,7 +189,7 @@ The project uses the following 3rd party modules:
 
 * requests (HTTP client for Python 2/3)
 * html5lib (to parse and query HTML)
-* keyring (to store your BlackBoard password)
+* keyring (to store your Blackboard password)
 * [html2text](https://github.com/Alir3z4/html2text) (to convert HTML forum posts to Markdown)
 * six (bridges incompatibilities between Python 2 and 3)
 

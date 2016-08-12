@@ -14,7 +14,7 @@ from blackboard.base import BadAuth, ParserError, logger
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
-class BlackBoardSession:
+class BlackboardSession:
     def __init__(self, cookiejar, username, course_id):
         self.cookiejar_filename = cookiejar
         self.username = username

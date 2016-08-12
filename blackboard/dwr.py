@@ -76,7 +76,7 @@ def get_script_session_id(session):
     except AttributeError:
         pass
     url = 'https://bb.au.dk/javascript/dwr/engine.js'
-    # Bypass BlackBoardSession.get and go straight to requests.Session instead
+    # Bypass BlackboardSession.get and go straight to requests.Session instead
     dwr_engine = session.session.get(url).text
     mo = re.search('dwr.engine._origScriptSessionId = "(.*)";', dwr_engine)
     if mo:

@@ -78,9 +78,9 @@ def wrapper(fun):
     args = parser.parse_args()
     configure_logging(quiet=args.quiet)
 
-    from blackboard.session import BlackBoardSession
+    from blackboard.session import BlackboardSession
 
-    session = BlackBoardSession(args.cookiejar, args.username, args.course)
+    session = BlackboardSession(args.cookiejar, args.username, args.course)
     try:
         fun(session)
     except ParserError as exn:
