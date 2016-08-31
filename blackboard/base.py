@@ -3,6 +3,7 @@ import time
 import logging
 import argparse
 import datetime
+import importlib
 import collections
 
 
@@ -75,12 +76,26 @@ def wrapper(fun):
     parser.add_argument('--username', '-u')
     parser.add_argument('--course')
     parser.add_argument('--cookiejar', default='cookies.txt')
+    parser.add_argument('--session-class', default='BlackboardSession')
     args = parser.parse_args()
     configure_logging(quiet=args.quiet)
 
-    from blackboard.session import BlackboardSession
+    try:
+        module, classname = args.session_class.rsplit('.', 1)
+    except ValueError:
+        module, classname = 'blackboard.session', args.session_class
+    try:
+        session_module = importlib.import_module(module)
+    except ImportError:
+        print("Failed to import %s" % (module,))
+        raise
+    try:
+        session_class = getattr(session_module, classname)
+    except AttributeError:
+        print("Failed to import %s.%s" % (module, classname))
+        raise
 
-    session = BlackboardSession(args.cookiejar, args.username, args.course)
+    session = session_class(args.cookiejar, args.username, args.course)
     try:
         fun(session)
     except ParserError as exn:
