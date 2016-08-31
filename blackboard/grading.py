@@ -96,6 +96,8 @@ class Grading(blackboard.Serializable):
     def get_student_visible(self, student):
         if self.classes is None:
             raise NotImplementedError
+        if self.classes is all:
+            return True
         if isinstance(self.classes, str):
             classes = (self.classes,)
         else:
