@@ -267,3 +267,15 @@ class BlackboardSession:
             '?course_id=%s' % self.course_id +
             '&sortCol=LastLoginCol&sortDir=D')
         self.get(url)
+
+
+class PassBlackboardSession(BlackboardSession):
+    def get_password(self):
+        # Use https://www.passwordstore.org/ to get password
+        import subprocess
+        s = subprocess.check_output(
+            ('pass', 'au'), universal_newlines=True)
+        return s.splitlines()[0].strip()
+
+    def forget_password(self):
+        raise NotImplementedError
