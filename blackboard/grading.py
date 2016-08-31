@@ -20,6 +20,7 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 class Grading(blackboard.Serializable):
     FIELDS = ('attempt_state', 'gradebook', 'username', 'groups')
 
+    session_class = BlackboardSession
     gradebook_class = Gradebook
 
     def __init__(self, session):
@@ -692,7 +693,7 @@ class Grading(blackboard.Serializable):
             parser.error("You must implement %s" %
                          ' and '.join(not_implemented))
 
-        session = BlackboardSession('cookies.txt', username, course)
+        session = cls.session_class('cookies.txt', username, course)
         grading = cls(session)
         grading.override_get_password(args)
         grading.load('grading.json')
