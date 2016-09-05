@@ -225,17 +225,17 @@ class Grading(blackboard.Serializable):
             assignment = str(assignment)
         assert isinstance(assignment, str)
         students = self.gradebook.students.values()
-        students = filter(self.get_student_visible, students)
-        students = [
+        students = list(filter(self.get_student_visible, students))
+        group_students = [
             student for student in students
             if self.get_student_group_display(student) == group
         ]
-        if not students:
+        if not group_students:
             names = sorted(set(self.get_student_group_display(s)
                                for s in students))
             raise ValueError("No students in a group named %r. " % (group,) +
                              "Must be one of: %s" % (names,))
-        student = students[0]
+        student = group_students[0]
         assignments = [
             a for a in self.gradebook.assignments.values()
             if self.get_assignment_name_display(a) == assignment
