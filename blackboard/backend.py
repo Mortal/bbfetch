@@ -350,6 +350,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
         rubric_data_str = data_get(rubric_input)
         rubric_data = json.loads(unquote(rubric_data_str))
         for rubric_cells, rubric in zip(rubrics, rubric_data['rubrics']):
+            rubric['client_changed'] = True
             for input_row, row in zip(rubric_cells, rubric['rows']):
                 row['cell_id'] = input_row
         rubric_data_str = quote(json.dumps(rubric_data))
