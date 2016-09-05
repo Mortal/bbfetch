@@ -3,10 +3,12 @@ import re
 import sys
 sys.path += [os.path.expanduser('~/bbfetch'),
              os.path.expanduser('~/work/bbfetch')]
-import blackboard.grading  # NOQA
+import blackboard.grading  # noqa
+from blackboard.session import PassBlackboardSession  # noqa
 
 
 class Grading(blackboard.grading.Grading):
+    session_class = PassBlackboardSession
     username = '20103940'
     course = '_49446_1'
     student_group_display_regex = (r'Gruppe (\S+) - (\S+)', r'\1-\2')
@@ -14,20 +16,6 @@ class Grading(blackboard.grading.Grading):
     assignment_name_display_regex = (r'Aflevering (\d+)', r'\1')
     rehandin_regex = r'genaflevering|re-?handin'
     accept_regex = r'accepted|godkendt'
-
-    def __init__(self, session):
-        super().__init__(session)
-        session.forget_password = lambda self: print("keyring not used")
-
-    @classmethod
-    def get_password(cls, **kwargs):
-        """This method may be overridden to use something other than
-        the keyring module to store your login password."""
-        # Use https://www.passwordstore.org/ to get password
-        import subprocess
-        s = subprocess.check_output(
-            ('pass', 'au'), universal_newlines=True)
-        return s.splitlines()[0].strip()
 
     def get_attempt_directory_name(self, attempt):
         """
