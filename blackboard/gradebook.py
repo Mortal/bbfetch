@@ -1,4 +1,6 @@
 import time
+import textwrap
+import collections
 
 import blackboard
 from blackboard import BlackboardSession, logger
@@ -391,3 +393,92 @@ class Gradebook(blackboard.Serializable):
         attempt_data = dwr_get_attempts_info(self.session, attempt_keys)
         for (user_id, aid), attempts in zip(attempt_keys, attempt_data):
             self.students[user_id]['assignments'][aid]['attempts'] = attempts
+
+
+class Rubric(object):
+    def __init__(self, **kwargs):
+        self.title = kwargs.pop('title')
+        self.rows = kwargs.pop('rows')
+        super().__init__(**kwargs)
+
+    def get_row_name(self, row_index):
+        row = self.rows[row_index]
+        name = row['title'].split()[0]
+        return '%s. %s' % (row_index + 1, name)
+
+    def get_cell_keys(self, cells):
+        cells_sorted = sorted(cells, key=lambda cell: cell['score'])
+        cell_keys = {cell['id']: str(i+1)
+                     for i, cell in enumerate(cells_sorted)}
+        return cell_keys
+
+    def get_row_options(self, row_index):
+        row = self.rows[row_index]
+        cell_keys = self.get_cell_keys(row['cells'])
+        chosen_key = (None if row['chosen_id'] is None
+                      else cell_keys[row['chosen_id']])
+        options = collections.OrderedDict([
+            (cell_keys[cell['id']], cell)
+            for cell in row['cells']])
+        return chosen_key, options
+
+    def rubric_form_indicator(self):
+        return 'Rubric title: %s' % self.title
+
+    def rubric_option_indicator(self, row_index):
+        row_name = self.get_row_name(row_index)
+        chosen_key, options = self.get_row_options(row_index)
+        option_keys = ''.join(sorted(options.keys()))
+        return '%s [%s]:' % (row_name, option_keys)
+
+    def get_form_as_text(self):
+        lines = [self.rubric_form_indicator()]
+        for i, r in enumerate(self.rows):
+            chosen_key, options = self.get_row_options(i)
+            s = self.rubric_option_indicator(i)
+            if chosen_key is not None:
+                s += ' %s' % chosen_key
+            lines.append(s)
+        for i, r in enumerate(self.rows):
+            lines.append('')
+            row_name = self.get_row_name(i)
+            lines.append('Options for %s:' % row_name)
+            lines.append(r['title'])
+            chosen_key, options = self.get_row_options(i)
+            for key, option in options.items():
+                lines.append('%s: %s' % (key, option['title']))
+                lines.append(option['desc'])
+        return '\n'.join(lines) + '\n'
+
+    def get_form_input(self, text):
+        lines = text.splitlines()
+        indicator = self.rubric_form_indicator()
+        indicator_index = [i for i, line in enumerate(lines)
+                           if line == indicator]
+        if len(indicator_index) == 0:
+            raise ValueError("Could not find indicator line %r" % indicator)
+        if len(indicator_index) > 1:
+            raise ValueError("Found multiple indicators %r %r" %
+                             (indicator, indicator_index))
+
+        # Unpack line index
+        indicator_index, = indicator_index
+
+        answer_ids = []
+        for i, r in enumerate(self.rows):
+            line = lines[indicator_index + 1 + i]
+            s = self.rubric_option_indicator(i)
+            if not line.startswith(s):
+                raise ValueError("Could not find option indicator %r" % s)
+            answer = line[len(s):].strip()
+            chosen_key, options = self.get_row_options(i)
+            if not answer:
+                answer_id = None
+            else:
+                try:
+                    answer_id = options[answer]['id']
+                except KeyError:
+                    raise ValueError("Invalid option %r; must be one of %r" %
+                                     (answer, ' '.join(options.keys())))
+            answer_ids.append(answer_id)
+        return answer_ids

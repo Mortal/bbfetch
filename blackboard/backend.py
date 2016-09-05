@@ -4,7 +4,7 @@ import json
 import pprint
 import html5lib
 
-from requests.compat import urljoin
+from requests.compat import urljoin, unquote, quote
 
 import blackboard
 from blackboard import logger, ParserError, BlackboardSession
@@ -189,6 +189,26 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         feedbackfiles.append(
             dict(filename=filename, download_link=download_link))
 
+    rubric_data = None
+    rubric_ids = []
+    if is_group_assignment:
+        rubric_input = document.find(
+            './/h:input[@id="%s_rubricEvaluation"]' % attempt_id, NS)
+        if rubric_input is not None:
+            rubric_data_str = form_field_value(rubric_input)
+            try:
+                rubric_data = json.loads(unquote(rubric_data_str))
+            except json.decoder.JSONDecodeError:
+                raise ParserError("Couldn't decode JSON", response)
+            assert rubric_data['evalEntityId'] == attempt_id
+            if is_group_assignment:
+                assert (rubric_data['evalDataType'] ==
+                        'blackboard.platform.gradebook2.GroupAttempt')
+            rubric_ids = [rubric['id'] for rubric in rubric_data['rubrics']]
+            # assoc_id = rubric_data['assocEntityId']
+            # for rubric in rubric_data['rubrics']:
+            #     rubrics.append(fetch_rubric(session, assoc_id, rubric))
+
     return dict(
         submission=submission_text,
         comments=comments,
@@ -197,11 +217,76 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         feedbackfiles=feedbackfiles,
         score=score,
         grading_notes=grading_notes,
+        rubric_data=rubric_data,
+        rubric_ids=rubric_ids,
     )
 
 
+def fetch_rubric(session, assoc_id, rubric_object):
+    rubric_id = rubric_object['id']
+    rubric_title = rubric_object['title']
+    prefix = 'BBFETCH'
+    url = (
+        'https://bb.au.dk/webapps/rubric/do/course/gradeRubric' +
+        '?mode=grid&isPopup=true&rubricCount=1&prefix=%s' % prefix +
+        '&course_id=%s' % session.course_id +
+        '&maxValue=1.0&rubricId=%s' % rubric_id +
+        '&viewOnly=false&displayGrades=true&type=grading' +
+        '&rubricAssoId=%s' % assoc_id)
+    l = blackboard.slowlog()
+    response = session.get(url)
+    l("Fetching attempt rubric took %.1f s")
+    document = html5lib.parse(response.content, encoding=response.encoding)
+
+    def is_desc(div_element):
+        classes = (div_element.get('class') or '').split()
+        return ('u_controlsWrapper' in classes and
+                'radioLabel' not in classes and
+                'feedback' not in classes)
+
+    table = document.find(
+        './/h:table[@id="%s_rubricGradingTable"]' % prefix, NS)
+
+    column_headers = list(map(
+        element_text_content, table.findall('./h:thead/h:tr/h:th', NS)[1:]))
+    rubric_rows = []
+    row_tags = table.findall('./h:tbody/h:tr', NS)
+    for row in row_tags:
+        row_id = row.get('rubricrowid')
+        if row_id is None:
+            raise ParserError("Could not get rubric row id", response)
+        row_title = element_text_content(row.find('./h:th', NS))
+        row_cells = row.findall('./h:td', NS)
+        if len(row_cells) != len(column_headers):
+            raise ParserError("Number of row cells does not equal " +
+                              "number of table header cells", response)
+        rubric_row_cells = []
+        for cell in row_cells:
+            cell_id = cell.get('rubriccellid')
+            if cell_id is None:
+                raise ParserError("Could not get rubric cell id", response)
+            cell_container = cell.find(
+                './h:div[@class="rubricCellContainer"]', NS)
+            cell_percentage_element = cell_container.find(
+                './/h:input[@class="selectedPercentField"]', NS)
+            if cell_percentage_element is None:
+                raise ParserError("No selectedPercentField", response)
+            percentage = form_field_value(cell_percentage_element)
+            desc = list(filter(is_desc, cell_container.findall('./h:div', NS)))
+            if len(desc) != 1:
+                raise ParserError("Could not get description", response)
+            else:
+                desc_text = element_text_content(desc[0])
+            rubric_row_cells.append(dict(
+                id=cell_id, desc=desc_text, percentage=percentage))
+        rubric_rows.append(dict(
+            id=row_id, title=row_title, cells=rubric_row_cells))
+    return dict(id=rubric_id, title=rubric_title,
+                columns=column_headers, rows=rubric_rows)
+
+
 def submit_grade(session, attempt_id, is_group_assignment,
-                 grade, text, filenames):
+                 grade, text, filenames, rubrics):
     assert isinstance(session, BlackboardSession)
     if is_group_assignment:
         url = ('https://bb.au.dk/webapps/assignment/' +
@@ -254,6 +339,16 @@ def submit_grade(session, attempt_id, is_group_assignment,
     data_set('feedbacktext', text)
     data_set('gradingNotestext',
              'Submitted with https://github.com/Mortal/bbfetch')
+
+    if rubrics:
+        rubric_input = '%s_rubricEvaluation' % attempt_id
+        rubric_data_str = data_get(rubric_input)
+        rubric_data = json.loads(unquote(rubric_data_str))
+        for rubric_cells, rubric in zip(rubrics, rubric_data['rubrics']):
+            for input_row, row in zip(rubric_cells, rubric['rows']):
+                row['cell_id'] = input_row
+        rubric_data_str = quote(json.dumps(rubric_data))
+        data_set(rubric_input, rubric_data_str)
 
     files = []
 

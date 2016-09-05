@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import decimal
 import numbers
 import argparse
 import requests
@@ -10,15 +11,18 @@ import collections
 from blackboard import logger, ParserError, BadAuth, BlackboardSession
 # from groups import get_groups
 from blackboard.gradebook import (
-    Gradebook, Attempt, truncate_name, StudentAssignment)
-from blackboard.backend import fetch_attempt, submit_grade, fetch_groups
+    Gradebook, Attempt, truncate_name, StudentAssignment, Rubric,
+)
+from blackboard.backend import (
+    fetch_attempt, submit_grade, fetch_groups, fetch_rubric,
+)
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
 class Grading(blackboard.Serializable):
-    FIELDS = ('attempt_state', 'gradebook', 'username', 'groups')
+    FIELDS = ('attempt_state', 'gradebook', 'username', 'groups', 'rubrics')
 
     session_class = BlackboardSession
     gradebook_class = Gradebook
@@ -51,8 +55,48 @@ class Grading(blackboard.Serializable):
         if any(k.startswith('Access the profile') for k in self.groups.keys()):
             raise Exception("fetch_groups returned bad usernames")
 
+    def get_rubric(self, attempt_rubric):
+        if not hasattr(self, 'rubrics') or self.rubrics is None:
+            self.rubrics = {}
+        rubric_id = attempt_rubric['id']
+        if rubric_id not in self.rubrics:
+            assoc_id = attempt_rubric['assocEntityId']
+            self.rubrics[rubric_id] = fetch_rubric(
+                self.session, assoc_id, rubric)
+
+        rubric = self.rubrics[rubric_id]
+        title = rubric['title']
+        assert title == attempt_rubric['title']
+        assert len(rubric['rows']) == len(attempt_rubric['rows'])
+        rows = []
+        columns = rubric['columns']
+        for r1, r2 in zip(rubric['rows'], attempt_rubric['rows']):
+            row_title = r1['title']
+            assert r1['id'] == r2['row_id']
+            assert len(r1['cells']) == len(columns)
+            cells = [
+                dict(title=title, id=cell['id'], desc=cell['desc'],
+                     score=decimal.Decimal(cell['percentage']))
+                for title, cell in zip(columns, r1['cells'])
+            ]
+            cell_id_map = {cell['id']: i for i, cell in enumerate(cells)}
+            assert len(cell_id_map) == len(cells), 'IDs not distinct'
+            if r2['cell_id'] is not None:
+                assert r2['cell_id'] in cell_id_map
+            rows.append(dict(
+                title=row_title, cells=cells, chosen_id=r2['cell_id']))
+
+        return Rubric(title=title, rows=rows)
+
+    def get_rubrics(self, attempt_id):
+        if isinstance(attempt_id, Attempt):
+            attempt_id = attempt_id.id
+        attempt = self.attempt_state[attempt_id]
+        rubrics = attempt.get('rubric_data', dict(rubrics=()))['rubrics']
+        return [self.get_rubric(attempt_rubric) for attempt_rubric in rubrics]
+
     def deserialize_default(self, key):
-        if key == 'groups':
+        if key in ('groups', 'rubrics'):
             return {}
         return super().deserialize_default(key)
 
@@ -393,6 +437,10 @@ class Grading(blackboard.Serializable):
         if st.get('feedback'):
             used_filenames.remove('comments.txt')
             add_file('comments.txt', contents=st['feedback'])
+        rubrics = self.get_rubrics(attempt)
+        if rubrics:
+            add_file('rubric.txt',
+                     contents='\n'.join(r.get_form_as_text() for r in rubrics))
         for o in st.get('feedbackfiles', []):
             add_file(o['filename'], **o)
         for o in st['files']:
@@ -461,6 +509,21 @@ class Grading(blackboard.Serializable):
         return [filename for filename in annotated_filenames
                 if os.path.exists(filename)]
 
+    def get_rubric_input(self, attempt):
+        directory = self.get_attempt_directory(attempt, create=False)
+        if not directory:
+            return
+        rubrics = self.get_rubrics(attempt)
+        if not rubrics:
+            return
+        rubric_file = os.path.join(directory, 'rubric.txt')
+        try:
+            with open(rubric_file) as fp:
+                rubric_input = fp.read()
+        except FileNotFoundError:
+            return
+        return [r.get_form_input(rubric_input) for r in rubrics]
+
     def get_annotated_filename(self, filename):
         base, ext = os.path.splitext(filename)
         return base + '_ann' + ext
@@ -501,24 +564,30 @@ class Grading(blackboard.Serializable):
                 attachments = self.get_feedback_attachments(attempt)
             except ValueError as exn:
                 errors.append(str(exn))
+            try:
+                rubrics = self.get_rubric_input(attempt)
+            except ValueError as exn:
+                errors.append(str(exn))
             if errors:
                 print("Error for %s:" % (attempt,))
                 for e in errors:
                     print("* %s" % (e,))
             else:
-                uploads.append((attempt, score, feedback, attachments))
+                uploads.append(
+                    (attempt, score, feedback, attachments, rubrics))
         if dry_run:
-            for attempt, score, feedback, attachments in uploads:
+            for attempt, score, feedback, attachments, rubrics in uploads:
                 print("%s %s:" % (attempt.assignment, attempt,))
                 print("score: %s, feedback: %s words, %s attachment(s)" %
                       (score, len(feedback.split()), len(attachments)))
+                print("rubrics: %s" % (rubrics,))
         else:
-            for attempt, score, feedback, attachments in uploads:
+            for attempt, score, feedback, attachments, rubrics in uploads:
                 submit_grade(self.session, attempt.id,
                              attempt.assignment.group_assignment,
-                             score, feedback, attachments)
+                             score, feedback, attachments, rubrics)
             self.gradebook.refresh_attempts(
-                attempts=[attempt for attempt, _s, _f, _a in uploads])
+                attempts=[attempt for attempt, _s, _f, _a, _r in uploads])
             self.autosave()
 
     def main(self, args, session, grading):
