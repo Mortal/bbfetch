@@ -522,14 +522,14 @@ class Grading(blackboard.Serializable):
             self.autosave()
 
     def main(self, args, session, grading):
+        if args.refresh_groups:
+            self.refresh_groups()
         if args.refresh:
             try:
                 self.refresh(refresh_attempts=args.refresh_attempts)
             except requests.ConnectionError:
                 print("Connection failed; continuing in offline mode (-n)")
                 args.refresh = False
-        if args.refresh_groups:
-            self.refresh_groups()
         if args.check:
             self.check()
         if args.download_attempt:
