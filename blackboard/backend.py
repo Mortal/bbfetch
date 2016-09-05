@@ -190,7 +190,6 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             dict(filename=filename, download_link=download_link))
 
     rubric_data = None
-    rubric_ids = []
     if is_group_assignment:
         rubric_input = document.find(
             './/h:input[@id="%s_rubricEvaluation"]' % attempt_id, NS)
@@ -200,14 +199,21 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                 rubric_data = json.loads(unquote(rubric_data_str))
             except json.decoder.JSONDecodeError:
                 raise ParserError("Couldn't decode JSON", response)
-            assert rubric_data['evalEntityId'] == attempt_id
-            if is_group_assignment:
-                assert (rubric_data['evalDataType'] ==
-                        'blackboard.platform.gradebook2.GroupAttempt')
-            rubric_ids = [rubric['id'] for rubric in rubric_data['rubrics']]
-            # assoc_id = rubric_data['assocEntityId']
-            # for rubric in rubric_data['rubrics']:
-            #     rubrics.append(fetch_rubric(session, assoc_id, rubric))
+            t1 = 'blackboard.platform.gradebook2.GroupAttempt'
+            t2 = 'blackboard.plugin.rubric.api.core.data.EvaluationEntity'
+            if rubric_data['evalDataType'] == t1:
+                if rubric_data['evalEntityId'] != attempt_id:
+                    raise ParserError(
+                        "evalEntityId is %r, expected %r" %
+                        (rubric_data['evalEntityId'], attempt_id),
+                        response)
+            elif rubric_data['evalDataType'] == t2:
+                # Seems to indicate an already filled-out rubric
+                pass
+            else:
+                raise ParserError(
+                    "Unknown evalDataType %r" % rubric_data['evalDataType'],
+                    response)
 
     return dict(
         submission=submission_text,
@@ -218,7 +224,6 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         score=score,
         grading_notes=grading_notes,
         rubric_data=rubric_data,
-        rubric_ids=rubric_ids,
     )
 
 
