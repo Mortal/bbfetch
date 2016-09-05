@@ -312,7 +312,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
     fields = (form.findall('.//h:input', NS) +
               form.findall('.//h:textarea', NS))
     data = [
-        (field.get('name'), field.get('value') or '')
+        (field.get('name'), form_field_value(field))
         for field in fields
         if field.get('name')
     ]
