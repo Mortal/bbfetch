@@ -425,7 +425,7 @@ def fetch_groups(session):
     def extract(key, cell, d):
         if key == 'userorgroupname':
             return d.split()[-1]
-        if key != 'Groups':
+        if key not in ('Grupper', 'Groups'):
             return d
         groups = cell.findall(
             './/h:a[@class="userGroupNameListItemRemove"]', NS)
@@ -446,8 +446,14 @@ def fetch_groups(session):
     username = keys.index('userorgroupname')
     first_name = keys.index('firstname')
     last_name = keys.index('lastname')
-    role = keys.index('Role')
-    groups = keys.index('Groups')
+    try:
+        role = keys.index('Role')
+    except ValueError:
+        role = keys.index('Rolle')
+    try:
+        groups = keys.index('Groups')
+    except ValueError:
+        groups = keys.index('Grupper')
     users = {}
     for row in rows:
         users[row[username]] = dict(
