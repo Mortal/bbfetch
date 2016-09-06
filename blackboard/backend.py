@@ -13,6 +13,12 @@ from blackboard.elementtext import (
     element_to_markdown, element_text_content, form_field_value,
     html_to_markdown)
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    # No JSONDecodeError in Python 3.4
+    JSONDecodeError = ValueError
+
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
@@ -28,7 +34,7 @@ def fetch_overview(session):
     l("Fetching gradebook took %.1f s")
     try:
         o = response.json()
-    except json.decoder.JSONDecodeError:
+    except JSONDecodeError:
         raise ParserError("Couldn't decode JSON", response)
 
     if 'cachedBook' in o:
@@ -202,7 +208,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             rubric_data_str = form_field_value(rubric_input)
             try:
                 rubric_data = json.loads(unquote(rubric_data_str))
-            except json.decoder.JSONDecodeError:
+            except JSONDecodeError:
                 raise ParserError("Couldn't decode JSON", response)
             t1 = 'blackboard.platform.gradebook2.GroupAttempt'
             t2 = 'blackboard.plugin.rubric.api.core.data.EvaluationEntity'
