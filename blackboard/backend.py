@@ -23,6 +23,24 @@ except ImportError:
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
+def is_course_id_valid(session, course_id=None):
+    if course_id is None:
+        course_id = session.course_id
+    url = (
+        'https://bb.au.dk/webapps/blackboard/execute/' +
+        'courseMain?course_id=%s' % course_id)
+    response = session.get(url)
+    document = html5lib.parse(response.content, encoding=response.encoding)
+
+    content_panel_path = './/h:div[@id="contentPanel"]'
+    content_panel = document.find(content_panel_path, NS)
+    if content_panel is None:
+        logger.debug("is_course_id_valid: No contentPanel")
+        return True
+    classes = (content_panel.get('class') or '').split()
+    return 'error' not in classes
+
+
 def fetch_overview(session):
     """Fetch gradebook information. Returns (assignments, students)."""
     assert isinstance(session, BlackboardSession)
