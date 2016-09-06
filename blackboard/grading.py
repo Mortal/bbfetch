@@ -101,6 +101,8 @@ class Grading(blackboard.Serializable):
         return super().deserialize_default(key)
 
     def get_student_groups(self, student):
+        if self.groups is None:
+            return []
         Group = collections.namedtuple('Group', 'name id')
         try:
             groups = [Group(g[0], g[1])
