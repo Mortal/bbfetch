@@ -31,6 +31,8 @@ def fetch_overview(session):
     except json.decoder.JSONDecodeError:
         raise ParserError("Couldn't decode JSON", response)
 
+    if 'cachedBook' in o:
+        o = o['cachedBook']
     columns = o['colDefs']
     assignments = {}
     for c in columns:
