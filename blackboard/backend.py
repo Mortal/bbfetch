@@ -33,7 +33,10 @@ def fetch_overview(session):
 
     if 'cachedBook' in o:
         o = o['cachedBook']
-    columns = o['colDefs']
+    try:
+        columns = o['colDefs']
+    except KeyError:
+        raise ParserError("No colDefs", response)
     assignments = {}
     for c in columns:
         if c.get('src') != 'resource/x-bb-assignment':
