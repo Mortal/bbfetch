@@ -167,6 +167,10 @@ class Serializable:
         if filename is not None:
             self.save(filename)
 
+    def initialize_fields(self):
+        for k in self.FIELDS:
+            setattr(self, k, getattr(self, k, None))
+
     def load(self, filename=None, refresh=True):
         if filename is None:
             filename = self.filename
@@ -178,8 +182,7 @@ class Serializable:
                 with open(filename) as fp:
                     o = json.load(fp)
             except FileNotFoundError:
-                for k in self.FIELDS:
-                    setattr(self, k, getattr(self, k, None))
+                self.initialize_fields()
                 self.refresh()
                 self.save(filename=filename)
                 return
