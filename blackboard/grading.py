@@ -767,8 +767,8 @@ class Grading(blackboard.Serializable):
         session = cls.session_class('cookies.txt', username, course)
         grading = cls(session)
         grading.override_get_password(args)
-        grading.load('grading.json')
         try:
+            grading.load('grading.json')
             grading.main(args, session, grading)
         except ParserError as exn:
             logger.error("Parsing error")
