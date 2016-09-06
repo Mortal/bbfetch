@@ -356,7 +356,7 @@ class Grading(blackboard.Serializable):
 
         else:
             group_name = attempt.group_name
-            if group_name.startswith('Gruppe'):
+            if group_name and group_name.startswith('Gruppe'):
                 class_name = group_name.split()[1]
                 group_number = group_name.split()[3]
             else:
