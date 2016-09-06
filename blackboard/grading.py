@@ -92,7 +92,7 @@ class Grading(blackboard.Serializable):
         if isinstance(attempt_id, Attempt):
             attempt_id = attempt_id.id
         attempt = self.attempt_state[attempt_id]
-        rubrics = attempt.get('rubric_data', dict(rubrics=()))['rubrics']
+        rubrics = (attempt.get('rubric_data') or dict(rubrics=()))['rubrics']
         return [self.get_rubric(attempt_rubric) for attempt_rubric in rubrics]
 
     def deserialize_default(self, key):
