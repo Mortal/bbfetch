@@ -15,6 +15,7 @@ from blackboard.gradebook import (
 )
 from blackboard.backend import (
     fetch_attempt, submit_grade, fetch_groups, fetch_rubric,
+    is_course_id_valid,
 )
 
 
@@ -31,6 +32,14 @@ class Grading(blackboard.Serializable):
         self.session = session
         self.gradebook = type(self).gradebook_class(self.session)
         self.username = session.username
+
+    def initialize_fields(self):
+        super().initialize_fields()
+        if not is_course_id_valid(self.session):
+            logger.error(
+                "Course ID %s does not seem to be a valid Blackboard course",
+                self.session.course_id)
+            raise SystemExit(1)
 
     def refresh(self, **kwargs):
         logger.info("Refresh gradebook")
