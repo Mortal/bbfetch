@@ -5,48 +5,9 @@ import blackboard.grading
 
 
 class Grading(blackboard.grading.Grading):
-    @classmethod
-    def get_username(cls, args):
-        return '20103940'
-
-    @classmethod
-    def get_course(cls, args):
-        return '_13158_1'
-
-    def get_group_name_display(self, group_name):
-        """Given a group name, compute an abbreviation of the name."""
-        if group_name is None:
-            return '?'
-        elif group_name.startswith('Gruppe'):
-            x = group_name.split()
-            return '%s-%s' % (x[1], x[3])
-        else:
-            return group_name
-
-    def get_student_visible(self, student):
-        """
-        Return True if the given student should be visible,
-        that is, if it is a member of the user's TA class.
-        """
-        return True
-
-    def get_student_ordering(self, student):
-        """
-        Return a sorting key for the student
-        indicating how students should be sorted when displayed.
-        Typically you want to sort by group, then by name.
-        """
-        return (self.get_group_name_display(student.group),
-                student.name)
-
-    def get_assignment_name_display(self, assignment):
-        """
-        Return an abbreviation of the name of an assignment.
-        """
-        if assignment.name.startswith('Hand In'):
-            return assignment.name.split()[-1]
-        else:
-            return assignment.name
+    username = '20103940'
+    course = '_13158_1'
+    classes = all
 
     def get_attempt_directory_name(self, attempt):
         """
@@ -73,6 +34,34 @@ class Grading(blackboard.grading.Grading):
             base='/home/rav/TA/testcourse',
             assignment=self.get_assignment_name_display(attempt.assignment),
             name=name, id=attempt_id)
+
+    def get_group_name_display(self, group_name):
+        """Given a group name, compute an abbreviation of the name."""
+        if group_name is None:
+            return '?'
+        elif group_name.startswith('Gruppe'):
+            x = group_name.split()
+            return '%s-%s' % (x[1], x[3])
+        else:
+            return group_name
+
+    def get_student_ordering(self, student):
+        """
+        Return a sorting key for the student
+        indicating how students should be sorted when displayed.
+        Typically you want to sort by group, then by name.
+        """
+        return (self.get_group_name_display(student.group),
+                student.name)
+
+    def get_assignment_name_display(self, assignment):
+        """
+        Return an abbreviation of the name of an assignment.
+        """
+        if assignment.name.startswith('Hand In'):
+            return assignment.name.split()[-1]
+        else:
+            return assignment.name
 
     def get_feedback_score(self, comments):
         """
