@@ -100,7 +100,7 @@ class Grading(blackboard.Serializable):
     def get_rubrics(self, attempt_id):
         if isinstance(attempt_id, Attempt):
             attempt_id = attempt_id.id
-        attempt = self.attempt_state[attempt_id]
+        attempt = self.attempt_state.get(attempt_id, {})
         rubrics = (attempt.get('rubric_data') or dict(rubrics=()))['rubrics']
         return [self.get_rubric(attempt_rubric) for attempt_rubric in rubrics]
 
