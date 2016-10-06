@@ -164,6 +164,95 @@ auxxxxxx xxxxxxxxxxxxxxxxx              DA2-11 | ✔     | ✔     | ✘     |  
 ```
 
 
+## Customizing how feedback is stored and found
+
+If you have a different workflow for grading handins,
+you might be able to customize `Grading` to suit your workflow
+if you are ready to write a bit of Python code.
+
+For instance, in the Machine Learning course, I store the feedback for accepted
+handins in the directory `graded1/godkendt` and for re-handins in
+`graded1/genaflevering`.
+
+To support this, I have added a method named `get_ml_feedback` to my
+Grading class which finds the feedback and score of a given attempt,
+and then I have overriden `has_feedback`, `get_feedback`
+and `get_feedback_attachments` to use `get_ml_feedback`.
+
+The implementations are as follows.
+
+```python
+def get_ml_feedback(self, attempt):
+    """
+    Compute (score, feedback_file) for given attempt, or (None, None)
+    if no feedback exists.
+    """
+    if attempt != attempt.assignment.attempts[-1]:
+	# This attempt is not the last attempt uploaded by the student,
+	# so we do not give any feedback to this attempt.
+	return None, None
+    if any(a.score is not None for a in attempt.assignment.attempts[:-1]):
+	# We already graded previous attempts, so this is an actual
+	# re-handin from the student, which we do not handle with this
+	# method.
+	return None, None
+
+    # Feedback for group 42 is stored in a file named comments_42.pdf
+    group_name = attempt.group_name
+    group_name = re.sub(self.student_group_display_regex[0],
+			self.student_group_display_regex[1],
+			group_name)
+    filename = 'comments_%02d.pdf' % int(group_name)
+    assignment = self.get_assignment_name_display(attempt.assignment)
+
+    # Re-handin comments are stored separately from accepted handins.
+    # The directory determines whether the assignment is accepted or not.
+    accept_file = 'graded%s/godkendt/%s' % (assignment, filename)
+    has_accept = os.path.exists(accept_file)
+    reject_file = 'graded%s/genaflevering/%s' % (assignment, filename)
+    has_reject = os.path.exists(reject_file)
+    # Check that we don't have both accept and re-handin feedback.
+    assert not (has_accept and has_reject)
+    if has_accept:
+	return 1, accept_file
+    elif has_reject:
+	return 0, reject_file
+    else:
+	return None, None
+
+def has_feedback(self, attempt):
+    score, filename = self.get_ml_feedback(attempt)
+    if filename:
+	return True
+    # No ML feedback, but maybe we want to give feedback to this attempt
+    # in the standard bbfetch way, so we delegate to superclass.
+    return super().has_feedback(attempt)
+
+def get_feedback(self, attempt):
+    score, filename = self.get_ml_feedback(attempt)
+    if score == 0:
+	# This string must contain 're-handin' so that get_feedback_score
+	# will compute the score correctly.
+	return ('Re-handin. ' +
+		'Deadline November 3, 2016 at 9:00 (same as Hand-in 2). ' +
+		'See comments in attached PDF.')
+    if score == 1:
+	# This string must contain 'accepted' so that get_feedback_score
+	# will compute the score correctly.
+	return ('Accepted. ' +
+		'See comments in attached PDF.')
+    # No ML feedback, but we delegate to superclass.
+    return super().get_feedback(attempt)
+
+def get_feedback_attachments(self, attempt):
+    score, filename = self.get_ml_feedback(attempt)
+    if filename:
+	return [filename]
+    # No ML feedback, but we delegate to superclass.
+    return super().get_feedback_attachments(attempt)
+```
+
+
 ## Implementation
 
 This project contains classes to access
