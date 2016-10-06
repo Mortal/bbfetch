@@ -408,12 +408,21 @@ class Grading(blackboard.Serializable):
                 self.extract_archive(outfile)
 
     def extract_archive(self, filename):
+        base, ext = os.path.splitext(filename)
+        if ext.startswith('.'):
+            try:
+                method = getattr(self, 'extract_' + ext.strip('.'))
+            except AttributeError:
+                pass
+            else:
+                method(filename)
+
+    def extract_zip(self, filename):
         path = os.path.dirname(filename)
-        if filename.endswith('.zip'):
-            logger.debug("Unzip archive %s", filename)
-            import zipfile
-            with zipfile.ZipFile(filename) as zf:
-                zf.extractall(path)
+        logger.debug("Unzip archive %s", filename)
+        import zipfile
+        with zipfile.ZipFile(filename) as zf:
+            zf.extractall(path)
 
     def get_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
