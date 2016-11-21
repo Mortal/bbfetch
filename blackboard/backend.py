@@ -144,8 +144,11 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     submission_list = document.find(
         './/h:ul[@id="currentAttempt_submissionList"]', NS)
     if submission_list is None:
-        raise ParserError("No currentAttempt_submissionList",
-                          response)
+        logger.warning("No submission list. Did the student upload anything?")
+        if comments is None:
+            raise blackboard.ParserError(
+                "No currentAttempt_submissionList and no comments", response)
+        submission_list = ()
     for submission in submission_list:
         filename = element_text_content(submission)
         download_button = submission.find(
