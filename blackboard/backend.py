@@ -120,6 +120,11 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     l("Fetching attempt took %.1f s")
     document = html5lib.parse(response.content, encoding=response.encoding)
 
+    currentAttempt_container = document.find(
+        './/h:div[@id="currentAttempt"]', NS)
+    if currentAttempt_container is None:
+        raise blackboard.ParserError('No <div id="currentAttempt">')
+
     submission_text = document.find(
         './/h:div[@id="submissionTextView"]', NS)
     if submission_text is not None:
