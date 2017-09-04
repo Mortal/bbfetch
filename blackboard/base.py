@@ -9,6 +9,8 @@ import collections
 
 logger = logging.getLogger('blackboard')
 
+DOMAIN = 'blackboard.au.dk'
+
 
 class ParserError(Exception):
     def __init__(self, msg, response, *extra):

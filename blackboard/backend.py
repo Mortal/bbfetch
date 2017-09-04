@@ -7,7 +7,7 @@ import html5lib
 from requests.compat import urljoin, unquote, quote
 
 import blackboard
-from blackboard import logger, ParserError, BlackboardSession
+from blackboard import logger, ParserError, BlackboardSession, DOMAIN
 from blackboard.datatable import fetch_datatable
 from blackboard.elementtext import (
     element_to_markdown, element_text_content, form_field_value,
@@ -21,9 +21,6 @@ except ImportError:
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
-
-
-DOMAIN = 'blackboard.au.dk'
 
 
 def is_course_id_valid(session, course_id=None):

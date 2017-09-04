@@ -3,9 +3,9 @@ import textwrap
 import collections
 
 import blackboard
-from blackboard import BlackboardSession, logger
+from blackboard import BlackboardSession, logger, DOMAIN
 from blackboard.dwr import dwr_get_attempts_info
-from blackboard.backend import fetch_overview, DOMAIN
+from blackboard.backend import fetch_overview
 
 
 def get_handin_attempt_counts(session, handin_id):
