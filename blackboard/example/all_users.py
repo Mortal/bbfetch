@@ -8,7 +8,7 @@ NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 def get_all_users(session):
     url = (
-        'https://bb.au.dk/webapps/blackboard/execute/userManager' +
+        'https://blackboard.au.dk/webapps/blackboard/execute/userManager' +
         '?context=userPicker&course_id=_13158_1&enrollTypeString=UnEnrolled' +
         '&sortCol=userFirstName&sortDir=ASCENDING' +
         '&userInfoSearchKeyString=UserName' +

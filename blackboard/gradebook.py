@@ -5,11 +5,11 @@ import collections
 import blackboard
 from blackboard import BlackboardSession, logger
 from blackboard.dwr import dwr_get_attempts_info
-from blackboard.backend import fetch_overview
+from blackboard.backend import fetch_overview, DOMAIN
 
 
 def get_handin_attempt_counts(session, handin_id):
-    url = ('https://bb.au.dk/webapps/gradebook/do/instructor/' +
+    url = ('https://%s/webapps/gradebook/do/instructor/' % DOMAIN +
            'getJSONUniqueAttemptData?course_id=%s' % session.course_id +
            '&itemId=%s' % handin_id)
     o = session.get(url).json()

@@ -4,7 +4,7 @@ from blackboard.datatable import fetch_datatable
 
 def get_visit_stats(session):
     url = (
-        'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
+        'https://blackboard.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
         '?course_id=%s' % session.course_id +
         '&sortCol=LastLoginCol&sortDir=D')
     response, keys, rows = fetch_datatable(session, url)

@@ -23,11 +23,14 @@ except ImportError:
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
+DOMAIN = 'blackboard.au.dk'
+
+
 def is_course_id_valid(session, course_id=None):
     if course_id is None:
         course_id = session.course_id
     url = (
-        'https://bb.au.dk/webapps/blackboard/execute/' +
+        'https://%s/webapps/blackboard/execute/' % DOMAIN +
         'courseMain?course_id=%s' % course_id)
     response = session.get(url)
     document = html5lib.parse(response.content, encoding=response.encoding)
@@ -45,7 +48,7 @@ def fetch_overview(session):
     """Fetch gradebook information. Returns (assignments, students)."""
     assert isinstance(session, BlackboardSession)
     url = (
-        'https://bb.au.dk/webapps/gradebook/do/instructor/getJSONData' +
+        'https://%s/webapps/gradebook/do/instructor/getJSONData' % DOMAIN +
         '?course_id=%s' % session.course_id)
     l = blackboard.slowlog()
     response = session.get(url)
@@ -106,12 +109,12 @@ def fetch_overview(session):
 def fetch_attempt(session, attempt_id, is_group_assignment):
     assert isinstance(session, BlackboardSession)
     if is_group_assignment:
-        url = ('https://bb.au.dk/webapps/assignment/' +
+        url = ('https://%s/webapps/assignment/' % DOMAIN +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&groupAttemptId=%s' % attempt_id)
     else:
-        url = ('https://bb.au.dk/webapps/assignment/' +
+        url = ('https://%s/webapps/assignment/' % DOMAIN +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&attempt_id=%s' % attempt_id)
@@ -272,7 +275,7 @@ def fetch_rubric(session, assoc_id, rubric_object):
     rubric_title = rubric_object['title']
     prefix = 'BBFETCH'
     url = (
-        'https://bb.au.dk/webapps/rubric/do/course/gradeRubric' +
+        'https://%s/webapps/rubric/do/course/gradeRubric' % DOMAIN +
         '?mode=grid&isPopup=true&rubricCount=1&prefix=%s' % prefix +
         '&course_id=%s' % session.course_id +
         '&maxValue=1.0&rubricId=%s' % rubric_id +
@@ -334,12 +337,12 @@ def submit_grade(session, attempt_id, is_group_assignment,
                  grade, text, filenames, rubrics):
     assert isinstance(session, BlackboardSession)
     if is_group_assignment:
-        url = ('https://bb.au.dk/webapps/assignment/' +
+        url = ('https://%s/webapps/assignment/' % DOMAIN +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&groupAttemptId=%s' % attempt_id)
     else:
-        url = ('https://bb.au.dk/webapps/assignment/' +
+        url = ('https://%s/webapps/assignment/' % DOMAIN +
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&attempt_id=%s' % attempt_id)
@@ -413,10 +416,10 @@ def submit_grade(session, attempt_id, is_group_assignment,
         files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
     if is_group_assignment:
         post_url = (
-            'https://bb.au.dk/webapps/assignment//gradeGroupAssignment/submit')
+            'https://%s/webapps/assignment//gradeGroupAssignment/submit' % DOMAIN)
     else:
         post_url = (
-            'https://bb.au.dk/webapps/assignment//gradeAssignment/submit')
+            'https://%s/webapps/assignment//gradeAssignment/submit' % DOMAIN)
     if not files:
         # Blackboard requires the POST to be
         # Content-Type: multipart/form-data.
@@ -471,7 +474,7 @@ def fetch_groups(session):
             res.append((name, strip_prefix(i, 'rmv_')))
         return res
 
-    url = ('https://bb.au.dk/webapps/bb-group-mgmt-LEARN/execute/' +
+    url = ('https://%s/webapps/bb-group-mgmt-LEARN/execute/' % DOMAIN +
            'groupInventoryList?course_id=%s' % session.course_id +
            '&toggleType=users&chkAllRoles=on')
 

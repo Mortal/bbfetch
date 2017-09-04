@@ -4,6 +4,7 @@ import sys
 import collections
 
 import blackboard
+import blackboard.backend
 from blackboard import logger, ParserError
 
 
@@ -75,7 +76,7 @@ def get_script_session_id(session):
         return session._script_session_id
     except AttributeError:
         pass
-    url = 'https://bb.au.dk/javascript/dwr/engine.js'
+    url = 'https://%s/javascript/dwr/engine.js' % blackboard.backend.DOMAIN
     # Bypass BlackboardSession.get and go straight to requests.Session instead
     dwr_engine = session.session.get(url).text
     mo = re.search('dwr.engine._origScriptSessionId = "(.*)";', dwr_engine)
@@ -252,7 +253,7 @@ def dwr_get_attempts_info_single_request(session, attempts):
             param2='string:%s' % handin_id)
         payload.update(('c%d-%s' % (i, k), v) for k, v in call_data.items())
 
-    url = ('https://bb.au.dk/webapps/gradebook/dwr/call/plaincall/' +
+    url = ('https://%s/webapps/gradebook/dwr/call/plaincall/' % blackboard.backend.DOMAIN +
            'GradebookDWRFacade.getAttemptsInfo.dwr')
     response = session.post(url, payload)
     try:
@@ -290,7 +291,7 @@ def dwr_get_groups(session):
         id=i,
         param0='string:%s' % course_id_raw)
     payload.update(('c%d-%s' % (i, k), v) for k, v in call_data.items())
-    url = ('https://bb.au.dk/webapps/gradebook/dwr/call/plaincall/' +
+    url = ('https://%s/webapps/gradebook/dwr/call/plaincall/' % blackboard.backend.DOMAIN +
            'GradebookDWRFacade.getGroups.dwr')
     response = session.post(url, payload)
     try:

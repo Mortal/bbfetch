@@ -6,7 +6,7 @@ from blackboard.backend import fetch_groups
 
 
 def fetch_users(session):
-    url = ('https://bb.au.dk/webapps/blackboard/execute/userManager' +
+    url = ('https://blackboard.au.dk/webapps/blackboard/execute/userManager' +
            '?course_id=%s' % session.course_id)
     response, keys, rows = fetch_datatable(session, url)
     try:

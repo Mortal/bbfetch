@@ -16,7 +16,7 @@ your own directory and adjust them, filling out the details.
 The course ID of a Blackboard courses is found by inspecting the course URL.
 If it looks like:
 
-`https://bb.au.dk/webapps/blackboard/execute/content/blankPage?cmd=view&content_id=_347138_1&course_id=_43290_1`
+`https://blackboard.au.dk/webapps/blackboard/execute/content/blankPage?cmd=view&content_id=_347138_1&course_id=_43290_1`
 
 then the course id is `_43290_1`.
 

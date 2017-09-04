@@ -39,7 +39,7 @@ def get_thread_posts(session, forum_id, nonce, threads):
     # Therefore we use action=collect instead, which by default
     # sorts by date in descending order.
     url = (
-        'https://bb.au.dk/webapps/discussionboard/do/message' +
+        'https://blackboard.au.dk/webapps/discussionboard/do/message' +
         '?conf_id=%s&forum_id=%s&action=collect' % forum_id +
         '&blackboard.platform.security.NonceUtil.nonce=%s' % nonce +
         ''.join('&formCBs=%s' % t for t in ids) +
@@ -93,7 +93,7 @@ def get_forum_ids(session):
         return (mo.group(1), mo.group(2)), v
 
     url = (
-        'https://bb.au.dk/webapps/discussionboard/do/conference' +
+        'https://blackboard.au.dk/webapps/discussionboard/do/conference' +
         '?action=list_forums&course_id=%s' % session.course_id +
         '&nav=discussion_board')
     response, keys, rows = fetch_datatable(session, url, extract=extract)
@@ -103,7 +103,7 @@ def get_forum_ids(session):
 
 def get_thread_ids(session, forum_id):
     url = (
-        'https://bb.au.dk/webapps/discussionboard/do/forum' +
+        'https://blackboard.au.dk/webapps/discussionboard/do/forum' +
         '?action=list_threads&nav=discussion_board' +
         '&course_id=%s' % session.course_id +
         '&conf_id=%s&forum_id=%s' % forum_id +

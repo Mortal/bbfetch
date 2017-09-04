@@ -9,6 +9,7 @@ from six.moves.http_cookiejar import LWPCookieJar
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
 from blackboard.base import BadAuth, ParserError, logger
+from blackboard.backend import DOMAIN
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -38,7 +39,7 @@ class BlackboardSession:
 
     def get_cookie(self, key, path):
         try:
-            return self.session.cookies._cookies['bb.au.dk'][path][key].value
+            return self.session.cookies._cookies[DOMAIN][path][key].value
         except KeyError:
             print(self.session.cookies._cookies)
             raise
@@ -92,7 +93,7 @@ class BlackboardSession:
 
     def relogin(self):
         url = (
-            'https://bb.au.dk/webapps/bb-auth-provider-shibboleth-BBLEARN' +
+            'https://%s/webapps/bb-auth-provider-shibboleth-BBLEARN' % DOMAIN +
             '/execute/shibbolethLogin?authProviderId=_102_1')
         response = self.get(url)
         if self.detect_login(response) is False:
@@ -150,7 +151,7 @@ class BlackboardSession:
             r'\'\);\s*' +
             r'(?:(?://)?-->)?\s*$')
         real_login_url = (
-            'https://bb.au.dk/webapps/' +
+            'https://%s/webapps/' % DOMAIN +
             'bb-auth-provider-shibboleth-BBLEARN/execute/shibbolethLogin')
         history = list(response.history) + [response]
 
@@ -169,7 +170,7 @@ class BlackboardSession:
             if next_url is not None:
                 o = urlparse(next_url)
                 p = o.netloc + o.path
-                if p == 'bb.au.dk/webapps/login/':
+                if p == '%s/webapps/login/' % DOMAIN:
                     qs = parse_qs(o.query)
                     try:
                         return_url = qs['new_loc'][0]
@@ -215,7 +216,7 @@ class BlackboardSession:
 
     def ensure_edit_mode(self, response):
         if self.get_edit_mode(response) is False:
-            url = ('https://bb.au.dk/webapps/blackboard/execute/' +
+            url = ('https://%s/webapps/blackboard/execute/' % DOMAIN +
                    'doCourseMenuAction?cmd=setDesignerParticipantViewMode' +
                    '&courseId=' + self.course_id +
                    '&mode=designer')
@@ -263,7 +264,7 @@ class BlackboardSession:
 
     def ensure_logged_in(self):
         url = (
-            'https://bb.au.dk/webapps/blackboard/content/manageDashboard.jsp' +
+            'https://%s/webapps/blackboard/content/manageDashboard.jsp' % DOMAIN +
             '?course_id=%s' % self.course_id +
             '&sortCol=LastLoginCol&sortDir=D')
         self.get(url)
