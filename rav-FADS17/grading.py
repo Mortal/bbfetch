@@ -1,8 +1,8 @@
 import os
 import re
 import sys
-sys.path += [os.path.expanduser('~/bbfetch'),
-             os.path.expanduser('~/work/bbfetch')]
+# sys.path += [os.path.expanduser('~/bbfetch'),
+#              os.path.expanduser('~/work/bbfetch')]
 import blackboard.grading  # noqa
 from blackboard.session import PassBlackboardSession  # noqa
 
