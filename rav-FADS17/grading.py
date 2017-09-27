@@ -17,6 +17,17 @@ class Grading(blackboard.grading.Grading):
     rehandin_regex = r'genaflevering|re-?handin'
     accept_regex = r'accepted|godkendt'
 
+    def get_domjudge_team_name(self, student):
+        groups = self.get_student_groups(student)
+        if groups:
+            pattern, repl = self.student_group_display_regex
+            for g in groups:
+                mo = re.fullmatch(pattern, g.name)
+                if mo:
+                    class_name = mo.group(1).lower()
+                    group_number = int(mo.group(2))
+                    return 'fads17-%s-%02d' % (class_name, group_number)
+
     def get_attempt_directory_name(self, attempt):
         """
         Return a path to the directory in which to store files
