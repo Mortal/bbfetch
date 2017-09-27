@@ -38,7 +38,7 @@ def iter_datatable(session, url, **kwargs):
     if kwargs.pop('edit_mode', False):
         response = session.ensure_edit_mode(response)
     history = list(response.history) + [response]
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
     keys, rows = parse_datatable(response, document, **kwargs)
     yield keys
     yield from rows
@@ -56,7 +56,7 @@ def iter_datatable(session, url, **kwargs):
         response = session.get(url)
         l("Fetching datatable page %d took %.4f s", page_number)
         history += list(response.history) + [response]
-        document = html5lib.parse(response.content, encoding=response.encoding)
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
         keys_, rows = parse_datatable(response, document, **kwargs)
         if keys != keys_:
             raise ValueError(

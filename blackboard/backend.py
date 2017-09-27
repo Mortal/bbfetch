@@ -30,7 +30,7 @@ def is_course_id_valid(session, course_id=None):
         'https://%s/webapps/blackboard/execute/' % DOMAIN +
         'courseMain?course_id=%s' % course_id)
     response = session.get(url)
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
 
     content_panel_path = './/h:div[@id="contentPanel"]'
     content_panel = document.find(content_panel_path, NS)
@@ -118,7 +118,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     l = blackboard.slowlog()
     response = session.get(url)
     l("Fetching attempt took %.1f s")
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
 
     currentAttempt_container = document.find(
         './/h:div[@id="currentAttempt"]', NS)
@@ -281,7 +281,7 @@ def fetch_rubric(session, assoc_id, rubric_object):
     l = blackboard.slowlog()
     response = session.get(url)
     l("Fetching attempt rubric took %.1f s")
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
 
     def is_desc(div_element):
         classes = (div_element.get('class') or '').split()
@@ -345,7 +345,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
                '&attempt_id=%s' % attempt_id)
     # We need to fetch the page to get the nonce
     response = session.get(url)
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
     form = document.find('.//h:form[@id="currentAttempt_form"]', NS)
     if form is None:
         raise ParserError("No <form id=currentAttempt_form>", response)
@@ -428,7 +428,7 @@ def submit_grade(session, attempt_id, is_group_assignment,
     except:
         logger.exception("data=%r files=%r", data, files)
         raise
-    document = html5lib.parse(response.content, encoding=response.encoding)
+    document = html5lib.parse(response.content, transport_encoding=response.encoding)
     badmsg = document.find('.//h:span[@id="badMsg1"]', NS)
     if badmsg is not None:
         raise ParserError(

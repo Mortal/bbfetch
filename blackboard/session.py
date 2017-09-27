@@ -102,7 +102,7 @@ class BlackboardSession:
         return response
 
     def detect_login(self, response):
-        document = html5lib.parse(response.content, encoding=response.encoding)
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
         logged_out_url = (
             '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_21_1')
         o = document.find('.//h:a[@href="%s"]' % logged_out_url, NS)
@@ -122,7 +122,7 @@ class BlackboardSession:
             Page containing form with only hidden fields
         """
 
-        document = html5lib.parse(response.content, encoding=response.encoding)
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
         form = document.find('.//h:form', NS)
         url = form.get('action')
         inputs = form.findall('.//h:input[@name]', NS)
@@ -156,7 +156,7 @@ class BlackboardSession:
 
         while True:
             document = html5lib.parse(
-                response.content, encoding=response.encoding)
+                response.content, transport_encoding=response.encoding)
             scripts = document.findall('.//h:script', NS)
 
             next_url = None
@@ -208,7 +208,7 @@ class BlackboardSession:
         return response
 
     def get_edit_mode(self, response):
-        document = html5lib.parse(response.content, encoding=response.encoding)
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
         mode_switch = document.find('.//*[@id="editModeToggleLink"]', NS)
         if mode_switch is not None:
             return 'read-on' in (mode_switch.get('class') or '').split()
@@ -243,7 +243,7 @@ class BlackboardSession:
         return response
 
     def log_error(self, response):
-        document = html5lib.parse(response.content, encoding=response.encoding)
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
         content = document.find('.//h:div[@id="contentPanel"]', NS)
         if content is not None:
             class_list = (content.get('class') or '').split()

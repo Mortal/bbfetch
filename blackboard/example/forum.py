@@ -45,7 +45,7 @@ def get_thread_posts(session, forum_id, nonce, threads):
         ''.join('&formCBs=%s' % t for t in ids) +
         '&requestType=thread&course_id=%s' % session.course_id)
     r = session.get(url)
-    document = html5lib.parse(r.content, encoding=r.encoding)
+    document = html5lib.parse(r.content, transport_encoding=r.encoding)
     return parse_thread_posts(document)
 
 
@@ -110,7 +110,7 @@ def get_thread_ids(session, forum_id):
         '&showAll=true'
     )
     r = session.get(url)
-    document = html5lib.parse(r.content, encoding=r.encoding)
+    document = html5lib.parse(r.content, transport_encoding=r.encoding)
     return parse_thread_ids(document)
 
 
