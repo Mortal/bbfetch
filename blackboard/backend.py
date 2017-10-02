@@ -43,10 +43,10 @@ def is_course_id_valid(session, course_id=None):
 
 
 def fetch_overview(session):
-    """Fetch gradebook information. Returns (assignments, students).
+    """Fetch gradebook information. Returns (assignments, students, columns).
 
     The result is a namedtuple of type fetch_overview.result with attributes
-    'assignments' and 'students'.
+    'assignments', 'students', 'columns'.
     """
     assert isinstance(session, BlackboardSession)
     url = (
@@ -105,10 +105,11 @@ def fetch_overview(session):
             assignments=user_assignments,
         )
 
-    return fetch_overview.result(assignments, users)
+    return fetch_overview.result(assignments, users, columns)
+
 
 fetch_overview.result = collections.namedtuple(
-    'fetch_overview', 'assignments students')
+    'fetch_overview', 'assignments students columns')
 
 
 def fetch_attempt(session, attempt_id, is_group_assignment):
