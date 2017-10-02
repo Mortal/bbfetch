@@ -1,8 +1,15 @@
 import csv
+import argparse
 import datetime
 import collections
 from domjudge import get_scoreboard
 from grading import Grading
+from blackboard.base import ParserError, logger
+from blackboard.backend import upload_csv
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-u', '--upload', action='store_true')
 
 
 def get_problems():
@@ -75,8 +82,20 @@ def get_points(grading):
 
 
 def main():
+    args = parser.parse_args()
     grading = Grading.init()
     get_points(grading)
+    if args.upload:
+        with open('gradecentre.csv') as fp:
+            rd = iter(csv.reader(fp))
+            columns = next(rd)
+            rows = list(rd)
+        try:
+            upload_csv(grading.session, columns, rows)
+        except ParserError as exn:
+            logger.error("Parsing error")
+            print(exn)
+            exn.save()
 
 
 if __name__ == '__main__':
