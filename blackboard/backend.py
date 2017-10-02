@@ -381,6 +381,12 @@ class Form:
                 return d
             raise
 
+    def getall(self, k):
+        return [v for k_, v in self._data if k_ == k]
+
+    def pop(self, k):
+        self._data[self._data_lookup[k]] = None
+
     def set(self, k, v):
         try:
             self._data[self._data_lookup[k]] = k, v
