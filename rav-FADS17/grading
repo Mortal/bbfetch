@@ -1,5 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-source /home/rav/work/bbfetch/venv/bin/activate
-cd /home/rav/TA/FADS-2017
+# source ~/bbfetch/venv/bin/activate
+cd ~/TA/FADS-2017
 python3 grading.py "$@"
