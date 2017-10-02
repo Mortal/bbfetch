@@ -338,6 +338,100 @@ def fetch_rubric(session, assoc_id, rubric_object):
                 columns=column_headers, rows=rubric_rows)
 
 
+class Form:
+    def __init__(self, session, url, form_xpath):
+        # We need to fetch the page to get the nonce
+        self._session = session
+        if isinstance(url, str):
+            response = session.get(url)
+        else:
+            # Presumably a response object
+            response = url
+            url = response.url
+        self._history = response.history + [response]
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
+        form = document.find(form_xpath, NS)
+        if form is None:
+            raise ParserError("No %s" % form_xpath, response)
+        self.enctype_formdata = form.get('enctype') == 'multipart/form-data'
+        self.post_url = urljoin(response.url, form.get('action', ''))
+        # TODO: <select>?
+        fields = (form.findall('.//h:input', NS) +
+                  form.findall('.//h:textarea', NS))
+        self._data = [
+            (field.get('name'), form_field_value(field))
+            for field in fields
+            if field.get('name')
+            and (field.get('type') != 'radio' or
+                 field.get('checked') is not None)
+            and field.get('type') != 'submit'
+        ]
+        self._data_lookup = {k: i for i, (k, v) in enumerate(self._data)}
+
+        self.files = []
+
+    def get(self, k, *args):
+        if args:
+            d, = args
+        try:
+            return self._data[self._data_lookup[k]][1]
+        except KeyError:
+            if args:
+                return d
+            raise
+
+    def set(self, k, v):
+        try:
+            self._data[self._data_lookup[k]] = k, v
+        except KeyError:
+            self._data_lookup[k] = len(self._data)
+            self._data.append((k, v))
+
+    def extend(self, kvs):
+        for k, v in kvs:
+            self._data_lookup[k] = len(self._data)
+            self._data.append((k, v))
+
+    def submit(self, post_url=None):
+        if post_url is None:
+            post_url = self.post_url
+            print("POST to", post_url)
+        if self.enctype_formdata and not self.files:
+            # Blackboard requires the POST to be
+            # Content-Type: multipart/form-data.
+            # Unfortunately, requests can only make a form-data POST
+            # if it has file-like input in the files list.
+            self.files = [('dummy', io.StringIO(''))]
+        try:
+            data = [d for d in self._data if d is not None]
+            response = self._session.post(post_url, data=data, files=self.files)
+        except:
+            logger.exception("data=%r files=%r", data, self.files)
+            raise
+        self._log_badmsg(response)
+        response.history = self._history + list(response.history)
+        return response
+
+    def _log_badmsg(self, response):
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
+        badmsg = document.find('.//h:span[@id="badMsg1"]', NS)
+        if badmsg is not None:
+            raise ParserError(
+                "badMsg1: %s" % element_text_content(badmsg), response,
+                'Post data:\n%s' % pprint.pformat(self._data),
+                'Files:\n%s' % pprint.pformat(self.files))
+
+    def require_success_message(self, response):
+        document = html5lib.parse(response.content, transport_encoding=response.encoding)
+        msg = document.find('.//h:span[@id="goodMsg1"]', NS)
+        if msg is None:
+            raise ParserError(
+                "No goodMsg1 in POST response", response,
+                'Post data:\n%s' % pprint.pformat(self._data),
+                'Files:\n%s' % pprint.pformat(self.files))
+        logger.debug("goodMsg1: %s", element_text_content(msg))
+
+
 def submit_grade(session, attempt_id, is_group_assignment,
                  grade, text, filenames, rubrics):
     assert isinstance(session, BlackboardSession)
@@ -351,64 +445,27 @@ def submit_grade(session, attempt_id, is_group_assignment,
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&attempt_id=%s' % attempt_id)
-    # We need to fetch the page to get the nonce
-    response = session.get(url)
-    document = html5lib.parse(response.content, transport_encoding=response.encoding)
-    form = document.find('.//h:form[@id="currentAttempt_form"]', NS)
-    if form is None:
-        raise ParserError("No <form id=currentAttempt_form>", response)
-    fields = (form.findall('.//h:input', NS) +
-              form.findall('.//h:textarea', NS))
-    data = [
-        (field.get('name'), form_field_value(field))
-        for field in fields
-        if field.get('name')
-    ]
-    data_lookup = {k: i for i, (k, v) in enumerate(data)}
+    form = Form(session, url, './/h:form[@id="currentAttempt_form"]')
 
-    def data_get(k, *args):
-        if args:
-            d, = args
-        try:
-            return data[data_lookup[k]][1]
-        except KeyError:
-            if args:
-                return d
-            raise
-
-    def data_set(k, v):
-        try:
-            data[data_lookup[k]] = k, v
-        except KeyError:
-            data_lookup[k] = len(data)
-            data.append((k, v))
-
-    def data_extend(kvs):
-        for k, v in kvs:
-            data_lookup[k] = len(data)
-            data.append((k, v))
-
-    data_set('grade', str(grade))
-    data_set('feedbacktext', text)
-    data_set('gradingNotestext',
+    form.set('grade', str(grade))
+    form.set('feedbacktext', text)
+    form.set('gradingNotestext',
              'Submitted with https://github.com/Mortal/bbfetch')
 
     if rubrics:
         rubric_input = '%s_rubricEvaluation' % attempt_id
-        rubric_data_str = data_get(rubric_input)
+        rubric_data_str = form.get(rubric_input)
         rubric_data = json.loads(unquote(rubric_data_str))
         for rubric_cells, rubric in zip(rubrics, rubric_data['rubrics']):
             rubric['client_changed'] = True
             for input_row, row in zip(rubric_cells, rubric['rows']):
                 row['cell_id'] = input_row
         rubric_data_str = quote(json.dumps(rubric_data))
-        data_set(rubric_input, rubric_data_str)
-
-    files = []
+        form.set(rubric_input, rubric_data_str)
 
     for i, filename in enumerate(filenames):
         base = os.path.basename(filename)
-        data_extend([
+        form.extend([
             ('feedbackFiles_attachmentType', 'L'),
             ('feedbackFiles_fileId', 'new'),
             ('feedbackFiles_artifactFileId', 'undefined'),
@@ -418,38 +475,15 @@ def submit_grade(session, attempt_id, is_group_assignment,
         ])
         with open(filename, 'rb') as fp:
             fdata = fp.read()
-        files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
+        form.files.append(('feedbackFiles_LocalFile%d' % i, (base, fdata)))
     if is_group_assignment:
         post_url = (
             'https://%s/webapps/assignment//gradeGroupAssignment/submit' % DOMAIN)
     else:
         post_url = (
             'https://%s/webapps/assignment//gradeAssignment/submit' % DOMAIN)
-    if not files:
-        # Blackboard requires the POST to be
-        # Content-Type: multipart/form-data.
-        # Unfortunately, requests can only make a form-data POST
-        # if it has file-like input in the files list.
-        files = [('dummy', io.StringIO(''))]
-    try:
-        response = session.post(post_url, data=data, files=files)
-    except:
-        logger.exception("data=%r files=%r", data, files)
-        raise
-    document = html5lib.parse(response.content, transport_encoding=response.encoding)
-    badmsg = document.find('.//h:span[@id="badMsg1"]', NS)
-    if badmsg is not None:
-        raise ParserError(
-            "badMsg1: %s" % element_text_content(badmsg), response,
-            'Post data:\n%s' % pprint.pformat(data),
-            'Files:\n%s' % pprint.pformat(files))
-    msg = document.find('.//h:span[@id="goodMsg1"]', NS)
-    if msg is None:
-        raise ParserError(
-            "No goodMsg1 in POST response", response,
-            'Post data:\n%s' % pprint.pformat(data),
-            'Files:\n%s' % pprint.pformat(files))
-    logger.debug("goodMsg1: %s", element_text_content(msg))
+    response = form.submit(post_url)
+    form.require_success_message(response)
 
 
 def fetch_groups(session):
