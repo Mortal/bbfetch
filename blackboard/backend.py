@@ -1,5 +1,7 @@
 import io
 import os
+import re
+import csv
 import json
 import pprint
 import html5lib
@@ -548,3 +550,73 @@ def fetch_groups(session):
             groups=row[groups],
         )
     return users
+
+
+def upload_csv(session, columns, rows):
+    '''
+    Upload one or more columns to the Grade Centre overview.
+
+    'columns' is a list of str, and 'rows' is a list of list of str.
+
+    columns[0] must be 'Username', and subsequent columns must end with
+    "|nnnn", where nnnn is the column ID of an existing Grade Centre column.
+
+    This function cannot be used to create new columns in the Grade Centre.
+    '''
+    if columns[0] != 'Username':
+        raise ValueError("First column must be Username")
+
+    # Validate column IDs
+    column_ids = []
+    for c in columns[1:]:
+        mo = re.match(r'^.*\|(\d+)$', c)
+        if not mo:
+            raise ValueError("Column must end in a column ID")
+        column_ids.append(mo.group(1))
+
+    for r in rows:
+        if len(r) != len(columns):
+            raise ValueError("Wrong number of cells in row")
+
+    # TODO: Use cached gradebook data instead of fetching directly
+    grade_centre = fetch_overview(session)
+
+    # Validate column IDs against getJSONData
+    grade_centre_column_ids = [c.get('id') for c in grade_centre.columns]
+    missing = [c for c in column_ids if c not in grade_centre_column_ids]
+    if missing:
+        raise ValueError('Column IDs not in Grade Centre: %r' % (missing,))
+
+    # Validate usernames against getJSONData
+    grade_centre_usernames = set(s.get('username')
+                                 for s in grade_centre.students.values())
+    missing = [row[0] for row in rows if row[0] not in grade_centre_usernames]
+    if missing:
+        raise ValueError('Usernames not in Grade Centre: %r' % (missing,))
+
+    url = ('https://%s/webapps/gradebook/do/instructor/' % DOMAIN +
+           'uploadGradebook2?course_id=%s' % session.course_id +
+           '&actionType=selectFile')
+
+    form = Form(session, url, './/h:form[@name="uploadGradebookForm2"]')
+    form.set('theFile_attachmentType', 'L')
+    base = 'bbfetch.csv'
+    form.set('theFile_linkTitle', base)
+    with io.StringIO() as fp:
+        writer = csv.writer(fp)
+        writer.writerow(columns)
+        writer.writerows(rows)
+        fdata = fp.getvalue().encode('utf-8')
+    form.pop('theFile_LocalFile0')
+    form.files.append(('theFile_LocalFile0', (base, fdata)))
+
+    response = form.submit()
+    assert response.status_code == 200
+    form2 = Form(session, response, './/h:form[@name="uploadGradebookForm2"]')
+    form2.set('bottom_Submit', 'Submit')
+    # The following is implemented in Blackboard by JavaScript functions
+    # validateSelection(form) and checkboxArray(form)
+    form2.set('item_positions', ','.join(v for v in form2.getall('items')))
+    response2 = form2.submit()
+    # No goodMsg1 if no columns changed.
+    # form2.require_success_message(response2)
