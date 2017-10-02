@@ -337,7 +337,9 @@ class Gradebook(blackboard.Serializable):
         except AttributeError:
             prev = None
         # The following may raise requests.ConnectionError
-        self._assignments, self._students = fetch_overview(self.session)
+        overview = fetch_overview(self.session)
+        self._assignments = overview.assignments
+        self._students = overview.students
         if prev is not None:
             self.copy_student_data(prev)
         # No exception raised; store fetch_time

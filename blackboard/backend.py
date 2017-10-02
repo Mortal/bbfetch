@@ -3,6 +3,7 @@ import os
 import json
 import pprint
 import html5lib
+import collections
 
 from requests.compat import urljoin, unquote, quote
 
@@ -42,7 +43,11 @@ def is_course_id_valid(session, course_id=None):
 
 
 def fetch_overview(session):
-    """Fetch gradebook information. Returns (assignments, students)."""
+    """Fetch gradebook information. Returns (assignments, students).
+
+    The result is a namedtuple of type fetch_overview.result with attributes
+    'assignments' and 'students'.
+    """
     assert isinstance(session, BlackboardSession)
     url = (
         'https://%s/webapps/gradebook/do/instructor/getJSONData' % DOMAIN +
@@ -100,7 +105,10 @@ def fetch_overview(session):
             assignments=user_assignments,
         )
 
-    return assignments, users
+    return fetch_overview.result(assignments, users)
+
+fetch_overview.result = collections.namedtuple(
+    'fetch_overview', 'assignments students')
 
 
 def fetch_attempt(session, attempt_id, is_group_assignment):
