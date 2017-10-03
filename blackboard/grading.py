@@ -807,7 +807,7 @@ class Grading(blackboard.Serializable):
         username = cls.get_username(None)
         cookiejar = 'cookies.txt'
         dbpath = 'grading.json'
-        session = BlackboardSession(cookiejar, username, course)
+        session = cls.session_class(cookiejar, username, course)
         grading = cls(session)
         grading.load(dbpath)
         return grading
