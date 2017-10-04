@@ -1,66 +1,143 @@
+import os
 import json
+import time
 import datetime
 import requests
-import functools
 
 
 DOMAIN = 'https://domjudge.cs.au.dk'
+CACHE = 'domjudge-cache'
+
+
+def timed_get(session, url):
+    print('GET %s' % url, flush=True, end='')
+    t1 = time.time()
+    response = session.get(url)
+    t2 = time.time()
+    print(' [%.2f s]' % (t2 - t1), flush=True)
+    return response
 
 
 def api_contests(session):
-    response = session.get(DOMAIN + '/api/contests')
+    response = timed_get(session, DOMAIN + '/api/contests')
     return response.json()
 
 
 def api_scoreboard(session, contest_id):
-    response = session.get(DOMAIN + '/api/scoreboard?cid=%s' % contest_id)
+    response = timed_get(session, DOMAIN + '/api/scoreboard?cid=%s' % contest_id)
     return response.json()
 
 
 def api_teams(session):
-    response = session.get(DOMAIN + '/api/teams')
+    response = timed_get(session, DOMAIN + '/api/teams')
     return response.json()
 
 
 def api_problems(session, contest_id):
-    response = session.get(DOMAIN + '/api/problems?cid=%s' % contest_id)
+    response = timed_get(session, DOMAIN + '/api/problems?cid=%s' % contest_id)
     return response.json()
 
 
-def auto_session(fn):
-    @functools.wraps(fn)
-    def wrapper(session=None):
-        if session is None:
-            with requests.Session() as session:
-                return fn(session)
-        else:
-            return fn(session)
-
-    return wrapper
-
-
 def get_unique_contest(session):
-    contests = api_contests(session)
-    if len(contests) == 0:
-        raise Exception("No contests")
-    if len(contests) > 1:
-        raise Exception("Multiple active contests")
-    contest, = contests.values()
+    path = os.path.join(CACHE, 'unique_contest.json')
+    try:
+        with open(path) as fp:
+            contest = json.load(fp)
+    except FileNotFoundError:
+        contests = api_contests(session)
+        if len(contests) == 0:
+            raise Exception("No contests")
+        if len(contests) > 1:
+            raise Exception("Multiple active contests")
+        contest, = contests.values()
+        try:
+            fp = open(path, 'w')
+        except FileNotFoundError:
+            os.makedirs(CACHE)
+            fp = open(path, 'w')
+        with fp:
+            json.dump(contest, fp, indent=2)
     return contest
 
 
-def get_problems(session):
+def fetch_problems(session):
     contest = get_unique_contest(session)
     problems = api_problems(session, contest['id'])
     return {problem['id']: problem['label'] for problem in problems}
 
 
-def get_team_names(session):
+def fetch_team_names(session):
     teams = api_teams(session)
     return {team['id']: team['name'] for team in teams}
 
 
-@auto_session
+class CachedDict:
+    class DictView:
+        def __init__(self, cached_dict, session):
+            self._source = cached_dict
+            self._session = session
+
+        def __getitem__(self, k):
+            return self._source(self._session, k)
+
+    def __init__(self, fetch_fn, filename):
+        self._fetch_fn = fetch_fn
+        self._path = os.path.join(CACHE, filename)
+        self._cache = None
+        self._fetched = None
+        self._negative = set()
+
+    def __call__(self, session, k):
+        if k in self._negative:
+            raise KeyError(k)
+        if self._cache is None:
+            self.read_or_fetch(session)
+        try:
+            return self._cache[k]
+        except KeyError:
+            print('Refetching due to %r' % k)
+            raise
+            self.refetch(session)
+            try:
+                return self._cache[k]
+            except KeyError:
+                self._negative.add(k)
+                raise
+
+    def refetch(self, session, force=False):
+        if self._fetched and not force:
+            return
+        self._cache = self._fetch_fn(session)
+        self._fetched = True
+        self._write_cache()
+
+    def _write_cache(self):
+        try:
+            fp = open(self._path, 'w')
+        except FileNotFoundError:
+            os.makedirs(CACHE)
+            fp = open(self._path, 'w')
+        with fp:
+            json.dump(self._cache, fp, indent=2)
+
+    def read_or_fetch(self, session):
+        try:
+            with open(self._path) as fp:
+                self._cache = {int(k): v for k, v in json.load(fp).items()}
+        except FileNotFoundError:
+            self.refetch(session)
+
+    def dict_view(self, session):
+        self.read_or_fetch(session)
+        return self.DictView(self, session)
+
+
+get_team_name = CachedDict(fetch_team_names, 'teams.json')
+get_team_names = get_team_name.dict_view
+get_problem_label = CachedDict(fetch_problems, 'problems.json')
+get_problems = get_problem_label.dict_view
+
+
 def get_scoreboard(session):
     contest = get_unique_contest(session)
     start_time = datetime.datetime.fromtimestamp(contest['start'])
@@ -80,6 +157,7 @@ def get_scoreboard(session):
 
 
 if __name__ == '__main__':
-    s = get_scoreboard()
+    with requests.Session() as session:
+        s = get_scoreboard(session)
     with open('scoreboard.json', 'w') as fp:
         json.dump(s, fp, indent=2, default=str)
