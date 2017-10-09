@@ -103,9 +103,8 @@ class BlackboardSession:
 
     def detect_login(self, response):
         document = html5lib.parse(response.content, transport_encoding=response.encoding)
-        logged_out_url = (
-            '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_21_1')
-        o = document.find('.//h:a[@href="%s"]' % logged_out_url, NS)
+        log_in_id = 'topframe.login.label'
+        o = document.find('.//h:a[@id="%s"]' % log_in_id, NS)
         if o is not None:
             return False
         log_out_id = 'topframe.logout.label'

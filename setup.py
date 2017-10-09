@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.dirname(os.path.abspath(__file__))))
 
 setup(
     name='bbfetch',
-    version='0.1',
+    version='0.2',
     packages=find_packages(include=['blackboard', 'blackboard.*']),
     include_package_data=True,
     license='GNU GPLv3',
