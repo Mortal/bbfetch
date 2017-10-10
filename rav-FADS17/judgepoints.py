@@ -1,4 +1,5 @@
 import csv
+import json
 import argparse
 import datetime
 import collections
@@ -25,9 +26,24 @@ def get_problems():
     return problems
 
 
+def add_overrides(scoreboard):
+    try:
+        with open('override.json') as fp:
+            override = json.load(fp)
+    except FileNotFoundError:
+        return scoreboard
+    for team_name, team_override in override.items():
+        assert team_name in scoreboard
+        for label, comment in team_override.items():
+            assert isinstance(comment, str)
+            scoreboard[team_name][label] = comment
+    return scoreboard
+
+
 def get_points(grading):
     problem_info = get_problems()
     scoreboard = get_scoreboard(grading.session.session)
+    scoreboard = add_overrides(scoreboard)
     grade_centre_rows = []
     problem_columns = (
         sorted(set(column_name for deadline, points, column_name in problem_info.values())))
@@ -62,7 +78,7 @@ def get_points(grading):
             except KeyError:
                 # Demo problem -> Skip
                 continue
-            if time < deadline:
+            if isinstance(time, str) or time < deadline:
                 data[label] = '%s (%s)' % (points, time)
                 grade_centre_row[column_name] += points
                 data[column_name] += points
@@ -93,9 +109,13 @@ def main():
         try:
             upload_csv(grading.session, columns, rows)
         except ParserError as exn:
-            logger.error("Parsing error")
-            print(exn)
-            exn.save()
+            try:
+                grading.session.relogin()
+                upload_csv(grading.session, columns, rows)
+            except ParserError as exn:
+                logger.error("Parsing error")
+                print(exn)
+                exn.save()
 
 
 if __name__ == '__main__':
