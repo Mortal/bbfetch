@@ -114,6 +114,10 @@ fetch_overview.result = collections.namedtuple(
     'fetch_overview', 'assignments students columns')
 
 
+class NotYetSubmitted(Exception):
+    pass
+
+
 def fetch_attempt(session, attempt_id, is_group_assignment):
     assert isinstance(session, BlackboardSession)
     if is_group_assignment:
@@ -134,6 +138,10 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     currentAttempt_container = document.find(
         './/h:div[@id="currentAttempt"]', NS)
     if currentAttempt_container is None:
+        not_yet_submitted = ('This attempt has not yet been submitted and ' +
+                             'is not available to view at present.')
+        if not_yet_submitted in response.text:
+            raise NotYetSubmitted
         raise blackboard.ParserError('No <div id="currentAttempt">',
                                      response=response)
 

@@ -15,7 +15,7 @@ from blackboard.gradebook import (
 )
 from blackboard.backend import (
     fetch_attempt, submit_grade, fetch_groups, fetch_rubric,
-    is_course_id_valid,
+    is_course_id_valid, NotYetSubmitted,
 )
 
 
@@ -380,7 +380,11 @@ class Grading(blackboard.Serializable):
 
     def download_attempt_files(self, attempt):
         assert isinstance(attempt, Attempt)
-        files = self.get_attempt_files(attempt)
+        try:
+            files = self.get_attempt_files(attempt)
+        except NotYetSubmitted:
+            logger.info('Skip downloading %s (not yet submitted)', attempt)
+            return
         d = self.get_attempt_directory(attempt, create=True)
         for o in files:
             filename = o['filename']
@@ -495,7 +499,10 @@ class Grading(blackboard.Serializable):
         directory = self.get_attempt_directory(attempt, create=False)
         if not directory:
             return False
-        files = self.get_attempt_files(attempt)
+        try:
+            files = self.get_attempt_files(attempt)
+        except NotYetSubmitted:
+            return False
         filenames = [os.path.join(directory, o['filename']) for o in files]
         return all(os.path.exists(f) for f in filenames)
 
