@@ -134,7 +134,8 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
     currentAttempt_container = document.find(
         './/h:div[@id="currentAttempt"]', NS)
     if currentAttempt_container is None:
-        raise blackboard.ParserError('No <div id="currentAttempt">')
+        raise blackboard.ParserError('No <div id="currentAttempt">',
+                                     response=response)
 
     submission_text = document.find(
         './/h:div[@id="submissionTextView"]', NS)
