@@ -1,6 +1,14 @@
 bbfetch changes
 ===============
 
+0.3 (2017-xx-xx)
+----------------
+
+* Detect and handle the obscure Blackboard message
+  "This attempt has not yet been submitted and is not available to view at present."
+* Bugfix in `fetch_attempt`
+* Fix dependency specification in `setup.py`
+
 0.2 (2017-10-09)
 ----------------
 
