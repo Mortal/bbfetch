@@ -9,6 +9,7 @@ import requests
 import tempfile
 import subprocess
 from domjudge import get_problems, get_team_names
+from instrument import instrument
 
 
 def make_parser(c):
@@ -29,7 +30,9 @@ parse_submission_id = make_parser('s')
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-V', '--version', dest='override_version', type=int)
 parser.add_argument('-n', '--no-patch', dest='patch', action='store_false')
+parser.add_argument('-i', '--no-instrument', dest='instrument', action='store_false')
 parser.add_argument('submission_id', type=parse_submission_id)
 
 
@@ -113,8 +116,11 @@ def find_patch(hash, directory, filename):
 def apply_patch(patch, filename):
     basename = os.path.basename(filename)
     with tempfile.TemporaryDirectory() as tmpdir:
-        shutil.copyfile(filename,
-                        os.path.join(tmpdir, basename))
+        # Open input in text mode to convert CR+LF into LF.
+        # We cannot use shutil.copyfile since that preserves line endings.
+        target = os.path.join(tmpdir, basename)
+        with open(filename) as fsrc, open(target, 'w') as fdst:
+            shutil.copyfileobj(fsrc, fdst)
         with tempfile.NamedTemporaryFile('w') as patchfile:
             patchfile.write(patch)
             patchfile.flush()
@@ -142,8 +148,9 @@ def print_added_tests(patch):
               ', '.join(sorted(new, key=lambda s: (len(s), s))))
 
 
-def patch_test_file(directory, filename, problem):
-    current_version = get_version(os.path.join(directory, filename))
+def patch_test_file(directory, filename, problem, current_version=None):
+    if current_version is None:
+        current_version = get_version(os.path.join(directory, filename))
     repo = '/home/rav/codes/submitj'
     dir_in_repo = 'tasks/%s' % problem.rstrip('12')
     dir_path = os.path.join(repo, dir_in_repo)
@@ -176,7 +183,11 @@ def main(session):
     directory, target_file = setup_testall(paths)
     if directory:
         if args.patch:
-            patch_test_file(directory, target_file, problem_name)
+            patch_test_file(directory, target_file, problem_name,
+                            args.override_version)
+        if args.instrument:
+            for path in paths:
+                instrument(path)
         subprocess.check_call(['javac'] + glob.glob('%s/*.java' % directory))
         subprocess.check_call(('java', '-cp', directory, 'RunTestAll'))
 
