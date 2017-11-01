@@ -19,13 +19,11 @@ setup(
     author='Mathias Rav',
     author_email='rav@cs.au.dk',
     install_requires=[
+        'html2text',
         'keyring',
         'requests',
         'six',
         'html5lib==0.999999999',
-    ],
-    dependency_links=[
-        'https://github.com/Alir3z4/html2text/archive/2016.1.8.tar.gz#egg=html2text',
     ],
     classifiers=[
         'Intended Audience :: Developers',
