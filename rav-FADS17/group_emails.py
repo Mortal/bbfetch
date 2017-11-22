@@ -11,14 +11,23 @@ def grouping(xs, key):
     return itertools.groupby(sorted(xs, key=key), key=key)
 
 
-def main():
-    args = parser.parse_args()
+def search_group_emails(query=None):
+    if isinstance(query, str):
+        query = (query,)
     grading = Grading.init()
     key = grading.get_student_group_display
     for group, students in grouping(grading.gradebook.students.values(), key=key):
-        if args.search and all(s.lower() not in group.lower() for s in args.search):
+        if query and all(s.lower() not in group.lower() for s in query):
             continue
-        print(group, ' '.join('"%s" <%s@post.au.dk>,' % (student.name, student.student_number) for student in students))
+        yield group, [(student.name, '%s@post.au.dk' % student.student_number)
+                      for student in students]
+
+
+def main():
+    args = parser.parse_args()
+    for group, students in search_group_emails(args.search):
+        print(group, ' '.join('"%s" <%s>,' % (name, address)
+                              for name, address in students))
 
 
 if __name__ == '__main__':

@@ -11,11 +11,14 @@ CACHE = 'domjudge-cache'
 
 def timed_get(session, url):
     print('GET %s' % url, flush=True, end='')
-    t1 = time.time()
-    response = session.get(url)
-    t2 = time.time()
-    print(' [%.2f s]' % (t2 - t1), flush=True)
-    return response
+    try:
+        t1 = time.time()
+        response = session.get(url)
+        t2 = time.time()
+        print(' [%.2f s]' % (t2 - t1), end='')
+        return response
+    finally:
+        print('', flush=True)
 
 
 def api_contests(session):
@@ -95,8 +98,8 @@ class CachedDict:
         try:
             return self._cache[k]
         except KeyError:
-            print('Refetching due to %r' % k)
-            raise
+            print('%s: %s not found in cache; refetching' %
+                  (os.path.basename(self._path), k))
             self.refetch(session)
             try:
                 return self._cache[k]
@@ -107,7 +110,13 @@ class CachedDict:
     def refetch(self, session, force=False):
         if self._fetched and not force:
             return
-        self._cache = self._fetch_fn(session)
+        try:
+            self._cache = self._fetch_fn(session)
+        except Exception:
+            if session is None:
+                msg = 'Refetch requested, but no session supplied'
+                raise Exception(msg) from None
+            raise
         self._fetched = True
         self._write_cache()
 
@@ -146,13 +155,15 @@ def get_scoreboard(session):
     result = {}
     for team in scoreboard:
         team_name = team_names[team['team']]
-        solved_problems = {}
+        problems = {}
         for problem in team['problems']:
             if problem['solved']:
                 # p['time'] does not include penalty time
                 elapsed = datetime.timedelta(minutes=problem['time'])
-                solved_problems[problem['label']] = start_time + elapsed
-        result[team_name] = solved_problems
+                problems[problem['label']] = (True, start_time + elapsed)
+            elif problem['num_judged']:
+                problems[problem['label']] = (False, None)
+        result[team_name] = problems
     return result
 
 

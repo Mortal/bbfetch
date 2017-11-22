@@ -4,12 +4,27 @@ import os
 import re
 import glob
 import shutil
+import socket
 import argparse
 import requests
 import tempfile
 import subprocess
 from domjudge import get_problems, get_team_names
 from instrument import instrument
+
+
+REPO = {
+    'alcyone': '/home/rav/work/submitj',
+    'gonzales': '/ssd/home/work/csaudk-submitj',
+    'novascotia': '/home/rav/codes/submitj',
+}
+
+
+def gethostname():
+    global gethostname
+    value = socket.gethostname()
+    gethostname = lambda: value
+    return value
 
 
 def make_parser(c):
@@ -32,6 +47,7 @@ parse_submission_id = make_parser('s')
 parser = argparse.ArgumentParser()
 parser.add_argument('-V', '--version', dest='override_version', type=int)
 parser.add_argument('-n', '--no-patch', dest='patch', action='store_false')
+parser.add_argument('-o', '--no-extract', dest='extract', action='store_false')
 parser.add_argument('-i', '--no-instrument', dest='instrument', action='store_false')
 parser.add_argument('submission_id', type=parse_submission_id)
 
@@ -42,7 +58,7 @@ def setup_submission(submission_id, problems, teams):
     if not files:
         raise ValueError(submission_id)
     target_directory = set()
-    paths = []
+    to_copy = []
     for f in files:
         full = os.path.basename(f)
         (contest_id, submission_id_, team_id, problem_id,
@@ -53,15 +69,23 @@ def setup_submission(submission_id, problems, teams):
         d = 'submissions/{p}/{t}-s{s}'.format(
             p=problem_name, t=team_name, s=submission_id)
         target_directory.add(d)
-        os.makedirs(d, exist_ok=True)
-        path = os.path.join(d, filename)
-        shutil.copyfile(f, path)
-        paths.append(path)
+        to_copy.append((f, filename))
+
     assert len(target_directory) == 1
     d, = target_directory
-    print("Stored in %s" % d)
+    return d, to_copy, problem_name
+
+
+def extract(d, to_copy):
+    paths = []
+    for f, filename in to_copy:
+        path = os.path.join(d, filename)
+        os.makedirs(d, exist_ok=True)
+        shutil.copyfile(f, path)
+        paths.append(path)
+
     assert len(paths) >= 1
-    return paths, problem_name
+    return paths
 
 
 def setup_testall(paths):
@@ -82,7 +106,7 @@ def setup_testall(paths):
                     fp.write('}}\n')
             except FileExistsError:
                 pass
-            return d, f
+            return f
     else:
         print("No testAll() found.")
 
@@ -91,11 +115,14 @@ version_prefix = '// Version: '
 
 
 def get_version(path):
+    pattern = r'^%s(\d+)$' % re.escape(version_prefix)
     with open(path) as fp:
-        first_line = next(iter(fp))
-    mo = re.match(r'^%s(\d+)$' % re.escape(version_prefix), first_line)
-    if not mo:
-        raise ValueError(first_line)
+        try:
+            mo = next(mo for line in fp
+                      for mo in [re.match(pattern, line)]
+                      if mo is not None)
+        except StopIteration:
+            raise ValueError(path)
     return int(mo.group(1))
 
 
@@ -151,7 +178,7 @@ def print_added_tests(patch):
 def patch_test_file(directory, filename, problem, current_version=None):
     if current_version is None:
         current_version = get_version(os.path.join(directory, filename))
-    repo = '/home/rav/codes/submitj'
+    repo = REPO[gethostname()]
     dir_in_repo = 'tasks/%s' % problem.rstrip('12')
     dir_path = os.path.join(repo, dir_in_repo)
     repo_path = os.path.join(dir_path, filename)
@@ -175,15 +202,33 @@ def patch_test_file(directory, filename, problem, current_version=None):
     assert get_version(os.path.join(directory, filename)) == newest_version
 
 
+def remove_package(paths):
+    subprocess.check_call(
+        ('sed', '-i', '-e', '/package [_a-z0-9.]*;/ d') + tuple(paths))
+
+
 def main(session):
     args = parser.parse_args()
     problems = get_problems(session)
     teams = get_team_names(session)
-    paths, problem_name = setup_submission(args.submission_id, problems, teams)
-    directory, target_file = setup_testall(paths)
+    directory, target_files, problem_name = setup_submission(
+        args.submission_id, problems, teams)
+    if args.extract:
+        paths = extract(directory, target_files)
+        test_file = setup_testall(paths)
+    else:
+        paths = glob.glob(os.path.join(directory, '*.java'))
+        paths = [p for p in paths if not p.endswith('/RunTestAll.java')]
+        test_files = [os.path.basename(path) for path in paths
+                      if any('testAll()' in line for line in open(path))]
+        assert len(test_files) == 1, test_files
+        test_file, = test_files
+    print("Stored in %s" % directory)
+
     if directory:
+        remove_package(paths)
         if args.patch:
-            patch_test_file(directory, target_file, problem_name,
+            patch_test_file(directory, test_file, problem_name,
                             args.override_version)
         if args.instrument:
             for path in paths:

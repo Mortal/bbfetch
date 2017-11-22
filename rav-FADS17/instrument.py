@@ -54,6 +54,10 @@ def find_method_last_statement(file_contents, class_name, method_name):
     return position
 
 
+def field_names(java_type):
+    return [d.name for f in java_type.fields for d in f.declarators]
+
+
 def has_method(java_type, method_name):
     if any(m.name == method_name for m in java_type.methods):
         print('%s already has %s' % (java_type.name, method_name))
@@ -70,9 +74,8 @@ def instrument_augment_string(file_contents):
     print('Add method %s() to %s' % (method_name, java_type.name))
 
     method_template = 'public String %s() { return %s; }'
-    fields = [f.declarators[0].name for f in java_type.fields]
     method_body = '"("+%s+")"' % (
-        '+","+'.join('"%s="+%s' % (f, f) for f in fields))
+        '+","+'.join('"%s="+%s' % (f, f) for f in field_names(java_type)))
     method = method_template % (method_name, method_body)
     return (file_contents[:insert_position] +
             method + file_contents[insert_position:])
@@ -84,6 +87,9 @@ def instrument_node_string(file_contents):
         return
     method_name = 'toString'
     if has_method(java_type, method_name):
+        return
+    fields = 'left key augment right'.split()
+    if not set(fields).issubset(field_names(java_type)):
         return
     print('Add method %s() to %s' % (method_name, java_type.name))
 
@@ -100,7 +106,8 @@ def instrument_combine_print(file_contents):
         return
     statement = ('System.out.println("combine(" + left + ' +
                  '", " + key + ", " + right + ") = " + res);')
-    return (file_contents[:position] + statement + file_contents[position:])
+    if statement not in file_contents:
+        return (file_contents[:position] + statement + file_contents[position:])
 
 
 try:
