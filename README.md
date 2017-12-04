@@ -30,8 +30,36 @@ cd path/to/grading
 ./grading --help
 ```
 
-The useful options are `-d` (download new handins),
-`-u` (upload feedback) and `-n` (offline mode).
+To download handins that have not been graded yet:
+
+```
+./grading -d
+```
+
+To download both graded and ungraded handins:
+
+```
+./grading -dd
+```
+
+To download graded and ungraded handins for all students in the course
+(and not just those made visible by `grading.py`):
+
+```
+./grading -ddd
+```
+
+To upload feedback:
+
+```
+./grading -u
+```
+
+To run in offline mode without internet access:
+
+```
+./grading -n
+```
 
 #### Grading handins
 
