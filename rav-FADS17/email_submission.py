@@ -22,8 +22,8 @@ def compose_email(recipients, subject, body):
 
 judgings = dict(
     wa='wrong-answer',
-    rte='run-time-error',
-    tle='time-limit-exceeded',
+    rte='run-error',
+    tle='timelimit',
 )
 
 
@@ -58,7 +58,7 @@ def main(session=None):
     teams = get_team_names(session)
     group_name, students, problem_name = analyze_submission(
         args.submission_id, problems, teams)
-    problem_name = re.sub(r'\d*$', '-2', problem_name)
+    problem_name = re.sub(r'\d+$', '-2', problem_name)
     names = ' og '.join(n.split(' ')[0] for n, e in students)
     context = dict(
         names=names,
