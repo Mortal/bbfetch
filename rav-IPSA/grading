@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+# source ~/bbfetch/venv/bin/activate
+cd ~/TA/IPSA/grading
+python3 grading.py "$@"
