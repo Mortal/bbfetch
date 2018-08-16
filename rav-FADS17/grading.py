@@ -3,11 +3,11 @@ import re
 import sys
 # sys.path += [os.path.expanduser('~/bbfetch'),
 #              os.path.expanduser('~/work/bbfetch')]
-import blackboard.grading  # noqa
-from blackboard.session import PassBlackboardSession  # noqa
+import bbfetch.grading  # noqa
+from bbfetch.session import PassBlackboardSession  # noqa
 
 
-class Grading(blackboard.grading.Grading):
+class Grading(bbfetch.grading.Grading):
     session_class = PassBlackboardSession
     username = 'au306325'
     course = '_66529_1'

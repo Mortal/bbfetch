@@ -3,8 +3,8 @@ import csv
 import html5lib
 from requests.compat import urljoin
 
-import blackboard
-from blackboard.elementtext import element_text_content
+import bbfetch
+from bbfetch.elementtext import element_text_content
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -33,7 +33,7 @@ def dump_iter_datatable(session, url, fp, **kwargs):
 
 def iter_datatable(session, url, **kwargs):
     url += '&numResults=1000&startIndex=0'
-    l = blackboard.slowlog()
+    l = bbfetch.slowlog()
     response = session.get(url)
     if kwargs.pop('edit_mode', False):
         response = session.ensure_edit_mode(response)
@@ -52,7 +52,7 @@ def iter_datatable(session, url, **kwargs):
     while next_o:
         page_number += 1
         url = urljoin(response.url, next_o.get('href'))
-        l = blackboard.slowlog()
+        l = bbfetch.slowlog()
         response = session.get(url)
         l("Fetching datatable page %d took %.4f s", page_number)
         history += list(response.history) + [response]
@@ -73,7 +73,7 @@ def parse_datatable(response, document, extract=None, table_id=None):
         table_id = 'listContainer_datatable'
     table = document.find('.//h:table[@id="%s"]' % table_id, NS)
     if table is None:
-        raise blackboard.ParserError(
+        raise bbfetch.ParserError(
             "No table with id %r" % (table_id,), response)
     header = table.find('./h:thead', NS)
     keys = []

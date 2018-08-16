@@ -9,10 +9,10 @@ import collections
 
 from requests.compat import urljoin, unquote, quote
 
-import blackboard
-from blackboard import logger, ParserError, BlackboardSession, DOMAIN
-from blackboard.datatable import fetch_datatable
-from blackboard.elementtext import (
+import bbfetch
+from bbfetch import logger, ParserError, BlackboardSession, DOMAIN
+from bbfetch.datatable import fetch_datatable
+from bbfetch.elementtext import (
     element_to_markdown, element_text_content, form_field_value,
     html_to_markdown)
 
@@ -54,7 +54,7 @@ def fetch_overview(session):
     url = (
         'https://%s/webapps/gradebook/do/instructor/getJSONData' % DOMAIN +
         '?course_id=%s' % session.course_id)
-    l = blackboard.slowlog()
+    l = bbfetch.slowlog()
     response = session.get(url)
     l("Fetching gradebook took %.1f s")
     try:
@@ -130,7 +130,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                'gradeAssignmentRedirector' +
                '?course_id=%s' % session.course_id +
                '&attempt_id=%s' % attempt_id)
-    l = blackboard.slowlog()
+    l = bbfetch.slowlog()
     response = session.get(url)
     l("Fetching attempt took %.1f s")
     document = html5lib.parse(response.content, transport_encoding=response.encoding)
@@ -142,8 +142,8 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
                              'is not available to view at present.')
         if not_yet_submitted in response.text:
             raise NotYetSubmitted
-        raise blackboard.ParserError('No <div id="currentAttempt">',
-                                     response=response)
+        raise bbfetch.ParserError('No <div id="currentAttempt">',
+                                  response=response)
 
     submission_text = document.find(
         './/h:div[@id="submissionTextView"]', NS)
@@ -159,7 +159,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             for e in comments.findall(xpath, NS)
         ]
         if not comments:
-            raise blackboard.ParserError(
+            raise bbfetch.ParserError(
                 "Page contains currentAttempt_comments, " +
                 "but it contains no comments",
                 response)
@@ -193,12 +193,12 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             if a is not None:
                 # This <li> is for the submission_text
                 if not submission_text:
-                    raise blackboard.ParserError(
+                    raise bbfetch.ParserError(
                         "%r in file list, but no " % (filename,) +
                         "accompanying submission text contents",
                         response)
             else:
-                raise blackboard.ParserError(
+                raise bbfetch.ParserError(
                     "No download link for file %r" % (filename,),
                     response)
 
@@ -212,7 +212,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
             score = float(score)
         except ValueError:
             if score:
-                raise blackboard.ParserError(
+                raise bbfetch.ParserError(
                     "Couldn't parse currentAttempt_grade: %r" % (score,),
                     response)
             score = None
@@ -240,7 +240,7 @@ def fetch_attempt(session, attempt_id, is_group_assignment):
         try:
             link = row.findall('.//h:a', NS)[0]
         except IndexError:
-            raise blackboard.ParserError(
+            raise bbfetch.ParserError(
                 "feedbackFiles_table_body row %s: no link" % i,
                 response)
         download_link = urljoin(
@@ -298,7 +298,7 @@ def fetch_rubric(session, assoc_id, rubric_object):
         '&maxValue=1.0&rubricId=%s' % rubric_id +
         '&viewOnly=false&displayGrades=true&type=grading' +
         '&rubricAssoId=%s' % assoc_id)
-    l = blackboard.slowlog()
+    l = bbfetch.slowlog()
     response = session.get(url)
     l("Fetching attempt rubric took %.1f s")
     document = html5lib.parse(response.content, transport_encoding=response.encoding)

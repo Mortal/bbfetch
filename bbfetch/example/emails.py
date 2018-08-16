@@ -1,8 +1,8 @@
 import re
 
-import blackboard
-from blackboard.datatable import fetch_datatable
-from blackboard.backend import fetch_groups
+import bbfetch
+from bbfetch.datatable import fetch_datatable
+from bbfetch.backend import fetch_groups
 
 
 def fetch_users(session):
@@ -12,7 +12,7 @@ def fetch_users(session):
     try:
         return parse_users(keys, rows)
     except ValueError as exn:
-        raise blackboard.ParserError(exn.args[0], response)
+        raise bbfetch.ParserError(exn.args[0], response)
 
 
 def extract_username(s):
@@ -67,4 +67,4 @@ def print_groups_and_emails(session):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(print_groups_and_emails)
+    bbfetch.wrapper(print_groups_and_emails)

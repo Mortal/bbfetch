@@ -7,7 +7,7 @@ import importlib
 import collections
 
 
-logger = logging.getLogger('blackboard')
+logger = logging.getLogger('bbfetch')
 
 DOMAIN = 'blackboard.au.dk'
 
@@ -85,7 +85,7 @@ def wrapper(fun):
     try:
         module, classname = args.session_class.rsplit('.', 1)
     except ValueError:
-        module, classname = 'blackboard.session', args.session_class
+        module, classname = 'bbfetch.session', args.session_class
     try:
         session_module = importlib.import_module(module)
     except ImportError:

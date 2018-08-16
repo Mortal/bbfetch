@@ -2,9 +2,9 @@ import re
 import html5lib
 from xml.etree.ElementTree import ElementTree
 from six import BytesIO
-import blackboard
-from blackboard.datatable import fetch_datatable
-from blackboard.elementtext import element_to_markdown, element_text_content
+import bbfetch
+from bbfetch.datatable import fetch_datatable
+from bbfetch.elementtext import element_to_markdown, element_text_content
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -130,4 +130,4 @@ def parse_thread_ids(document):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(print_forum_posts)
+    bbfetch.wrapper(print_forum_posts)

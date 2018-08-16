@@ -3,10 +3,10 @@ import re
 import sys
 # Path to bbfetch repository
 sys.path += [os.path.expanduser('~/Repos/bbfetch')]
-import blackboard.grading
+import bbfetch.grading
 
 
-class Grading(blackboard.grading.Grading):
+class Grading(bbfetch.grading.Grading):
     # Username used to log in to Blackboard
     username = '20094480'
     # Blackboard course id (of the form '_NNNNN_1')

@@ -43,8 +43,8 @@ import datetime
 import collections
 from domjudge import get_scoreboard
 from grading import Grading
-from blackboard.base import ParserError, logger
-from blackboard.backend import upload_csv
+from bbfetch.base import ParserError, logger
+from bbfetch.backend import upload_csv
 
 
 parser = argparse.ArgumentParser()

@@ -9,8 +9,8 @@ os.chdir(os.path.normpath(os.path.dirname(os.path.abspath(__file__))))
 
 setup(
     name='bbfetch',
-    version='0.2',
-    packages=find_packages(include=['blackboard', 'blackboard.*']),
+    version='0.3a1',
+    packages=find_packages(include=['bbfetch', 'bbfetch.*']),
     include_package_data=True,
     license='GNU GPLv3',
     description='Command-line interface to Blackboard LMS',

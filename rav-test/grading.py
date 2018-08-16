@@ -1,10 +1,10 @@
 import re
 import sys
 sys.path += ['/home/rav/bbfetch']
-import blackboard.grading
+import bbfetch.grading
 
 
-class Grading(blackboard.grading.Grading):
+class Grading(bbfetch.grading.Grading):
     username = '20103940'
     course = '_13158_1'
     classes = all

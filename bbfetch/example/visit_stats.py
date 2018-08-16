@@ -1,5 +1,5 @@
-import blackboard
-from blackboard.datatable import fetch_datatable
+import bbfetch
+from bbfetch.datatable import fetch_datatable
 
 
 def get_visit_stats(session):
@@ -27,4 +27,4 @@ def print_visit_stats(session):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(print_visit_stats)
+    bbfetch.wrapper(print_visit_stats)

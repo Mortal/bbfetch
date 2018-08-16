@@ -4,11 +4,11 @@ import sys
 import subprocess
 # Path to bbfetch repository
 sys.path += [os.path.expanduser('~/bbfetch')]
-import blackboard.grading
-from blackboard.session import PassBlackboardSession
+import bbfetch.grading
+from bbfetch.session import PassBlackboardSession
 
 
-class Grading(blackboard.grading.Grading):
+class Grading(bbfetch.grading.Grading):
     session_class = PassBlackboardSession
     # Username used to log in to Blackboard
     username = '20103940'

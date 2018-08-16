@@ -8,7 +8,7 @@ import requests.cookies
 from six.moves.http_cookiejar import LWPCookieJar
 from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 
-from blackboard.base import BadAuth, ParserError, logger, DOMAIN
+from bbfetch.base import BadAuth, ParserError, logger, DOMAIN
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}

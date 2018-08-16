@@ -6,14 +6,14 @@ import numbers
 import argparse
 import requests
 import functools
-import blackboard
+import bbfetch
 import collections
-from blackboard import logger, ParserError, BadAuth, BlackboardSession
+from bbfetch import logger, ParserError, BadAuth, BlackboardSession
 # from groups import get_groups
-from blackboard.gradebook import (
+from bbfetch.gradebook import (
     Gradebook, Attempt, truncate_name, StudentAssignment, Rubric,
 )
-from blackboard.backend import (
+from bbfetch.backend import (
     fetch_attempt, submit_grade, fetch_groups, fetch_rubric,
     is_course_id_valid, NotYetSubmitted,
 )
@@ -22,7 +22,7 @@ from blackboard.backend import (
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
 
 
-class Grading(blackboard.Serializable):
+class Grading(bbfetch.Serializable):
     FIELDS = ('attempt_state', 'gradebook', 'username', 'groups', 'rubrics')
 
     session_class = BlackboardSession
@@ -771,7 +771,7 @@ class Grading(blackboard.Serializable):
     def execute_from_command_line(cls):
         parser = cls.get_argument_parser()
         args = parser.parse_args()
-        blackboard.configure_logging(quiet=args.quiet)
+        bbfetch.configure_logging(quiet=args.quiet)
 
         not_implemented = []
         try:

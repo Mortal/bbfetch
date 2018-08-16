@@ -8,6 +8,7 @@ bbfetch changes
   "This attempt has not yet been submitted and is not available to view at present."
 * Bugfix in `fetch_attempt`
 * Fix dependency specification in `setup.py`
+* Rename `blackboard` Python module to `bbfetch`
 
 0.2 (2017-10-09)
 ----------------

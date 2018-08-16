@@ -2,10 +2,10 @@ import time
 import textwrap
 import collections
 
-import blackboard
-from blackboard import BlackboardSession, logger, DOMAIN
-from blackboard.dwr import dwr_get_attempts_info
-from blackboard.backend import fetch_overview
+import bbfetch
+from bbfetch import BlackboardSession, logger, DOMAIN
+from bbfetch.dwr import dwr_get_attempts_info
+from bbfetch.backend import fetch_overview
 
 
 def get_handin_attempt_counts(session, handin_id):
@@ -311,7 +311,7 @@ def truncate_name(name, n):
     return ' '.join(parts)[:n]
 
 
-class Gradebook(blackboard.Serializable):
+class Gradebook(bbfetch.Serializable):
     """Provides a view of what is accessible in the Blackboard gradebook."""
 
     FIELDS = '_students fetch_time _assignments'.split()

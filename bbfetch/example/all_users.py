@@ -1,6 +1,6 @@
-import blackboard
+import bbfetch
 
-from blackboard.datatable import fetch_datatable
+from bbfetch.datatable import fetch_datatable
 
 
 NS = {'h': 'http://www.w3.org/1999/xhtml'}
@@ -37,4 +37,4 @@ def parse_all_users(keys, rows):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(get_all_users)
+    bbfetch.wrapper(get_all_users)

@@ -3,9 +3,9 @@ import ast
 import sys
 import collections
 
-import blackboard
-import blackboard.backend
-from blackboard import logger, ParserError, DOMAIN
+import bbfetch
+import bbfetch.backend
+from bbfetch import logger, ParserError, DOMAIN
 
 
 class JsObjectParser(ast.NodeVisitor):
@@ -267,7 +267,7 @@ def dwr_get_attempts_info(session, attempts, batch_size=20):
     results = []
     for i in range(0, len(attempts), batch_size):
         j = min(len(attempts), i + batch_size)
-        l = blackboard.slowlog()
+        l = bbfetch.slowlog()
         results.extend(
             dwr_get_attempts_info_single_request(session, attempts[i:j]))
         l("Fetching %d attempt lists took %%.1f s" % (j - i))

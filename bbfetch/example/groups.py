@@ -1,5 +1,5 @@
-import blackboard
-from blackboard.backend import fetch_groups
+import bbfetch
+from bbfetch.backend import fetch_groups
 
 
 def print_groups(session):
@@ -11,4 +11,4 @@ def print_groups(session):
 
 
 if __name__ == "__main__":
-    blackboard.wrapper(print_groups)
+    bbfetch.wrapper(print_groups)

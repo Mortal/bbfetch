@@ -289,16 +289,16 @@ with the Python Requests framework, and is useful for teaching assistants and
 teachers who wish to automate the Blackboard tedium.
 
 The main component is a wrapper around `requests.Session`
-named `blackboard.BlackboardSession`
+named `bbfetch.BlackboardSession`
 with methods to automatically login and resubmit an HTTP request,
 automatically follow HTML redirects,
 save and load cookies, save and load login passwords.
 
-For grading handins, the class `blackboard.grading.Grading`
+For grading handins, the class `bbfetch.grading.Grading`
 should be extended with information on which course and students
 should have their handins graded by the user.
 
-For other Blackboard automation purposes, the `blackboard/examples/` directory
+For other Blackboard automation purposes, the `bbfetch/examples/` directory
 contains examples of how to download all forum posts for a course,
 how to download the list of groups,
 how to download a list of email addresses for each group of students,
