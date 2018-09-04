@@ -47,7 +47,7 @@ class Grading(blackboard.grading.Grading):
     def get_excel_fields(self, filename, fields):
         result = {k: None for k in fields}
         csv_filename = self.soffice_convert(filename, 'csv')
-        with open(csv_filename) as f:
+        with open(csv_filename, encoding='iso8859-1') as f:
             reader = csv.reader(f)
             for row in reader:
                 k = row[0].strip()
