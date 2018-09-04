@@ -63,7 +63,7 @@ class Grading(blackboard.grading.Grading):
         else:
             return assignment.name
 
-    def get_feedback_score(self, attempt, comments):
+    def get_feedback_score(self, comments):
         """
         Decide from the contents of comments.txt what score to give a handin.
         """

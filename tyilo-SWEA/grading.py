@@ -123,10 +123,10 @@ class Grading(blackboard.grading.Grading):
             return ('Godkendt. ' +
                     'Se kommentarerne i den vedhæftede PDF.')
 
-    def get_feedback_score(self, attempt, comments):
+    def get_attempt_score(self, attempt, comments):
         score, filename = self.get_swea_feedback(attempt)
         if score == None:
-            return super().get_feedback_score(attempt, comments)
+            return self.get_feedback_score(comments)
         else:
             return score
 

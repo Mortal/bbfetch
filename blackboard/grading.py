@@ -558,7 +558,7 @@ class Grading(blackboard.Serializable):
     rehandin_regex = r'genaflevering|re-?handin'
     accept_regex = r'accepted|godkendt'
 
-    def get_feedback_score(self, attempt, comments):
+    def get_feedback_score(self, comments):
         rehandin = re.search(self.rehandin_regex, comments, re.I)
         accept = re.search(self.accept_regex, comments, re.I)
         if rehandin and accept:
@@ -567,6 +567,9 @@ class Grading(blackboard.Serializable):
             return 0
         elif accept:
             return 1
+
+    def get_attempt_score(self, attempt, comments):
+        return self.get_feedback_score(comments)
 
     def upload_all_feedback(self, dry_run=False):
         return self.upload_attempts(self.get_attempts(needs_upload=True),
@@ -581,7 +584,7 @@ class Grading(blackboard.Serializable):
             feedback = self.get_feedback(attempt)
             errors = []
             try:
-                score = self.get_feedback_score(attempt, feedback)
+                score = self.get_attempt_score(attempt, feedback)
             except ValueError as exn:
                 errors.append(str(exn))
             else:
