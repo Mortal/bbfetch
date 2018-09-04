@@ -1,12 +1,11 @@
-import os
 import re
 import sys
+from pathlib import Path
 # Path to bbfetch repository
-sys.path += [os.path.expanduser('~/repos/bbfetch')]
+sys.path += [Path('~/repos/bbfetch').expanduser()]
 import blackboard.grading
 import csv
 from subprocess import run, DEVNULL
-from time import sleep
 
 
 class Grading(blackboard.grading.Grading):
