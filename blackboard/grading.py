@@ -568,6 +568,9 @@ class Grading(blackboard.Serializable):
         elif accept:
             return 1
 
+    def get_attempt_score(self, attempt, comments):
+        return self.get_feedback_score(comments)
+
     def upload_all_feedback(self, dry_run=False):
         return self.upload_attempts(self.get_attempts(needs_upload=True),
                                     dry_run=dry_run)
@@ -581,7 +584,7 @@ class Grading(blackboard.Serializable):
             feedback = self.get_feedback(attempt)
             errors = []
             try:
-                score = self.get_feedback_score(feedback)
+                score = self.get_attempt_score(attempt, feedback)
             except ValueError as exn:
                 errors.append(str(exn))
             else:
