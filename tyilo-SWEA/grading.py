@@ -5,7 +5,7 @@ import sys
 sys.path += [os.path.expanduser('~/repos/bbfetch')]
 import blackboard.grading
 import csv
-from subprocess import run
+from subprocess import run, DEVNULL
 from time import sleep
 
 
@@ -27,20 +27,21 @@ class Grading(blackboard.grading.Grading):
 
     def soffice_convert(self, in_file, out_format):
         out_dir = os.path.dirname(in_file)
-        print(out_dir)
         out_file = in_file.split('.')[0] + '.' + out_format
+
+        # Make sure we don't use an old file
         try:
             os.unlink(out_file)
         except:
             pass
 
-        run(['soffice', '--convert-to', out_format, '--outdir', out_dir, in_file])
+        # See https://stackoverflow.com/a/30465397/640584
+        MAGIC_ENV = '-env:UserInstallation=file:///tmp/libreoffice_batch'
 
-        # Wait for soffice to write file
-        while not os.path.exists(out_file):
-            sleep(0.1)
-            print('Waiting for soffice...')
+        run(['soffice', MAGIC_ENV, '--convert-to', out_format, '--outdir', out_dir, in_file],
+            stdout=DEVNULL)
 
+        assert os.path.exists(out_file)
         return out_file
 
     def get_excel_fields(self, filename, fields):
@@ -85,7 +86,6 @@ class Grading(blackboard.grading.Grading):
 
         excel_filename = f'eval_{group_name}.xlsx'
         excel_filename = 'graded%s/%s' % (assignment, excel_filename)
-        print(os.path.abspath(excel_filename))
         if not os.path.exists(excel_filename):
             return None, None
 
