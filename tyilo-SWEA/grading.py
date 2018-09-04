@@ -23,7 +23,7 @@ class Grading(blackboard.grading.Grading):
     # Regex pattern and replacement text to abbreviate handin names
     assignment_name_display_regex = (r'Iteration (\d+).*', r'\1')
     # Template indicating where to save each handin
-    attempt_directory_name = '~/TA/SWEA18/{assignment}/{group}_{id}'
+    attempt_directory_name = '~/TA/SWEA18/attempts/{assignment}/{class_name}-{group}_{id}'
 
     def soffice_convert(self, in_file, out_format):
         out_dir = os.path.dirname(in_file)
