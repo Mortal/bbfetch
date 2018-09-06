@@ -2,7 +2,7 @@ import re
 import sys
 from pathlib import Path
 # Path to bbfetch repository
-sys.path += [Path('~/repos/bbfetch').expanduser()]
+sys.path += [str(Path('~/repos/bbfetch').expanduser())]
 import blackboard.grading
 import csv
 from subprocess import run, DEVNULL
