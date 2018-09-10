@@ -150,6 +150,15 @@ class Grading(blackboard.Serializable):
         raise NotImplementedError
 
     def get_student_visible(self, student):
+        try:
+            gr = self.groups_regex
+        except AttributeError:
+            gr = None
+        if gr is not None:
+            for g in self.get_student_groups(student):
+                if re.match(gr, g.name) is not None:
+                    return True
+            return False
         if self.classes is None:
             raise NotImplementedError
         if self.classes is all:
