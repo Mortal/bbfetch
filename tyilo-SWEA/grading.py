@@ -17,7 +17,7 @@ class Grading(blackboard.grading.Grading):
     # If you need to grade hand-ins of all students in the course,
     # put classes = all
     #classes = ['Hold DA3', 'Hold DA4']
-    groups_regex = r'(Gruppe DA3 - (\S+))|(Gruppe DA4 - (\S+))'
+    groups_regex = r'Gruppe DA(3|4) - \S+'
     # Regex pattern and replacement text to abbreviate group names
     student_group_display_regex = (r'Gruppe (\S+) - (\S+)', r'\1-\2')
     # Regex pattern and replacement text to abbreviate handin names
