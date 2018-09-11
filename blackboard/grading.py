@@ -632,7 +632,7 @@ class Grading(blackboard.Serializable):
             self.autosave()
 
     def main(self, args, session, grading):
-        if args.refresh_groups:
+        if args.refresh_groups or args.download >= 1:
             self.refresh_groups()
         if args.refresh:
             try:
