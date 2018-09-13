@@ -72,11 +72,9 @@ class Grading(blackboard.grading.Grading):
             # This attempt is not the last attempt uploaded by the student,
             # so we do not give any feedback to this attempt.
             return None, None
-        if any(a.score is not None for a in attempt.assignment.attempts[:-1]):
-            # We already graded previous attempts, so this is an actual
-            # re-handin from the student, which we do not handle with this
-            # method.
-            return None, None
+
+        graded_attempts = sum(a.score is not None for a in attempt.assignment.attempts[:-1])
+        prefix = f'_re{graded_attempts}' if graded_attempts else ''
 
         # Feedback for group 42 is stored in a file named eval_42.xlsx
         group_name = attempt.group_name
@@ -88,7 +86,7 @@ class Grading(blackboard.grading.Grading):
                                  self.assignment_name_display_regex[1],
                                  attempt.assignment.name)
 
-        excel_path = Path(f'graded{assignment}/eval_{group_name}.xlsx')
+        excel_path = Path(f'graded{assignment}/eval_{group_name}{prefix}.xlsx')
         if not excel_path.exists():
             return None, None
 
