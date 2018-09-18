@@ -30,7 +30,6 @@ class Grading(blackboard.grading.Grading):
         out_path = in_path.with_suffix(f'.{out_format}')
 
         if out_path.exists() and in_path.stat().st_mtime < out_path.stat().st_mtime:
-            print(f'Not reconverting {str(out_path)}')
             return out_path
 
         # Make sure we don't use an old file
