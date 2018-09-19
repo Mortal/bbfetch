@@ -1,0 +1,2 @@
+#!/bin/sh
+rsync -a apps:/var/www/apps/domserver/submissions/ submissions/inbox/
