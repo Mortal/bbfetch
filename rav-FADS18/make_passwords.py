@@ -12,6 +12,7 @@ import subprocess
 parser = argparse.ArgumentParser()
 parser.add_argument('-y', '--year', type=int, required=True)
 parser.add_argument('-c', '--classes', type=int, required=True)
+parser.add_argument('--hold', type=int, default=0)
 parser.add_argument('-g', '--groups', type=int, required=True)
 parser.add_argument('-l', '--password-length', type=int, default=10)
 parser.add_argument('-R', '--rows', type=int, default=10)
@@ -30,19 +31,19 @@ def make_passwords(pw_length, num_pw):
     return passwords
 
 
-def make_passwords_dict(password_length, classes, groups, prefix):
+def make_passwords_dict(password_length, classes, groups):
     password_list = make_passwords(password_length,
-                                   classes * groups)
+                                   len(classes) * groups)
     password_iter = iter(password_list)
     passwords = {}
-    for c in range(classes):
+    for c in classes:
         for g in range(groups):
-            key = '%s%d-%02d' % (prefix, c+1, g+1)
+            key = '%s-%02d' % (c, g+1)
             passwords[key] = next(password_iter)
     return passwords
 
 
-def make_ipe_source(fp, passwords, classes, prefix, rows, columns):
+def make_ipe_source(fp, passwords, classes, rows, columns):
     width = 595
     height = 842
     col_width = width / columns  # 297.5
@@ -57,18 +58,18 @@ def make_ipe_source(fp, passwords, classes, prefix, rows, columns):
         </ipestyle>
         <page>
     ''').lstrip() % dict(width=width, height=height))
-    for c in range(classes):
+    for c in classes:
         fp.write('<layer name="l%s"/>\n' % c)
-    for c in range(classes):
+    for c in classes:
         fp.write('<view layers="l%s" active="l%s"/>\n' % (c, c))
-    for c in range(classes):
+    for c in classes:
         fp.write('<group layer="l%s">\n' % c)
         group = 1
         for col in range(columns):
             x = (col + 0.5) * col_width
             for row in range(rows):
                 y = (rows - row - 0.5) * row_height
-                user = '%s%s-%02d' % (prefix, c+1, group)
+                user = '%s-%02d' % (c, group)
                 group += 1
                 try:
                     pw = passwords[user]
@@ -88,15 +89,19 @@ def make_ipe_source(fp, passwords, classes, prefix, rows, columns):
 
 def main():
     args = parser.parse_args()
-    prefix = 'fads%s-da' % (args.year % 100)
+    prefix = 'fads%s-' % (args.year % 100)
+    class_names = (
+        [prefix + 'da%s' % (c+1) for c in range(args.classes)]
+        + [prefix + 'hold%s' % (c+1) for c in range(args.hold)]
+    )
     passwords = make_passwords_dict(
-        args.password_length, args.classes, args.groups, prefix)
+        args.password_length, class_names, args.groups)
     base = 'student-passwords-%s' % args.year
     with open('%s.txt' % base, 'x') as fp:
         for k, v in sorted(passwords.items()):
             fp.write('%s %s\n' % (k, v))
     with open('%s.ipe' % base, 'x') as fp:
-        make_ipe_source(fp, passwords, args.classes, prefix,
+        make_ipe_source(fp, passwords, class_names,
                         args.rows, args.columns)
     subprocess.check_call(
         ('ipetoipe', '-pdf', '%s.ipe' % base, '%s.pdf' % base))
