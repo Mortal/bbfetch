@@ -1,0 +1,15 @@
+rav@novascotia:~/bbfetch/rav-FADS18$ python make_passwords.py -y 2018 -c 7 --hold 2 -g 20
+rav@novascotia:~$ ssh apps
+rav@apps-server:~$ sudo docker exec -ti domserver /bin/bash
+root@fa7e82d5885e:/# grep 'CATID =\|ROLES =' /opt/domjudge/domserver/bin/create_accounts
+$CATID = 4;  // 4 = Organisation in default db scheme
+$ROLES = array(2,3); // Judge and Team role in default db scheme
+root@fa7e82d5885e:/# sed -i.bak -e 's/CATID =.*/CATID = 2;/' -e 's/ROLES =.*/ROLES = array(3);/' /opt/domjudge/domserver/bin/create_accounts
+root@fa7e82d5885e:/# /opt/domjudge/domserver/bin/create_accounts <<EOF
+(paste contents of student-passwords-2018.txt)
+EOF
+Verify that teams are created on https://domjudge.cs.au.dk/public/
+rav@apps-server:/var/www/apps/domserver$ . mysql-password.txt
+rav@apps-server:/var/www/apps/domserver$ mysql -udomjudge -p$MYSQL_PASSWORD
+mysql> update team set enabled = 0 where name like 'fads17%';
+
