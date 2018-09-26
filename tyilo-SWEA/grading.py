@@ -6,6 +6,7 @@ sys.path += [str(Path('~/repos/bbfetch').expanduser())]
 import blackboard.grading
 import csv
 from subprocess import run, DEVNULL
+import requests
 
 
 class Grading(blackboard.grading.Grading):
@@ -87,6 +88,13 @@ class Grading(blackboard.grading.Grading):
 
         excel_path = Path(f'graded{assignment}/eval_{group_name}{prefix}.xlsx')
         if not excel_path.exists():
+            not_done_path = Path(str(excel_path).replace('eval', '/not-done/eval'))
+            not_done_path.parent.mkdir(parents=True, exist_ok=True)
+            if not not_done_path.exists():
+                r = requests.get(f'https://cs.au.dk/~baerbak/c/swea/templates/iteration-{assignment}-eval.xlsx')
+                assert r.ok
+                with not_done_path.open('wb') as f:
+                    f.write(r.content)
             return None, None
 
         scoring = self.get_excel_fields(excel_path, ['Submission', 'Score'])
