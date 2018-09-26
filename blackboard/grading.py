@@ -622,6 +622,7 @@ class Grading(blackboard.Serializable):
                 print("score: %s, feedback: %s words, %s attachment(s)" %
                       (score, len(feedback.split()), len(attachments)))
                 print("rubrics: %s" % (rubrics,))
+                print(feedback)
         else:
             for attempt, score, feedback, attachments, rubrics in uploads:
                 submit_grade(self.session, attempt.id,
