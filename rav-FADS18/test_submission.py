@@ -11,6 +11,7 @@ import tempfile
 import subprocess
 from domjudge import get_problems, get_team_names
 from instrument import instrument
+import judge
 
 
 REPO = {
@@ -207,6 +208,10 @@ def remove_package(paths):
         ('sed', '-i', '-e', '/package [_a-z0-9.]*;/ d') + tuple(paths))
 
 
+def get_testcases(problem_name):
+    return glob.glob('../../fads-problems/%s/data/*/*.in' % problem_name)
+
+
 def main(session):
     args = parser.parse_args()
     problems = get_problems(session)
@@ -235,6 +240,16 @@ def main(session):
                 instrument(path)
         subprocess.check_call(['javac'] + glob.glob('%s/*.java' % directory))
         subprocess.check_call(('java', '-cp', directory, 'RunTestAll'))
+
+        main_files = [os.path.basename(path) for path in paths
+                      if any('void main(' in line for line in open(path))]
+        main_file, = main_files
+        for testcase in get_testcases(problem_name):
+            print(testcase)
+            try:
+                judge.main([os.path.join(directory, main_file), testcase])
+            except SystemExit as e:
+                print(e.args[0])
 
 
 if __name__ == '__main__':

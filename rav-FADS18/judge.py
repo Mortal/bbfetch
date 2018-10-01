@@ -94,8 +94,8 @@ parser.add_argument('program', type=runnable)
 parser.add_argument('testcase', type=testcase_input)
 
 
-def main():
-    args = parser.parse_args()
+def main(args=None):
+    args = parser.parse_args(args)
     input, answer = args.testcase
     r = judge(input, answer, args.program)
     if r == AC:
