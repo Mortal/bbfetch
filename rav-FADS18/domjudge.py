@@ -48,11 +48,13 @@ def get_unique_contest(session):
             contest = json.load(fp)
     except FileNotFoundError:
         contests = api_contests(session)
+        if not isinstance(contests, list):
+            raise Exception("contests is not a list: %r" % (contests,))
         if len(contests) == 0:
             raise Exception("No contests")
         if len(contests) > 1:
             raise Exception("Multiple active contests")
-        contest, = contests.values()
+        contest, = contests
         try:
             fp = open(path, 'w')
         except FileNotFoundError:
