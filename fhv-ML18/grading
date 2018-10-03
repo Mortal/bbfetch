@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+source /home/fhv/anaconda3/bin/activate mlgrading
+cd ~/Documents/Instructor/ml18/handins
+python grading.py "$@"
