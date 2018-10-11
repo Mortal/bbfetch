@@ -151,12 +151,12 @@ get_problems = get_problem_label.dict_view
 
 def get_scoreboard(session):
     contest = get_unique_contest(session)
-    start_time = datetime.datetime.fromtimestamp(contest['start'])
+    start_time = datetime.datetime.strptime(contest['start_time'].replace('.000', ''), '%Y-%m-%dT%H:%M:%S%z')
     scoreboard = api_scoreboard(session, contest['id'])
     team_names = get_team_names(session)
     result = {}
     for team in scoreboard:
-        team_name = team_names[team['team']]
+        team_name = team_names[team['team_id']]
         problems = {}
         for problem in team['problems']:
             if problem['solved']:

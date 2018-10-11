@@ -58,7 +58,7 @@ def get_problems():
         header = next(c)
         assert header == ['Problem id', 'Deadline', 'Points', 'Grade centre CSV name']
         for problem_id, deadline, points, column in c:
-            deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d %H:%M')
+            deadline = datetime.datetime.strptime(deadline, '%Y-%m-%d %H:%M%z')
             points = int(points)
             problems[problem_id] = (deadline, points, column)
     return problems
