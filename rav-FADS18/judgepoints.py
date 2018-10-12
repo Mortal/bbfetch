@@ -96,6 +96,31 @@ def add_overrides(scoreboard):
     return scoreboard
 
 
+def describe_scoreboard(problems, problem_info, data=None):
+    if data is None:
+        data = {}
+    data.setdefault("Total", 0)
+    for label, (solved, time) in problems.items():
+        try:
+            deadline, points, column_name = problem_info[label]
+        except KeyError:
+            # Demo problem -> Skip
+            continue
+        if isinstance(time, datetime.datetime):
+            time_str = time.strftime("%Y-%m-%d %H:%M")
+        else:
+            time_str = str(time)
+        if solved and (isinstance(time, str) or time < deadline):
+            data[label] = "%s (%s)" % (points, time_str)
+            data[column_name] = data.get(column_name, 0) + points
+            data["Total"] += points
+        elif solved:
+            data[label] = "0 (Late: %s)" % time_str
+        else:
+            data[label] = "0 (Attempted)"
+    return data
+
+
 def get_points(grading):
     problem_info = get_problems()
     scoreboard = get_scoreboard(grading.session.session)
@@ -133,25 +158,23 @@ def get_points(grading):
             continue
         problems = scoreboard[team_name]
         data['Group'] = team_name
-        for label, (solved, time) in problems.items():
-            try:
-                deadline, points, column_name = problem_info[label]
-            except KeyError:
-                # Demo problem -> Skip
-                continue
-            if isinstance(time, datetime.datetime):
-                time_str = time.strftime('%Y-%m-%d %H:%M')
-            else:
-                time_str = str(time)
-            if solved and (isinstance(time, str) or time < deadline):
-                data[label] = '%s (%s)' % (points, time_str)
-                grade_centre_row[column_name] += points
-                data[column_name] += points
-                data['Total'] += points
-            elif solved:
-                data[label] = '0 (Late: %s)' % time_str
-            else:
-                data[label] = '0 (Attempted)'
+        describe_scoreboard(problems, problem_info, data)
+        for n in problem_columns:
+            grade_centre_row[n] = data[n]
+
+    seen_team_names = [r["Group"] for r in output_rows]
+    active_teams = [
+        team_name
+        for team_name, problems in scoreboard.items()
+        if problems and team_name != "demo"
+    ]
+    active_without_group = set(active_teams) - set(seen_team_names)
+    if active_without_group:
+        print("Domjudge teams with activity but no Blackboard group members:")
+        for team_name in sorted(active_without_group):
+            data = describe_scoreboard(scoreboard[team_name], problem_info)
+            print(team_name, " ".join(str(data.get(c, "--")) for c in output_columns))
+
     output_rows.sort(key=lambda r: (r['Group'], r['Name']))
     with open('judgepoints.csv', 'w') as fp:
         wr = csv.writer(fp)
