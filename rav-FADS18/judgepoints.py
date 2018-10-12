@@ -24,6 +24,7 @@ different DOMjudge problems.
 
 In override.json you can specify that certain groups should get points for
 problems even though they didn't submit an accepted solution by the deadline.
+This can be used e.g. if groups split up -- see below for an example.
 
 You should use grading.py to fetch the list of student group memberships.
 
@@ -34,6 +35,23 @@ Creating Grade Centre columns
 -----------------------------
 
 Go to Blackboard's "Full Grade Centre" and click "Create Column".
+
+
+Example of overriding points
+----------------------------
+
+If people in group "fads18-da8-02" split off to form group "fads18-da8-22"
+after the deadline for the first problems, add this in override.json:
+
+    {
+      "fads18-da8-22": {
+        "max": "Solved with fads18-da8-02",
+        "closest1": "Solved with fads18-da8-02",
+        "closest2": "Solved with fads18-da8-02",
+        "ball1": "Solved with fads18-da8-02",
+        "inversions1": "Solved with fads18-da8-02"
+      }
+    }
 '''
 import re
 import csv
