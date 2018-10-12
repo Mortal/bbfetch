@@ -11,7 +11,7 @@ class Grading(blackboard.grading.Grading):
     session_class = PassBlackboardSession
     username = 'au306325'
     course = '_116845_1'
-    student_group_display_regex = (r'Gruppe (\S+) - (\S+)', r'\1-\2')
+    student_group_display_regex = (r'Gruppe (.+) - (\S+)', r'\1-\2')
     classes = all
     assignment_name_display_regex = (r'Handin (\d+).*', r'\1')
     rehandin_regex = r'genaflevering|re-?handin'
@@ -24,7 +24,7 @@ class Grading(blackboard.grading.Grading):
             for g in groups:
                 mo = re.fullmatch(pattern, g.name)
                 if mo:
-                    class_name = mo.group(1).lower()
+                    class_name = mo.group(1).lower().replace(" ", "")
                     group_number = int(mo.group(2))
                     return 'fads18-%s-%02d' % (class_name, group_number)
 
