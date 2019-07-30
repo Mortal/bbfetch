@@ -26,7 +26,12 @@ class Grading(blackboard.grading.Grading):
     # Template indicating where to save each handin
     attempt_directory_name = '~/TA/SWEA18/attempts/{assignment}/{class_name}-{group}_{id}'
 
-    def soffice_convert(self, in_path, out_format):
+    def get_assignment_name_display(self, assignment):
+        name = super().get_assignment_name_display(assignment)
+        return name.zfill(2)
+
+    @classmethod
+    def soffice_convert(cls, in_path, out_format):
         out_dir = in_path.parent
         out_path = in_path.with_suffix(f'.{out_format}')
 
@@ -48,9 +53,10 @@ class Grading(blackboard.grading.Grading):
         assert out_path.exists()
         return out_path
 
-    def get_excel_fields(self, path, fields):
+    @classmethod
+    def get_excel_fields(cls, path, fields):
         result = {k: None for k in fields}
-        csv_path = self.soffice_convert(path, 'csv')
+        csv_path = cls.soffice_convert(path, 'csv')
         with csv_path.open(encoding='iso8859-1') as f:
             reader = csv.reader(f)
             for row in reader:
