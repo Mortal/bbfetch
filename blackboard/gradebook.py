@@ -193,6 +193,10 @@ class Assignment(ItemWrapper):
         except KeyError:
             return False
 
+    @staticmethod
+    def ordering(item):
+        return int(item['pos'])  # Sort Assignments by position
+
     def __str__(self):
         return self.name
 
