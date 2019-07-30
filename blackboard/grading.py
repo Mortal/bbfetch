@@ -206,19 +206,19 @@ class Grading(blackboard.Serializable):
 
     def get_gradebook_columns(self):
         columns = [
-            ('Username', lambda u: u.username, 8),
-            ('Name', str, 27),
-            ('Group', self.get_student_group_display, 6),
+            ('Username', lambda u: u.username),
+            ('Name', lambda u: truncate_name(u.name, 27)),
+            ('Group', self.get_student_group_display),
         ]
         for assignment in self.gradebook.assignments.values():
             name = self.get_assignment_name_display(assignment)
             display = functools.partial(self.get_assignment_display,
                                         assignment=assignment)
-            columns.append(('|', lambda u: '|', 1))
-            columns.append((name, display, 3))
-        columns.append(('|', lambda u: '|', 1))
+            columns.append(('|', lambda u: '|'))
+            columns.append((name, display))
+        columns.append(('|', lambda u: '|'))
         columns.append(
-            ('Pts', lambda u: '%g' % u.score, 3))
+            ('Pts', lambda u: '%g' % u.score))
         return columns
 
     def get_gradebook_cells(self, columns, students):
@@ -242,12 +242,14 @@ class Grading(blackboard.Serializable):
                           self.gradebook.students.values())
         students = sorted(students, key=self.get_student_ordering)
         rows = self.get_gradebook_cells(columns, students)
+        col_widths = [0] * len(columns)
+        for row in rows:
+            for i, cell in enumerate(row):
+                col_widths[i] = max(col_widths[i], len(str(cell)))
         for row in rows:
             row_fmt = []
-            for cell, c in zip(row, columns):
-                header_width = c[2]
-                row_fmt.append(
-                    truncate_name(str(cell), header_width).ljust(header_width))
+            for i, cell in enumerate(row):
+                row_fmt.append(str(cell).ljust(col_widths[i]))
             print(' '.join(row_fmt).rstrip())
 
     def dump_gradebook(self, fp):
