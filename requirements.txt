@@ -1,5 +1,5 @@
 https://github.com/Alir3z4/html2text/archive/2016.1.8.tar.gz#egg=html2text
 html5lib==0.999999999
 keyring==7.3
-requests==2.9.1
+requests==2.20.0
 six==1.10.0
